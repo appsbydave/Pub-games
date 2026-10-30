@@ -2,7 +2,7 @@
 
 Every dice, card and domino game from the pub games night rules cards, in one app you can install on a phone and play with no signal.
 
-**Play it:** https://appsbydave.github.io/pub-games/
+**Play it:** https://appsbydave.github.io/Pub-games/
 
 ## Games
 
