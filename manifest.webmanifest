@@ -1,7 +1,7 @@
 {
-  "name": "Pub Games · Dice & Cards",
+  "name": "Pub Games · Dice, Cards & Tables",
   "short_name": "Pub Games",
-  "description": "Roll, deal and play. Every dice, card and domino game from the pub games rules cards, in one place. Works offline.",
+  "description": "Roll, deal, slide and throw. The dice, card, domino and table games from the pub games rules cards, in one place. Works offline.",
   "id": "./",
   "start_url": "./",
   "scope": "./",
@@ -10,7 +10,10 @@
   "background_color": "#f4ebf4",
   "theme_color": "#4e1f4d",
   "lang": "en-GB",
-  "categories": ["games", "entertainment"],
+  "categories": [
+    "games",
+    "entertainment"
+  ],
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },

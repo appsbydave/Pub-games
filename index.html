@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#4e1f4d">
-<title>Pub Games · Dice &amp; Cards</title>
+<title>Pub Games · Dice, Cards &amp; Tables</title>
 <!-- Installable app + offline play (see README) -->
-<meta name="description" content="Roll, deal and play. Every dice, card and domino game from the pub games rules cards, in one place.">
+<meta name="description" content="Roll, deal, slide and throw. The dice, card, domino and table games from the pub games rules cards, in one place.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -344,10 +344,1778 @@ button.dom.ok:hover{transform:translateY(-4px)}
 .bidtag.d{border-style:dashed;opacity:.7}
 .mini.md svg{width:38px;height:19px}
 
+
+/* ===== Table games (scoped under .tg) ===== */
+.tg .sheet{max-width:560px;margin:0 auto;background:#fff;border:2px solid var(--plum);border-radius:22px;
+  box-shadow:0 0 0 5px #fff,0 0 0 6.5px var(--line);padding:22px 18px 18px;position:relative;min-height:calc(100vh - 40px)}
+@media (min-width:600px){.tg .sheet{padding:28px 28px 24px;margin-top:10px}}
+.tg .label{color:var(--label);font-weight:600;font-size:14px;letter-spacing:.01em;margin:0 0 2px}
+.tg .title{color:var(--plum);font-weight:700;font-size:clamp(40px,12.5vw,60px);line-height:.98;letter-spacing:-.025em;margin:0}
+.tg .title.sm{font-size:clamp(30px,9vw,42px)}
+.tg .tagline{font-weight:600;color:var(--ink);margin:8px 0 0;font-size:15px}
+.tg .head{display:flex;gap:12px;align-items:flex-start;justify-content:space-between}
+.tg .head .art{flex:0 0 auto;width:112px;margin-top:-2px}
+.tg .head .art svg{width:100%;height:auto;display:block}
+.tg .info{display:grid;grid-template-columns:repeat(3,1fr);border-top:2px solid var(--plum);border-bottom:2px solid var(--plum);margin:14px 0 18px;padding:9px 0}
+.tg .info>div{display:flex;gap:7px;align-items:flex-start;padding:0 8px;border-left:2px dashed #b9a2b8;min-width:0}
+.tg .info>div:first-child{border-left:0;padding-left:2px}
+.tg .info svg{flex:0 0 22px;width:22px;height:22px;margin-top:1px}
+.tg .info b{display:block;color:var(--plum);font-weight:700;font-size:13.5px;line-height:1.15}
+.tg .info span{display:block;color:var(--muted);font-size:11.5px;line-height:1.2;margin-top:1px}
+.tg .sec{display:flex;align-items:center;gap:9px;margin:20px 0 10px;color:var(--plum);font-weight:700;font-size:21px;letter-spacing:-.01em}
+.tg .sec .n{flex:0 0 28px;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:15px;font-weight:700;background:var(--orange)}
+.tg .sec .n.p{background:var(--plum)}
+.tg .sec .right{margin-left:auto;font-size:13px;font-weight:600}
+.tg .panel{background:var(--sand);border-radius:18px;padding:14px}
+.tg .panel.lite{background:var(--sand2)}
+.tg .panel h3{margin:0 0 8px;color:var(--plum);font-size:15px}
+.tg .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:2px solid var(--plum);background:#fff;color:var(--plum);
+  border-radius:999px;padding:11px 18px;font-weight:700;font-size:15px;min-height:46px;transition:transform .08s,background .15s;text-decoration:none}
+.tg .btn:active{transform:scale(.97)}
+.tg .btn.primary{background:var(--plum);color:#fff}
+.tg .btn.orange{background:var(--orange);border-color:var(--orange);color:#fff}
+.tg .btn.small{padding:6px 12px;min-height:34px;font-size:13px}
+.tg .btn.ghost{border-color:transparent;background:transparent}
+.tg .btn[disabled]{pointer-events:none;background:transparent;color:rgba(78,31,77,.42);border-color:rgba(78,31,77,.28);border-style:dashed}
+.tg .btn.wide{width:100%}
+.tg .btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.tg .btns>.btn{flex:1 1 0;min-width:120px}
+.tg .btn>svg{width:19px;height:19px;flex:0 0 auto}
+.tg .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tg .tile{display:flex;flex-direction:column;align-items:flex-start;text-align:left;background:#fff;border:2px solid var(--plum);border-radius:16px;padding:12px;min-height:150px;position:relative;transition:transform .1s,box-shadow .15s}
+.tg .tile:active{transform:scale(.98)}
+.tg .tile:hover{box-shadow:4px 4px 0 var(--sand)}
+.tg .tile .ic{height:46px;margin-bottom:8px}
+.tg .tile .ic svg{height:46px;width:auto}
+.tg .tile b{color:var(--plum);font-size:17px;line-height:1.1;font-weight:700}
+.tg .tile small{color:var(--ink);font-size:12.5px;margin-top:4px;line-height:1.25}
+.tg .tile .pp{margin-top:auto;padding-top:8px;color:var(--muted);font-size:11.5px}
+.tg .tile .resume{position:absolute;top:-9px;right:8px;background:var(--orange);color:#fff;font-size:10.5px;font-weight:700;border-radius:999px;padding:2px 8px}
+.tg .banner{background:var(--plum);color:#fff;border-radius:16px;padding:16px 18px;margin-top:20px;display:flex;align-items:center;gap:12px}
+.tg .banner .t{font-weight:700;font-size:22px;line-height:1.15}
+.tg .banner .t em{font-style:normal;color:var(--gold)}
+.tg .banner .s{color:#f6c98a;font-size:13px;margin-top:4px}
+.tg .banner .ic{margin-left:auto;flex:0 0 46px}
+.tg .banner .ic svg{width:46px;height:auto}
+.tg .modes{display:grid;gap:8px}
+.tg .mode{display:flex;gap:12px;align-items:center;text-align:left;border:2px solid var(--plum);background:#fff;border-radius:16px;padding:10px 12px}
+.tg .mode .mi{flex:0 0 40px;width:40px;height:40px;border-radius:12px;background:var(--sand2);display:grid;place-items:center}
+.tg .mode .mi svg{width:26px;height:26px}
+.tg .mode b{display:block;color:var(--plum);font-size:15.5px}
+.tg .mode span{display:block;font-size:12.5px;color:var(--ink);line-height:1.25}
+.tg .mode.on{background:var(--sand);box-shadow:0 0 0 3px var(--orange)}
+.tg .mode.on .mi{background:#fff}
+.tg .prow{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.tg .prow .dot{flex:0 0 14px;width:14px;height:14px;border-radius:50%;border:2px solid var(--plum)}
+.tg .prow input{flex:1 1 120px;min-width:0;border:2px solid var(--plum);border-radius:12px;padding:10px 12px;font:inherit;font-weight:600;color:var(--plum);background:#fff}
+.tg .prow input:focus{outline:3px solid var(--sand)}
+.tg .seg{display:inline-flex;border:2px solid var(--plum);border-radius:999px;overflow:hidden;flex:0 0 auto}
+.tg .seg button{border:0;background:#fff;color:var(--plum);padding:8px 10px;font-weight:600;font-size:12.5px}
+.tg .seg button.on{background:var(--plum);color:#fff}
+.tg .seg button+button{border-left:2px solid var(--plum)}
+.tg .x{border:0;background:transparent;color:var(--muted);font-size:22px;width:34px;height:34px;border-radius:50%;flex:0 0 34px}
+.tg .opt{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;flex-wrap:wrap}
+.tg .opt+.opt{border-top:2px dashed rgba(78,31,77,.25)}
+.tg .opt .l b{display:block;color:var(--plum)}
+.tg .opt .l span{font-size:12.5px;color:var(--ink)}
+.tg .note{font-size:13px;color:var(--muted);margin:6px 0 0}
+.tg .sheet.play{padding:10px 10px 10px;min-height:0;height:calc(100vh - 34px);height:calc(100dvh - max(10px,env(safe-area-inset-top)) - max(16px,env(safe-area-inset-bottom)) - 8px);display:flex;flex-direction:column}
+.tg .bar{display:flex;align-items:center;gap:6px;margin:0 0 6px}
+.tg .bar .nm{font-weight:700;color:var(--plum);font-size:16.5px;flex:1;text-align:center;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tg .iconbtn{border:2px solid var(--plum);background:#fff;color:var(--plum);border-radius:999px;height:36px;min-width:36px;padding:0 10px;font-weight:700;font-size:12.5px;display:inline-flex;align-items:center;justify-content:center;gap:4px}
+.tg .iconbtn svg{width:17px;height:17px}
+.tg .chips{display:flex;gap:6px;overflow-x:auto;padding:9px 2px 6px;margin:0 -2px;scrollbar-width:none;flex:0 0 auto}
+.tg .chips::-webkit-scrollbar{display:none}
+.tg .chip{flex:1 0 auto;border:2px solid var(--plum);border-radius:14px;padding:5px 10px;min-width:78px;background:#fff;position:relative}
+.tg .chip .who{font-size:12px;font-weight:600;color:var(--plum);display:flex;align-items:center;gap:5px;white-space:nowrap}
+.tg .chip .who i{width:10px;height:10px;border-radius:50%;flex:0 0 10px;border:1.5px solid var(--plum)}
+.tg .chip .v{font-size:20px;font-weight:700;color:var(--plum);line-height:1.1}
+.tg .chip .v small{font-size:11px;font-weight:500;color:var(--muted)}
+.tg .chip .sub{font-size:11px;color:var(--muted);white-space:nowrap}
+.tg .chip.on{background:var(--sand);box-shadow:0 0 0 3px var(--orange)}
+.tg .chip .tag{position:absolute;top:-9px;right:6px;background:var(--orange);color:#fff;font-size:10px;font-weight:700;border-radius:999px;padding:1px 6px}
+.tg .chip .tag.p{background:var(--plum)}
+.tg .stage{position:relative;flex:1 1 auto;min-height:240px;border-radius:16px;overflow:hidden;background:var(--plum-soft);touch-action:none;user-select:none;-webkit-user-select:none}
+.tg .stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.tg .stage .tip{position:absolute;left:50%;transform:translateX(-50%);bottom:10px;background:rgba(78,31,77,.88);color:#fff;font-size:12.5px;font-weight:600;border-radius:999px;padding:5px 12px;white-space:nowrap;pointer-events:none;transition:opacity .3s}
+.tg .stage .tip.hide{opacity:0}
+.tg .stage .flash{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%) scale(.9);background:var(--plum);color:#fff;border-radius:16px;padding:10px 16px;font-weight:700;font-size:20px;text-align:center;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;box-shadow:0 6px 0 rgba(78,31,77,.25);max-width:86%}
+.tg .stage .flash small{display:block;font-size:12.5px;font-weight:500;color:var(--sand);margin-top:2px}
+.tg .stage .flash.or{background:var(--orange)}
+.tg .stage .flash.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.tg .stage .side{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.tg .stage .pill{background:#fff;border:2px solid var(--plum);color:var(--plum);border-radius:999px;font-size:12px;font-weight:700;padding:3px 10px}
+.tg .ctrl{flex:0 0 auto;padding-top:8px}
+.tg .status{font-weight:700;color:var(--plum);font-size:16px;line-height:1.2;text-align:center}
+.tg .status small{display:block;font-weight:500;font-size:12.5px;color:var(--ink);margin-top:2px}
+.tg .tools{display:flex;gap:8px;justify-content:center;margin-top:8px;flex-wrap:wrap}
+.tg .tools:empty{display:none}
+.tg .sweep{border:2px solid var(--orange);background:#fff;color:var(--orange);border-radius:999px;font-weight:700;padding:10px 22px;min-height:46px;touch-action:none;user-select:none;-webkit-user-select:none}
+.tg .sweep.on{background:var(--orange);color:#fff}
+.tg .sweep[disabled]{opacity:.35}
+.tg .entry{flex:1 1 auto;overflow:auto;padding:2px 2px 4px}
+.tg .stepper{display:flex;align-items:center;gap:10px;padding:8px 0}
+.tg .stepper+.stepper{border-top:2px dashed rgba(78,31,77,.22)}
+.tg .stepper .l{flex:1;min-width:0}
+.tg .stepper .l b{display:block;color:var(--plum);font-size:15px}
+.tg .stepper .l span{display:block;font-size:12px;color:var(--muted)}
+.tg .stepper .ctl{display:flex;align-items:center;gap:6px}
+.tg .stepper .ctl button{width:44px;height:44px;border-radius:50%;border:2px solid var(--plum);background:#fff;color:var(--plum);font-size:22px;font-weight:700;line-height:1}
+.tg .stepper .ctl button.plus{background:var(--plum);color:#fff}
+.tg .stepper .ctl button[disabled]{opacity:.3}
+.tg .stepper .ctl output{min-width:34px;text-align:center;font-size:24px;font-weight:700;color:var(--plum)}
+.tg .big{font-size:44px;font-weight:700;color:var(--plum);line-height:1;text-align:center}
+.tg .big small{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-top:4px}
+.tg .choice{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}
+.tg .choice .btn{min-height:54px;flex-direction:column;gap:0;line-height:1.1;border-radius:16px}
+.tg .choice .btn small{font-weight:500;font-size:11.5px}
+.tg .choice .btn.on{background:var(--plum);color:#fff}
+.tg .puckrow{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;min-height:38px;margin:8px 0}
+.tg .pk{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#fff;border:2px solid var(--plum);background:var(--orange)}
+.tg .pk.p{background:var(--plum2)}
+.tg .pk.e{background:transparent;border-style:dashed;color:var(--muted)}
+.tg .swap{font-size:12.5px;text-align:center;margin-top:10px}
+.tg .swap button{border:0;background:none;color:var(--label);font-weight:700;text-decoration:underline;padding:4px}
+.tg .chalk{display:grid;grid-template-columns:1fr 46px 1fr;gap:0;background:#3c2a3b;border-radius:14px;padding:6px;border:3px solid #6b4a2f}
+.tg .chalk .hd{color:#fff;font-weight:700;font-size:12.5px;text-align:center;padding:4px 2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tg .chalk .hd.on{color:var(--gold)}
+.tg .chalk .bed{height:38px;border-top:1.5px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;gap:5px;background:transparent;border-left:0;border-right:0;border-bottom:0;padding:0}
+.tg .chalk .bed.num{color:var(--sand);font-weight:700;font-size:15px}
+.tg .chalk .bed.tap{cursor:pointer}
+.tg .chalk .bed.tap:active{background:rgba(255,255,255,.12)}
+.tg .chalk .bed.full{background:rgba(242,169,31,.18)}
+.tg .chalk .m{width:4px;height:22px;background:#fff;border-radius:2px;transform:rotate(8deg);opacity:.92}
+.tg .chalk .m.new{background:var(--gold)}
+.tg .chalk .sl{color:rgba(255,255,255,.5);font-size:11px}
+.tg .tbl{border:2px solid var(--plum);border-radius:12px;overflow:hidden;background:#fff}
+.tg .tbl .th{background:var(--plum);color:#fff;font-size:12px;font-weight:600;display:flex;justify-content:space-between;padding:7px 12px}
+.tg .tbl .tr{display:flex;align-items:center;gap:10px;padding:8px 12px;border-top:1.5px solid var(--line)}
+.tg .tbl .tr:first-of-type{border-top:0}
+.tg .tbl .tr.hi{background:var(--sand)}
+.tg .tbl .tr .tx{flex:1;min-width:0}
+.tg .tbl .tr .tx b{display:block;color:var(--plum);font-size:14.5px;line-height:1.2}
+.tg .tbl .tr .tx span{display:block;font-size:12px;color:var(--muted);line-height:1.25}
+.tg .tbl .tr .v{font-weight:700;color:var(--plum);font-size:20px;text-align:right;white-space:nowrap}
+.tg .tbl .tr .v small{font-size:11px;font-weight:600}
+.tg .grid{width:100%;border-collapse:separate;border-spacing:0;border:2px solid var(--plum);border-radius:12px;overflow:hidden;font-size:13px;text-align:center}
+.tg .grid th{background:var(--plum);color:#fff;font-weight:600;padding:6px 4px;font-size:11.5px}
+.tg .grid td{padding:7px 4px;border-top:1.5px solid var(--line);color:var(--plum);font-weight:600}
+.tg .grid td.nm{text-align:left;padding-left:10px;white-space:nowrap;max-width:110px;overflow:hidden;text-overflow:ellipsis}
+.tg .grid td.tot{background:var(--sand);font-weight:700;font-size:15px}
+.tg .grid td.hm{color:var(--orange)}
+.tg .grid td.dim{color:#c9b5c8}
+.tg .wrapx{overflow-x:auto;margin:0 -2px;padding:0 2px}
+.tg .steps{list-style:none;margin:0;padding:0}
+.tg .steps li{display:flex;gap:10px;margin-bottom:11px;font-size:14.5px}
+.tg .steps li .L{flex:0 0 26px;width:26px;height:26px;border:2px solid var(--plum);border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--plum);margin-top:-1px}
+.tg .steps li b{color:var(--plum)}
+.tg .scorecards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tg .sc{background:var(--sand);border-radius:14px;padding:10px 6px;text-align:center}
+.tg .sc .v{font-size:28px;font-weight:700;color:var(--plum);line-height:1}
+.tg .sc .v small{font-size:12px}
+.tg .sc b{display:block;color:var(--plum);font-size:13px;margin-top:4px;line-height:1.15}
+.tg .sc span{display:block;font-size:11.5px;color:var(--muted);line-height:1.2;margin-top:2px}
+.tg .ex{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;background:var(--sand2);border-radius:12px;padding:8px 12px;font-size:13px}
+.tg .ex b{color:var(--plum);font-size:16px;white-space:nowrap}
+.tg .goods{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.tg .good{border:2px solid var(--plum);border-radius:14px;padding:10px;font-size:12.5px;line-height:1.3}
+.tg .good b{display:block;color:var(--orange);font-size:15px;margin-bottom:2px}
+.tg .good.k{background:var(--plum);color:#fff}
+.tg .good.k b{color:var(--gold)}
+@media (max-width:420px){.tg .goods{grid-template-columns:1fr}}
+.tg .log{margin-top:12px;font-size:13px;color:var(--ink);border-top:2px dashed rgba(78,31,77,.25);padding-top:8px}
+.tg .log div{padding:2px 0}
+.tg .ov{position:fixed;inset:0;background:rgba(46,16,45,.55);z-index:50;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:16px 8px;animation:tgfade .2s}
+.tg .ov .sheet{min-height:0;width:100%;animation:tgpop .22s cubic-bezier(.2,.8,.3,1)}
+.tg .ov .close{position:absolute;top:10px;right:10px}
+@keyframes tgfade{from{opacity:0}}
+@keyframes tgpop{from{transform:translateY(16px) scale(.98);opacity:0}}
+.tg .toast{position:fixed;left:50%;top:max(64px,calc(env(safe-area-inset-top) + 56px));transform:translateX(-50%) translateY(-12px);background:var(--plum);color:#fff;border-radius:999px;padding:9px 16px;font-weight:600;font-size:13.5px;z-index:80;opacity:0;transition:opacity .25s,transform .25s;max-width:92vw;text-align:center;pointer-events:none}
+.tg .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.tg .win{text-align:center;padding:6px 0 0}
+.tg .win .crown{width:70px;margin:0 auto 6px}
+.tg .win h2{color:var(--plum);font-size:30px;margin:0;line-height:1.05;letter-spacing:-.02em}
+.tg .win p{margin:6px 0 0}
+.tg .where{display:grid;gap:10px;margin-top:10px}
+.tg .foot{font-size:11.5px;color:var(--muted);text-align:center;margin-top:16px}
+.tg .grid i.d{display:inline-block;width:9px;height:9px;border-radius:50%;border:1.5px solid var(--plum);vertical-align:middle;margin-right:2px}
+.tg .chip .who i{display:inline-block}
+.tg .mode{width:100%;font:inherit}
+.tg .tools .seg button[disabled]{opacity:.45}
+.tg .ov .sheet{padding-top:58px}
+.tg .bar .nm{font-size:15.5px}
+.tile .tgresume{position:absolute;top:-9px;right:8px;background:var(--orange);color:#fff;font-size:10.5px;font-weight:700;border-radius:999px;padding:2px 8px}
+
 </style>
 </head>
 <body>
 <main id="app"></main>
+<script>
+/* ===== Table games (Toad, Sjoelbak, Shuffleboard, Bank Shot, Curling, Shove Ha'penny) ===== */
+(function () {
+'use strict';
+
+/* ---------- small helpers ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+const lerp = (a, b, t) => a + (b - a) * t;
+const ease = t => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const DEG = Math.PI / 180;
+function gauss() { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+function plural(n, one, many) { return n + ' ' + (n === 1 ? one : (many || one + 's')); }
+function listAnd(a) { return a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; }
+const QS = new URLSearchParams(location.search);
+let SPEED = +(QS.get('speed') || 1);
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('ptg.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('ptg.' + k, JSON.stringify(v)); } catch (e) { } },
+  del(k) { try { localStorage.removeItem('ptg.' + k); } catch (e) { } }
+};
+
+/* ---------- sound (tiny synth, starts on first touch) ---------- */
+const Sound = {
+  ctx: null, on: store.get('sound', true), last: 0, noise: null,
+  init() {
+    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => { }); return; }
+    try {
+      const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+      this.ctx = new C();
+      const n = this.ctx.createBuffer(1, this.ctx.sampleRate * 0.2, this.ctx.sampleRate), d = n.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3);
+      this.noise = n;
+    } catch (e) { this.ctx = null; }
+  },
+  toggle() { this.on = !this.on; store.set('sound', this.on); },
+  _env(node, t, a, len) { const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(a, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + len); node.connect(g); g.connect(this.ctx.destination); return g; },
+  clack(v, tone = 2400) {
+    if (!this.on || !this.ctx || v < 40) return; const t = this.ctx.currentTime; if (t - this.last < 0.035) return; this.last = t;
+    const s = this.ctx.createBufferSource(); s.buffer = this.noise;
+    const f = this.ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = tone; f.Q.value = 4;
+    s.connect(f); this._env(f, t, clamp(v / 1400, 0.04, 0.7), 0.07); s.start(t); s.stop(t + 0.1);
+  },
+  thud(a = 0.4) {
+    if (!this.on || !this.ctx) return; const t = this.ctx.currentTime, o = this.ctx.createOscillator();
+    o.frequency.setValueAtTime(170, t); o.frequency.exponentialRampToValueAtTime(60, t + 0.12); this._env(o, t, a, 0.16); o.start(t); o.stop(t + 0.2);
+  },
+  chime(up = true) {
+    if (!this.on || !this.ctx) return; const t = this.ctx.currentTime;
+    (up ? [660, 990] : [440, 330]).forEach((fq, i) => { const o = this.ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = fq; this._env(o, t + i * 0.09, 0.18, 0.3); o.start(t + i * 0.09); o.stop(t + i * 0.09 + 0.35); });
+  },
+  slide() {
+    if (!this.on || !this.ctx) return; const t = this.ctx.currentTime, s = this.ctx.createBufferSource(); s.buffer = this.noise;
+    const f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 900; s.connect(f); this._env(f, t, 0.05, 0.18); s.start(t); s.stop(t + 0.2);
+  }
+};
+
+/* ---------- colours used on the tables ---------- */
+const COL = {
+  plum: '#4e1f4d', plum2: '#6a3468', soft: '#efe3ef', sand: '#f8dca8', sand2: '#fbeacb', orange: '#dd7f27', gold: '#f2a91f', ink: '#3b3b3b',
+  side: [{ top: '#e88a33', edge: '#b0601b', name: 'Orange' }, { top: '#7a3f78', edge: '#3d163c', name: 'Plum' }]
+};
+
+/* ---------- icons ---------- */
+const S = 'stroke="#4e1f4d" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"';
+const ICON = {
+  toad: `<svg viewBox="0 0 64 48"><path d="M14 14h36v14H14z" fill="#6a3468" ${S}/><path d="M9 28h46l5 9H4z" fill="#b9b2c6" ${S}/><ellipse cx="32" cy="32.5" rx="6" ry="2.6" fill="#2b1029"/><path d="M8 37h48v6H8z" fill="#4e1f4d" ${S}/><ellipse cx="46" cy="8" rx="7" ry="3.2" fill="#e8e6ee" ${S}/><path d="M38 12c-4 4-6 9-6 14" fill="none" stroke="#dd7f27" stroke-width="2" stroke-dasharray="2 3"/></svg>`,
+  sjoel: `<svg viewBox="0 0 64 48"><path d="M21 4h22l13 41H8z" fill="#f8dca8" ${S}/><path d="M21 4h22v6H21z" fill="#4e1f4d" ${S}/><path d="M23.5 10v-3.5h3.5V10M29 10V6.5h3V10M34 10V6.5h3V10M39.5 10V6.5H41" fill="#2b1029"/><ellipse cx="27" cy="30" rx="5" ry="2.4" fill="#e9b872" ${S}/><ellipse cx="38" cy="22" rx="4.2" ry="2" fill="#e9b872" ${S}/><ellipse cx="33" cy="40" rx="6" ry="2.8" fill="#e9b872" ${S}/></svg>`,
+  shuffle: `<svg viewBox="0 0 64 48"><path d="M26 3h12l9 42H17z" fill="#f8dca8" ${S}/><path d="M26.5 6h11M25.5 11h13M23 22h18" fill="none" stroke="#4e1f4d" stroke-width="2"/><path d="M27 3h10l-.5 3h-9z" fill="#dd7f27" opacity=".55"/><ellipse cx="32" cy="8.6" rx="3.4" ry="1.6" fill="#7a3f78" ${S}/><ellipse cx="34" cy="38" rx="6" ry="2.8" fill="#e88a33" ${S}/></svg>`,
+  bank: `<svg viewBox="0 0 64 48"><path d="M8 45V16a12 12 0 0 1 12-12h24a12 12 0 0 1 12 12v29z" fill="#f8dca8" ${S}/><path d="M32 45V22" ${S} fill="none"/><path d="M36 37h17M36 31h17" stroke="#4e1f4d" stroke-width="1.6" fill="none"/><path d="M20 40V14q0-5 6-5h8q8 0 9 9v20" fill="none" stroke="#dd7f27" stroke-width="2.2" stroke-dasharray="3 3"/><ellipse cx="44" cy="40" rx="4.6" ry="2.2" fill="#e88a33" ${S}/></svg>`,
+  curling: `<svg viewBox="0 0 64 48"><ellipse cx="32" cy="40" rx="24" ry="6" fill="#efe3ef"/><path d="M12 30c0-9 9-13 20-13s20 4 20 13v4c0 5-9 8-20 8s-20-3-20-8z" fill="#b9b2c6" ${S}/><path d="M12 31c4 4 12 5 20 5s16-1 20-5" fill="none" ${S}/><path d="M24 18v-6h18a4 4 0 0 1 0 8" fill="none" stroke="#dd7f27" stroke-width="4.5" stroke-linecap="round"/></svg>`,
+  shove: `<svg viewBox="0 0 64 48"><path d="M10 6h44v38H10z" fill="#f8dca8" ${S}/><path d="M17 6v38M47 6v38" stroke="#4e1f4d" stroke-width="1.6"/><path d="M10 14h44M10 19h44M10 24h44M10 29h44M10 34h44" stroke="#4e1f4d" stroke-width="1.3"/><circle cx="29" cy="21.5" r="3.6" fill="#c8803e" ${S}/><circle cx="38" cy="40" r="4" fill="#c8803e" ${S}/><path d="M12.5 15.5v2M14 15.5v2" stroke="#fff" stroke-width="1.3"/></svg>`,
+  people: `<svg viewBox="0 0 24 24" fill="none" ${S}><circle cx="9" cy="8" r="3.4"/><path d="M3 20c.6-3.6 3-5.6 6-5.6s5.4 2 6 5.6"/><circle cx="17" cy="9" r="2.6"/><path d="M16 14.6c2.6.1 4.4 1.8 5 4.6"/></svg>`,
+  disc: `<svg viewBox="0 0 24 24" fill="none" ${S}><ellipse cx="12" cy="10" rx="8" ry="3.6" fill="#f8dca8"/><path d="M4 10v4c0 2 3.6 3.6 8 3.6s8-1.6 8-3.6v-4"/></svg>`,
+  board: `<svg viewBox="0 0 24 24" fill="none" ${S}><path d="M8 3h8l4 18H4z" fill="#f8dca8"/><path d="M9 8h6M7.5 13h9"/></svg>`,
+  target: `<svg viewBox="0 0 24 24" fill="none" ${S}><circle cx="12" cy="12" r="8.5" fill="#f8dca8"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.6" fill="#dd7f27"/></svg>`,
+  coin: `<svg viewBox="0 0 24 24" fill="none" ${S}><circle cx="12" cy="12" r="8" fill="#f2c27b"/><circle cx="12" cy="12" r="5"/></svg>`,
+  phone: `<svg viewBox="0 0 24 24" fill="none" ${S}><rect x="6.5" y="2.5" width="11" height="19" rx="2.5" fill="#fff"/><path d="M10.5 18.5h3"/><path d="M9 13l3-6 3 6" stroke="#dd7f27"/></svg>`,
+  pencil: `<svg viewBox="0 0 24 24" fill="none" ${S}><rect x="4" y="3" width="13" height="18" rx="2" fill="#fff"/><path d="M7.5 8h6M7.5 12h6M7.5 16h3"/><path d="M20 7l-6.5 9.5-2.5 1 .4-2.6L18 5.4z" fill="#f8dca8"/></svg>`,
+  mix: `<svg viewBox="0 0 24 24" fill="none" ${S}><rect x="2.5" y="6" width="7" height="13" rx="1.6" fill="#fff"/><rect x="13" y="4" width="8.5" height="16" rx="1.6" fill="#f8dca8"/><path d="M9.5 10.5h3.5M13 14H9.5" stroke="#dd7f27"/></svg>`,
+  back: `<svg viewBox="0 0 24 24" fill="none" ${S}><path d="M15 5l-7 7 7 7"/></svg>`,
+  close: `<svg viewBox="0 0 24 24" fill="none" ${S}><path d="M6 6l12 12M18 6L6 18"/></svg>`,
+  list: `<svg viewBox="0 0 24 24" fill="none" ${S}><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg>`,
+  book: `<svg viewBox="0 0 24 24" fill="none" ${S}><path d="M4 5.5C6.5 4 9.5 4 12 5.8 14.5 4 17.5 4 20 5.5V19c-2.5-1.5-5.5-1.5-8 .3-2.5-1.8-5.5-1.8-8-.3z"/><path d="M12 5.8v13.5"/></svg>`,
+  undo: `<svg viewBox="0 0 24 24" fill="none" ${S}><path d="M8 7L4 11l4 4"/><path d="M4 11h10a6 6 0 0 1 0 12h-3"/></svg>`,
+  sound: `<svg viewBox="0 0 24 24" fill="none" ${S}><path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>`,
+  mute: `<svg viewBox="0 0 24 24" fill="none" ${S}><path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>`,
+  crown: `<svg viewBox="0 0 64 48"><path d="M8 38L4 12l15 12L32 6l13 18 15-12-4 26z" fill="#f2a91f" ${S}/><path d="M8 38h48v6H8z" fill="#dd7f27" ${S}/><circle cx="32" cy="26" r="3.4" fill="#fff" ${S}/></svg>`,
+  cpu: `<svg viewBox="0 0 24 24" fill="none" ${S}><rect x="5" y="7" width="14" height="11" rx="3"/><path d="M12 3.5V7M9.5 12h.01M14.5 12h.01M9.5 15h5"/></svg>`
+};
+
+/* =========================================================
+   Engine: disc physics, perspective camera, table base class
+   Units are millimetres and seconds. y runs away from the player.
+   ========================================================= */
+function wallSeg(x1, y1, x2, y2, e, tf) {
+  const dx = x2 - x1, dy = y2 - y1;
+  return { x1, y1, x2, y2, dx, dy, l2: dx * dx + dy * dy || 1e-9, e, tf, minx: Math.min(x1, x2), maxx: Math.max(x1, x2), miny: Math.min(y1, y2), maxy: Math.max(y1, y2) };
+}
+function boxWalls(x1, y1, x2, y2, e, tf) { return [wallSeg(x1, y1, x2, y1, e, tf), wallSeg(x2, y1, x2, y2, e, tf), wallSeg(x2, y2, x1, y2, e, tf), wallSeg(x1, y2, x1, y1, e, tf)]; }
+function arcWalls(cx, cy, r, a0, a1, n, e, tf) {
+  const out = []; for (let i = 0; i < n; i++) {
+    const t0 = a0 + (a1 - a0) * i / n, t1 = a0 + (a1 - a0) * (i + 1) / n;
+    out.push(wallSeg(cx + r * Math.cos(t0), cy + r * Math.sin(t0), cx + r * Math.cos(t1), cy + r * Math.sin(t1), e, tf));
+  } return out;
+}
+
+class World {
+  constructor(o = {}) {
+    this.decel = o.decel || 500; this.e = o.e == null ? 0.85 : o.e; this.wallE = o.wallE == null ? 0.6 : o.wallE;
+    this.walls = o.walls || []; this.curlK = o.curlK || 0; this.bodies = []; this.hook = null; this.onHit = null;
+    this.t = 0; this.sim = false; this.data = o.data || {};
+  }
+  clone() {
+    const w = Object.create(World.prototype); Object.assign(w, this);
+    w.bodies = this.bodies.map(b => Object.assign({}, b)); w.data = JSON.parse(JSON.stringify(this.data));
+    w.onHit = null; w.sim = true; w.t = 0; return w;
+  }
+  add(b) { b.vx = b.vx || 0; b.vy = b.vy || 0; b.m = b.m || 1; b.id = World.nid++; this.bodies.push(b); return b; }
+  live() { return this.bodies.filter(b => !b.out); }
+  moving() { for (const b of this.bodies) if (!b.out && (b.vx !== 0 || b.vy !== 0)) return true; return false; }
+  step(dt) {
+    const B = this.bodies; let vmax = 0, rmin = 1e9;
+    for (const b of B) { if (b.out) continue; if (b.r < rmin) rmin = b.r; const s = Math.abs(b.vx) + Math.abs(b.vy); if (s > vmax) vmax = s; }
+    this.t += dt; if (vmax === 0) return;
+    const n = Math.min(80, Math.max(1, Math.ceil(vmax * dt / (rmin * 0.3)))), h = dt / n, ck = this.curlK;
+    for (let k = 0; k < n; k++) {
+      for (const b of B) {
+        if (b.out) continue; let vx = b.vx, vy = b.vy; if (vx === 0 && vy === 0) continue;
+        const sp = Math.sqrt(vx * vx + vy * vy);
+        if (b.spin && ck) { // curl: turn the velocity a little to the side, keep the speed
+          const c = ck * b.spin * (b.curlM == null ? 1 : b.curlM) / (sp / 1000 + 0.25) * h;
+          const nx = vx + vy / sp * c, ny = vy - vx / sp * c, l = Math.sqrt(nx * nx + ny * ny) || 1; vx = nx / l * sp; vy = ny / l * sp;
+        }
+        const dec = this.decel * (b.fr == null ? 1 : b.fr) * h;
+        if (sp <= dec || sp < 0.8) { const d = dec > 0 ? sp * h / 2 * (sp / dec) : 0; b.x += vx / sp * d; b.y += vy / sp * d; b.vx = 0; b.vy = 0; continue; }
+        const f = (sp - dec) / sp, nx = vx * f, ny = vy * f; b.x += (vx + nx) * 0.5 * h; b.y += (vy + ny) * 0.5 * h; b.vx = nx; b.vy = ny;
+      }
+      for (let i = 0; i < B.length; i++) {
+        const a = B[i]; if (a.out || a.ghost) continue;
+        for (let j = i + 1; j < B.length; j++) {
+          const c = B[j]; if (c.out || c.ghost) continue;
+          const dx = c.x - a.x, dy = c.y - a.y, rr = a.r + c.r; if (dx > rr || dx < -rr || dy > rr || dy < -rr) continue;
+          const d2 = dx * dx + dy * dy; if (d2 >= rr * rr || d2 === 0) continue;
+          const d = Math.sqrt(d2), nx = dx / d, ny = dy / d, ov = rr - d, ia = 1 / a.m, ic = 1 / c.m, im = ia + ic;
+          a.x -= nx * ov * ia / im; a.y -= ny * ov * ia / im; c.x += nx * ov * ic / im; c.y += ny * ov * ic / im;
+          const vn = (a.vx - c.vx) * nx + (a.vy - c.vy) * ny;
+          if (vn > 0) {
+            const J = (1 + this.e) * vn / im; a.vx -= J * ia * nx; a.vy -= J * ia * ny; c.vx += J * ic * nx; c.vy += J * ic * ny;
+            a.touched = c.touched = true; if (this.onHit) this.onHit(vn, a, c);
+          }
+        }
+      }
+      for (const w of this.walls) {
+        for (const b of B) {
+          if (b.out || b.ghost) continue; const r = b.r;
+          if (b.x + r < w.minx || b.x - r > w.maxx || b.y + r < w.miny || b.y - r > w.maxy) continue;
+          let t = ((b.x - w.x1) * w.dx + (b.y - w.y1) * w.dy) / w.l2; t = t < 0 ? 0 : t > 1 ? 1 : t;
+          const px = w.x1 + t * w.dx, py = w.y1 + t * w.dy, dx = b.x - px, dy = b.y - py, d2 = dx * dx + dy * dy;
+          if (d2 >= r * r) continue;
+          let d = Math.sqrt(d2), nx, ny;
+          if (d < 1e-6) { const l = Math.sqrt(w.l2); nx = -w.dy / l; ny = w.dx / l; d = 0; } else { nx = dx / d; ny = dy / d; }
+          b.x = px + nx * r; b.y = py + ny * r;
+          const vn = b.vx * nx + b.vy * ny;
+          if (vn < 0) {
+            const e = w.e == null ? this.wallE : w.e; b.vx -= (1 + e) * vn * nx; b.vy -= (1 + e) * vn * ny;
+            const tf = w.tf == null ? 0.96 : w.tf, tx = -ny, ty = nx, vt = b.vx * tx + b.vy * ty;
+            b.vx -= vt * (1 - tf) * tx; b.vy -= vt * (1 - tf) * ty; b.cushion = (b.cushion || 0) + 1;
+            if (this.onHit) this.onHit(-vn * 0.6, b, null);
+          }
+        }
+      }
+      if (this.hook) for (const b of B) if (!b.out) this.hook(this, b);
+    }
+  }
+}
+World.nid = 1;
+function simulate(w, maxT = 16) { const dt = 1 / 60; let t = 0; while (t < maxT && w.moving()) { w.step(dt); t += dt; } return w; }
+
+/* ---------- perspective camera ---------- */
+class Cam {
+  constructor() { this.E = [0, -1000, 1000]; this.T = [0, 1000, 0]; this.F = 500; this.ox = 0; this.oy = 0; this.basis(); }
+  set(p) { this.E = p.E.slice(); this.T = p.T.slice(); this.F = p.F; this.ox = p.ox; this.oy = p.oy; this.basis(); return this; }
+  snap() { return { E: this.E.slice(), T: this.T.slice(), F: this.F, ox: this.ox, oy: this.oy }; }
+  basis() {
+    const E = this.E, T = this.T; let f = [T[0] - E[0], T[1] - E[1], T[2] - E[2]]; const fl = Math.hypot(f[0], f[1], f[2]); f = f.map(v => v / fl);
+    let r = [f[1], -f[0], 0]; const rl = Math.hypot(r[0], r[1]) || 1; r = [r[0] / rl, r[1] / rl, 0];
+    const u = [r[1] * f[2], -r[0] * f[2], r[0] * f[1] - r[1] * f[0]]; this.f = f; this.r = r; this.u = u;
+  }
+  p(x, y, z = 0) {
+    const dx = x - this.E[0], dy = y - this.E[1], dz = z - this.E[2], f = this.f, r = this.r, u = this.u;
+    let zc = dx * f[0] + dy * f[1] + dz * f[2]; if (zc < 1) zc = 1; const s = this.F / zc;
+    return [this.ox + (dx * r[0] + dy * r[1] + dz * r[2]) * s, this.oy - (dx * u[0] + dy * u[1] + dz * u[2]) * s, s];
+  }
+}
+function fitCam(E, T, pts, rect, align) {
+  const c = new Cam(); c.E = E; c.T = T; c.basis(); c.F = 1; c.ox = 0; c.oy = 0;
+  let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+  for (const p of pts) { const q = c.p(p[0], p[1], p[2] || 0); x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); }
+  const F = Math.min(rect.w / (x1 - x0), rect.h / (y1 - y0));
+  const ox = rect.x + (rect.w - (x1 - x0) * F) / 2 - x0 * F;
+  const oy = align === 'bottom' ? rect.y + rect.h - y1 * F : align === 'top' ? rect.y - y0 * F : rect.y + (rect.h - (y1 - y0) * F) / 2 - y0 * F;
+  return { E, T, F, ox, oy, rect };
+}
+const rectPts = (x0, y0, x1, y1, z = 0) => [[x0, y0, z], [x1, y0, z], [x1, y1, z], [x0, y1, z]];
+function circPts(cx, cy, r, n = 56, z = 0) { const a = []; for (let i = 0; i < n; i++) { const t = i / n * Math.PI * 2; a.push([cx + r * Math.cos(t), cy + r * Math.sin(t), z]); } return a; }
+
+/* ---------- drawing helpers (canvas in CSS pixels) ---------- */
+function gpath(g, cam, pts) { g.beginPath(); pts.forEach((p, i) => { const q = cam.p(p[0], p[1], p[2] || 0); i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); }); g.closePath(); }
+function gfill(g, cam, pts, fill, stroke, lw) { gpath(g, cam, pts); if (fill) { g.fillStyle = fill; g.fill(); } if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw || 2; g.lineJoin = 'round'; g.stroke(); } }
+function gbar(g, cam, x0, x1, y, w, col) { gfill(g, cam, rectPts(x0, y - w / 2, x1, y + w / 2), col); }
+function gvbar(g, cam, x, y0, y1, w, col) { gfill(g, cam, rectPts(x - w / 2, y0, x + w / 2, y1), col); }
+function gtext(g, cam, txt, x, y, size, col, opt = {}) {
+  const p0 = cam.p(x, y, opt.z || 0), px = cam.p(x + 1, y, opt.z || 0), py = cam.p(x, y + 1, opt.z || 0), d = g._dpr || 1;
+  g.save(); g.setTransform(d * (px[0] - p0[0]), d * (px[1] - p0[1]), -d * (py[0] - p0[0]), -d * (py[1] - p0[1]), d * p0[0], d * p0[1]);
+  g.font = `${opt.w || 700} ${size}px Lexend, system-ui, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.globalAlpha = opt.a == null ? 1 : opt.a; g.fillStyle = col; g.fillText(txt, 0, 0); g.restore();
+}
+function gdisc(g, cam, x, y, r, th, top, edge, o = {}) {
+  const z = o.z || 0, lw = o.lw == null ? 1.6 : o.lw, line = o.line || COL.plum;
+  const a0 = cam.p(x, y + r, z), b0 = cam.p(x, y - r, z), a1 = cam.p(x, y + r, z + th), b1 = cam.p(x, y - r, z + th);
+  const c0 = cam.p(x, y, z), c1 = cam.p(x, y, z + th);
+  const rx0 = r * c0[2], ry0 = Math.max(0.5, Math.abs(b0[1] - a0[1]) / 2), cy0 = (a0[1] + b0[1]) / 2, cx0 = (a0[0] + b0[0]) / 2;
+  const rx1 = r * c1[2], ry1 = Math.max(0.5, Math.abs(b1[1] - a1[1]) / 2), cy1 = (a1[1] + b1[1]) / 2, cx1 = (a1[0] + b1[0]) / 2;
+  g.save(); if (o.alpha != null) g.globalAlpha = o.alpha;
+  if (o.shadow) { g.fillStyle = 'rgba(46,16,45,.18)'; g.beginPath(); g.ellipse(cx0 + rx0 * 0.12, cy0 + ry0 * 0.25, rx0 * 1.04, ry0 * 1.05, 0, 0, 7); g.fill(); }
+  g.lineWidth = lw; g.strokeStyle = line; g.fillStyle = edge;
+  g.beginPath(); g.ellipse(cx0, cy0, rx0, ry0, 0, 0, Math.PI); g.lineTo(cx1 - rx1, cy1); g.ellipse(cx1, cy1, rx1, ry1, 0, Math.PI, 0, true); g.closePath(); g.fill(); if (lw) g.stroke();
+  g.fillStyle = top; g.beginPath(); g.ellipse(cx1, cy1, rx1, ry1, 0, 0, Math.PI * 2); g.fill(); if (lw) g.stroke();
+  if (o.ring) { g.strokeStyle = o.ring; g.lineWidth = Math.max(1, rx1 * 0.12); g.beginPath(); g.ellipse(cx1, cy1, rx1 * 0.62, ry1 * 0.62, 0, 0, 7); g.stroke(); }
+  if (o.dot) { g.fillStyle = o.dot; g.beginPath(); g.ellipse(cx1, cy1, rx1 * 0.25, ry1 * 0.25, 0, 0, 7); g.fill(); }
+  if (o.glow) { g.strokeStyle = o.glow; g.lineWidth = 3; g.beginPath(); g.ellipse(cx1, cy1, rx1 + 4, ry1 + 3, 0, 0, 7); g.stroke(); }
+  g.restore(); return [cx1, cy1, rx1, ry1];
+}
+function dashLine(g, cam, pts, col, w, dash) { g.save(); g.strokeStyle = col; g.lineWidth = w; g.setLineDash(dash || [8, 7]); g.lineCap = 'round'; g.beginPath(); pts.forEach((p, i) => { const q = cam.p(p[0], p[1], p[2] || 0); i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); }); g.stroke(); g.restore(); }
+
+/* ---------- computer difficulty ---------- */
+const DIFF = { easy: { a: 2.4 * DEG, p: 0.10, n: 'Easy' }, med: { a: 1.0 * DEG, p: 0.045, n: 'Medium' }, hard: { a: 0.35 * DEG, p: 0.016, n: 'Hard' } };
+
+/* =========================================================
+   Base class for the sliding games (and toad, which overrides the shot)
+   ========================================================= */
+class SlideTable {
+  constructor(o) {
+    this.m = o.match; this.unit = o.unit; this.onDone = o.onDone; this.ui = o.ui; this.G = o.game;
+    this.cam = new Cam(); this.presets = {}; this.camAnim = null; this.camName = 'aim';
+    this.state = 'idle'; this.drag = null; this.dead = false; this.last = 0; this.aimShow = null; this.spin = 1;
+    this.noiseA = 0.25 * DEG; this.noiseP = 0.012; this.maxAng = 12 * DEG; this.aimX = 0; this.shots = 0;
+    this.angSnap = 2.5 * DEG; this.angK = 0.4;
+    this.bg = COL.soft; this.th = 14;
+    this.init();
+    if (this.world) { this.world.hook = (w, b) => this.hook(w, b); this.world.onHit = (v) => Sound.clack(v, this.tone || 2400); }
+  }
+  /* --- to override --- */
+  init() { } hook() { } rest() { } drawTable() { } drawExtra() { } look() { return { top: COL.sand, edge: COL.plum }; }
+  xRange() { return [-100, 100]; } nextShooter() { return null; } result() { return {}; } status() { return ['', '']; }
+  camPresets() { return {}; }
+  /* --- mount / loop --- */
+  mount(stage) {
+    this.stage = stage; this.cv = document.createElement('canvas'); stage.prepend(this.cv); this.g = this.cv.getContext('2d');
+    const P = { passive: false };
+    this._d = e => this.down(e); this._m = e => this.move(e); this._u = e => this.up(e); this._c = () => { this.drag = null; };
+    this.cv.addEventListener('pointerdown', this._d, P); this.cv.addEventListener('pointermove', this._m, P);
+    this.cv.addEventListener('pointerup', this._u, P); this.cv.addEventListener('pointercancel', this._c);
+    this.ro = new ResizeObserver(() => this.resize()); this.ro.observe(stage); this.resize();
+    const loop = ts => { if (this.dead) return; const dt = this.last ? Math.min(1 / 30, (ts - this.last) / 1000) : 0; this.last = ts; this.tick(dt * SPEED); this.draw(); this.raf = requestAnimationFrame(loop); };
+    this.raf = requestAnimationFrame(loop);
+    setTimeout(() => !this.dead && this.begin(), 60);
+  }
+  destroy() { this.dead = true; cancelAnimationFrame(this.raf); if (this.ro) this.ro.disconnect(); }
+  resize() {
+    const r = this.stage.getBoundingClientRect(); if (!r.width || !r.height) return;
+    this.W = r.width; this.H = r.height; this.dpr = Math.min(3, window.devicePixelRatio || 1);
+    this.cv.width = Math.round(this.W * this.dpr); this.cv.height = Math.round(this.H * this.dpr);
+    this.pullMax = clamp(Math.min(this.W, this.H) * 0.42, 120, 230);
+    this.presets = this.camPresets(this.W, this.H); this.cam.set(this.presets[this.camName] || Object.values(this.presets)[0]); this.camAnim = null;
+  }
+  setCam(name, dur = 0.8) {
+    if (!this.presets[name]) return; if (this.camName === name && !this.camAnim) return; this.camName = name;
+    this.camAnim = { from: this.cam.snap(), to: this.presets[name], t: 0, dur };
+  }
+  tick(dt) {
+    if (this.camAnim) {
+      const a = this.camAnim; a.t += dt / a.dur; const k = ease(clamp(a.t, 0, 1)), f = a.from, to = a.to;
+      this.cam.set({ E: f.E.map((v, i) => lerp(v, to.E[i], k)), T: f.T.map((v, i) => lerp(v, to.T[i], k)), F: lerp(f.F, to.F, k), ox: lerp(f.ox, to.ox, k), oy: lerp(f.oy, to.oy, k) });
+      if (a.t >= 1) this.camAnim = null;
+    }
+    if (this.world) {
+      if (this.world.moving()) this.world.step(dt);
+      for (const b of this.world.bodies) { if (b.fall != null && b.fall < 1) b.fall += dt * 2.2; if (b.fade != null && b.fade < 1) b.fade += dt * 2.5; }
+    }
+    if (this.aimShow) this.aimShow.t += dt;
+    this.update(dt);
+  }
+  animating() { if (!this.world) return false; for (const b of this.world.bodies) if ((b.fall != null && b.fall < 1) || (b.fade != null && b.fade < 1)) return true; return false; }
+  update() {
+    if (this.state === 'moving' && !this.world.moving() && !this.animating()) {
+      this.state = 'rest'; this.rest(this.world, true);
+      setTimeout(() => { if (!this.dead) this.afterShot(); }, 380 / SPEED);
+    }
+  }
+  afterShot() { this.next(); }
+  /* --- flow --- */
+  begin() { this.next(); }
+  next() {
+    if (this.dead) return; const s = this.nextShooter();
+    if (!s) { this.finish(); return; }
+    this.shooter = s; this.refresh();
+    if (s.cpu) { this.state = 'cpu'; this.ui.tip(null); this.setCam('aim'); this.cpuGo(); }
+    else { this.state = 'aim'; this.setCam('aim'); this.ui.tip(this.tipText ? this.tipText() : 'Touch, pull back, let go'); }
+  }
+  refresh() { const st = this.status(); this.ui.status(st[0], st[1]); this.ui.chips(); }
+  finish() { this.state = 'done'; this.ui.tip(null); const r = this.result(); setTimeout(() => { if (!this.dead) this.onDone(r); }, 650 / SPEED); }
+  human() { return this.shooter && !this.shooter.cpu; }
+  noisy(s) { return Object.assign({}, s, { ang: s.ang + gauss() * this.noiseA, pow: clamp(s.pow * (1 + gauss() * this.noiseP), 0, 1) }); }
+  shoot(shot) {
+    shot = this.noisy(shot); Sound.init(); Sound.slide();
+    this.lastBody = this.launch(this.world, shot, this.shooter); this.shots++;
+    this.state = 'moving'; this.ui.tip(null); this.setCam('watch', 1.1); this.onShot && this.onShot();
+  }
+  async cpuGo() {
+    const t0 = performance.now(); this.ui.status(this.status()[0], 'Lining it up…');
+    await sleep(80);
+    let shot = await this.plan(); if (this.dead || !shot) return;
+    const D = DIFF[this.m.diff || 'med'];
+    const k = this.aiScale || 1; shot = Object.assign({}, shot, { ang: shot.ang + gauss() * D.a * k, pow: clamp(shot.pow * (1 + gauss() * D.p * k), 0.02, 1) });
+    await sleep(Math.max(0, 500 - (performance.now() - t0)) / SPEED); if (this.dead) return;
+    this.aimX = shot.x; this.spin = shot.spin || this.spin; this.ui.status(this.status()[0], this.status()[1]);
+    this.aimShow = { shot, t: 0 }; await sleep(700 / SPEED); if (this.dead) return; this.aimShow = null; this.shoot(shot);
+  }
+  async search(cands, evalFn, budget = 450) {
+    const t0 = performance.now(); let best = null, bv = -1e9, i = 0;
+    for (const c of cands) {
+      const w = this.world.clone(); this.launch(w, c, this.shooter); simulate(w); this.rest(w, false);
+      const v = evalFn(w, c) + Math.random() * 1e-3; if (v > bv) { bv = v; best = c; }
+      if (++i % 12 === 0) { await sleep(0); if (this.dead) return null; if (performance.now() - t0 > budget) break; }
+    }
+    return { best, v: bv };
+  }
+  async refine(best, bv, evalFn, n = 24, da = 0.6 * DEG, dp = 0.04, dx = 6) {
+    for (let i = 0; i < n && best; i++) {
+      const c = Object.assign({}, best, { ang: best.ang + gauss() * da, pow: clamp(best.pow * (1 + gauss() * dp), 0.02, 1), x: clamp(best.x + gauss() * dx, ...this.xRange(this.shooter)) });
+      const w = this.world.clone(); this.launch(w, c, this.shooter); simulate(w); this.rest(w, false);
+      const v = evalFn(w, c); if (v > bv) { bv = v; best = c; }
+      if (i % 8 === 7) { await sleep(0); if (this.dead) return best; }
+    }
+    return best;
+  }
+  /* --- input --- */
+  pt(e) { const r = this.cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+  xFromScreen(sx) {
+    const [a, b] = this.xRange(this.shooter), hw = Math.max(Math.abs(a), Math.abs(b)) + 1;
+    const L = this.cam.p(-hw, this.startY), R = this.cam.p(hw, this.startY), t = (sx - L[0]) / (R[0] - L[0]);
+    return clamp(lerp(-hw, hw, t), a, b);
+  }
+  down(e) {
+    if (this.state !== 'aim' || !this.human() || this.drag) return; e.preventDefault(); Sound.init();
+    try { this.cv.setPointerCapture(e.pointerId); } catch (_) { }
+    const p = this.pt(e); this.drag = { id: e.pointerId, sx: p[0], sy: p[1], x: p[0], y: p[1] };
+    if (this.fixedX == null) this.aimX = this.xFromScreen(p[0]); this.ui.tip(null);
+  }
+  move(e) { if (!this.drag || e.pointerId !== this.drag.id) return; e.preventDefault(); const p = this.pt(e); this.drag.x = p[0]; this.drag.y = p[1]; }
+  up(e) {
+    if (!this.drag || e.pointerId !== this.drag.id) return; const s = this.dragShot(); this.drag = null;
+    if (s && s.pow >= 0.03 && this.state === 'aim') this.shoot(s); else if (this.state === 'aim') this.ui.tip(this.tipText ? this.tipText() : 'Pull back further, then let go');
+  }
+  dragShot() {
+    if (!this.drag) return null; const x = this.fixedX != null ? this.fixedX : this.aimX, y = this.startY;
+    const dx = this.drag.sx - this.drag.x, dy = this.drag.sy - this.drag.y, L = Math.hypot(dx, dy); if (L < 5) return null;
+    const p0 = this.cam.p(x, y), px = this.cam.p(x + 10, y), py = this.cam.p(x, y + 10);
+    const ax = (px[0] - p0[0]) / 10, ay = (px[1] - p0[1]) / 10, bx = (py[0] - p0[0]) / 10, by = (py[1] - p0[1]) / 10, det = ax * by - bx * ay;
+    const wx = (dx * by - bx * dy) / det, wy = (ax * dy - dx * ay) / det;
+    const raw = Math.atan2(wx, wy), sn = this.angSnap, k = this.angK;
+    const ang = clamp(Math.abs(raw) <= sn ? 0 : Math.sign(raw) * (Math.abs(raw) - sn) * k, -this.maxAng, this.maxAng);
+    return { x, ang, pow: clamp(L / this.pullMax, 0, 1), spin: this.spin };
+  }
+  /* --- drawing --- */
+  draw() {
+    const g = this.g; if (!g || !this.W) return; g._dpr = this.dpr;
+    g.setTransform(this.dpr, 0, 0, this.dpr, 0, 0); g.fillStyle = this.bg; g.fillRect(0, 0, this.W, this.H);
+    this.drawTable(g); this.drawBodies(g); this.drawExtra(g);
+    const sh = this.drag ? this.dragShot() : this.aimShow ? this.aimShow.shot : null;
+    if (this.state === 'aim' && this.human() && !sh && this.showReady !== false) this.drawReady(g);
+    if (sh && (this.state === 'aim' || this.state === 'cpu')) this.drawAim(g, sh);
+    if (this.presets.inset && this.camName === 'aim' && !this.camAnim && (this.state === 'aim' || this.state === 'cpu')) this.drawInset(g);
+  }
+  drawInset(g) {
+    const p = this.presets.inset, r = p.rect, keep = this.cam.snap(); this.cam.set(p);
+    g.save(); rr(g, r.x, r.y, r.w, r.h, 12); g.fillStyle = this.bg; g.fill(); g.clip(); this.drawTable(g); this.drawBodies(g); g.restore();
+    g.save(); rr(g, r.x, r.y, r.w, r.h, 12); g.strokeStyle = COL.plum; g.lineWidth = 2; g.stroke();
+    g.fillStyle = COL.plum; rr(g, r.x + 6, r.y + r.h - 20, 54, 15, 7); g.fill(); g.fillStyle = '#fff'; g.font = '700 9.5px Lexend, system-ui'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(p.label || 'FAR END', r.x + 33, r.y + r.h - 12); g.restore();
+    this.cam.set(keep);
+  }
+  bodyOrder() { return this.world ? this.world.bodies.filter(b => !b.out || (b.fall != null && b.fall < 1) || (b.fade != null && b.fade < 1)).sort((a, b) => b.y - a.y) : []; }
+  drawBodies(g) {
+    for (const b of this.bodyOrder()) {
+      const L = this.look(b); let z = L.z || 0, alpha = 1;
+      if (b.out && b.fall != null) { z -= b.fall * b.fall * 700; alpha = 1 - b.fall; }
+      if (b.out && b.fade != null) alpha = 1 - b.fade;
+      gdisc(g, this.cam, b.x, b.y, b.r, L.th || this.th, L.top, L.edge, { z, alpha, shadow: !b.out, ring: L.ring, dot: L.dot, glow: b === this.lastBody && this.state === 'moving' ? null : L.glow });
+    }
+  }
+  drawReady(g) {
+    const x = this.fixedX != null ? this.fixedX : this.aimX, L = this.look({ side: this.shooter.side, ghost: true, x, y: this.startY });
+    gdisc(g, this.cam, x, this.startY, this.R, L.th || this.th, L.top, L.edge, { alpha: 0.55 + 0.25 * Math.sin(performance.now() / 260), ring: L.ring });
+  }
+  aimPath(sh) { const len = this.aimLen * (0.3 + 0.7 * sh.pow), x = sh.x, y = this.startY; return [[x, y], [x + Math.sin(sh.ang) * len, y + Math.cos(sh.ang) * len]]; }
+  drawAim(g, sh) {
+    const pts = this.aimPath(sh); if (pts.length) dashLine(g, this.cam, pts, COL.orange, 3.2, [7, 7]);
+    if (!sh._noDisc) { const L = this.look({ side: this.shooter.side, ghost: true }); gdisc(g, this.cam, sh.x, this.startY, this.R, L.th || this.th, L.top, L.edge, { ring: L.ring, glow: COL.orange }); }
+    // power meter
+    const H = Math.min(this.H * 0.4, 180), x = 10, y = this.H * 0.56 - H / 2;
+    g.save(); g.fillStyle = 'rgba(255,255,255,.92)'; g.strokeStyle = COL.plum; g.lineWidth = 2;
+    rr(g, x, y, 16, H, 8); g.fill(); g.stroke(); g.fillStyle = sh.pow > 0.85 ? '#c44d1a' : COL.orange;
+    const fh = (H - 6) * sh.pow; rr(g, x + 3, y + H - 3 - fh, 10, fh, 5); g.fill();
+    g.fillStyle = COL.plum; g.font = '700 12px Lexend, system-ui'; g.textAlign = 'left'; g.textAlign = 'center'; g.fillText(Math.round(sh.pow * 100) + '%', x + 8, y - 9); g.restore();
+  }
+}
+function rr(g, x, y, w, h, r) { r = Math.min(r, w / 2, h / 2); g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+/* shared: who scores when only the side with the best puck counts */
+function sideScore(bs, val, depth) {
+  const best = [-Infinity, -Infinity]; for (const b of bs) best[b.side] = Math.max(best[b.side], depth(b));
+  if (best[0] === best[1]) return { side: -1, pts: 0, n: 0 };
+  const s = best[0] > best[1] ? 0 : 1, o = 1 - s; let pts = 0, n = 0;
+  for (const b of bs) if (b.side === s && depth(b) > best[o]) { const v = val(b); pts += v; if (v) n++; }
+  return { side: pts ? s : -1, pts, n };
+}
+
+/* =========================================================
+   Shared match helpers used by the game modules
+   A match: { game, mode:'app'|'real'|'hybrid', players:[{name,kind,where}], opts, diff, s }
+   ========================================================= */
+const GAMES = {};
+const rname = (m, i) => (m.players[i] ? m.players[i].name : '?');
+const pname = (m, i) => esc(rname(m, i));
+const dotHTML = i => `<i style="background:${COL.side[i % 2].top}"></i>`;
+const btnA = (act, label, cls = '', extra = '') => `<button class="btn ${cls}" data-tg="${act}" ${extra}>${label}</button>`;
+function stepperHTML(id, label, sub, val, min, max) {
+  return `<div class="stepper"><div class="l"><b>${label}</b>${sub ? `<span>${sub}</span>` : ''}</div><div class="ctl">
+  <button data-tg="e:dec:${id}" ${val <= min ? 'disabled' : ''} aria-label="Less">−</button><output>${val}</output>
+  <button class="plus" data-tg="e:inc:${id}" ${val >= max ? 'disabled' : ''} aria-label="More">+</button></div></div>`;
+}
+function resolveFirst(m, opt, n = 2) { return opt === 'toss' || opt == null ? Math.floor(Math.random() * n) : +opt; }
+
+/* ---------- games played in rounds where both sides' pucks meet (shuffleboard, bank shot) ---------- */
+function puckRoundsGame(cfg) {
+  return Object.assign({
+    kind: 'rounds', seat: { min: 2, max: 2, label: 'Players or teams', sides: true },
+    init(m) { const h = resolveFirst(m, m.opts.hammer); m.s = { pts: [0, 0], hammer: h, rounds: [], tossed: m.opts.hammer === 'toss' }; },
+    unit(m) {
+      const n = m.s.rounds.length + 1, h = m.s.hammer;
+      return { round: n, hammer: h, title: `Round ${n}`, sub: `${rname(m, 1 - h)} shoots first · ${rname(m, h)} has the hammer` };
+    },
+    apply(m, res) {
+      const s = m.s; s.rounds.push({ side: res.side, pts: res.pts, hammer: s.hammer, where: res.where });
+      if (res.side >= 0 && res.pts > 0) {
+        s.pts[res.side] += res.pts; s.hammer = 1 - res.side;
+        if (s.pts[res.side] >= m.opts.to) { m.over = true; m.winner = [res.side]; }
+        return { t: `${rname(m, res.side)} scores ${res.pts}`, s: m.over ? '' : `${rname(m, res.side)} shoots first next round` };
+      }
+      return { t: 'No score this round', s: `${rname(m, s.hammer)} keeps the hammer` };
+    },
+    chips(m) {
+      return [0, 1].map(i => ({ name: m.players[i].name, dot: i, v: m.s.pts[i], small: `/${m.opts.to}`, sub: m.s.hammer === i ? 'hammer' : '&nbsp;', tag: m.s.hammer === i && !m.over ? 'last shot' : '' }));
+    },
+    board(m) {
+      const s = m.s; let rows = s.rounds.map((r, i) => `<tr><td>${i + 1}</td>${[0, 1].map(k => `<td class="${r.side === k ? '' : 'dim'}${r.hammer === k ? ' hm' : ''}">${r.side === k ? r.pts : '–'}${r.hammer === k ? '*' : ''}</td>`).join('')}<td class="dim">${r.where === 'real' ? 'table' : r.where === 'app' ? 'app' : ''}</td></tr>`).join('');
+      if (!rows) rows = `<tr><td colspan="4" class="dim">No rounds yet</td></tr>`;
+      return `<table class="grid"><tr><th>Round</th><th>${pname(m, 0)}</th><th>${pname(m, 1)}</th><th>Where</th></tr>${rows}
+      <tr><td class="tot">Total</td><td class="tot">${s.pts[0]}</td><td class="tot">${s.pts[1]}</td><td class="tot"></td></tr></table>
+      <p class="note">* had the hammer (last shot) that round. First to ${m.opts.to} wins.</p>`;
+    },
+    entryInit() { return { side: null, pucks: [] }; },
+    entryHTML(m, st, u) {
+      const vals = cfg.vals;
+      let h = `<div class="panel lite"><h3>Round ${u.round} on the real table</h3><p class="note" style="margin:0 0 10px">${pname(m, 1 - u.hammer)} shoots first, ${pname(m, u.hammer)} has the hammer. When all 8 are played, check who's furthest.</p>
+      <div class="choice">${[0, 1].map(i => `<button class="btn ${st.side === i ? 'on' : ''}" data-tg="e:side:${i}">${pname(m, i)}<small>scored</small></button>`).join('')}
+      <button class="btn ${st.side === -1 ? 'on' : ''}" data-tg="e:side:-1">Nobody<small>a tie or none in</small></button></div></div>`;
+      if (st.side >= 0) {
+        h += `<div class="sec"><span class="n">+</span>Tap each scoring puck</div><div class="choice">${vals.map(v => `<button class="btn" data-tg="e:add:${v[0]}" ${st.pucks.length >= 4 ? 'disabled' : ''}>${v[0]}<small>${v[1]}</small></button>`).join('')}</div>
+        <div class="puckrow">${[0, 1, 2, 3].map(i => st.pucks[i] != null ? `<button class="pk ${st.side ? 'p' : ''}" data-tg="e:rm:${i}" title="Remove">${st.pucks[i]}</button>` : `<span class="pk e">·</span>`).join('')}</div>
+        <div class="big">${st.pucks.reduce((a, b) => a + b, 0)}<small>points to ${pname(m, st.side)}</small></div>
+        <p class="note" style="text-align:center">Only pucks past ${pname(m, 1 - st.side)}'s best one count. On a line? Take the lower score.</p>`;
+      }
+      const ok = st.side === -1 || (st.side >= 0 && st.pucks.length);
+      h += `<div class="btns"><button class="btn primary wide" data-tg="e:done" ${ok ? '' : 'disabled'}>Save round ${u.round}</button></div>`;
+      return h;
+    },
+    entryAct(m, st, a, v) {
+      if (a === 'side') { st.side = +v; if (st.side < 0) st.pucks = []; }
+      else if (a === 'add' && st.pucks.length < 4) st.pucks.push(+v);
+      else if (a === 'rm') st.pucks.splice(+v, 1);
+      else if (a === 'done') return { done: { side: st.side, pts: st.side >= 0 ? st.pucks.reduce((x, y) => x + y, 0) : 0 } };
+    }
+  }, cfg);
+}
+
+/* =========================================================
+   Toad in the Hole
+   ========================================================= */
+class ToadTable extends SlideTable {
+  init() {
+    this.T = { x0: -225, x1: 225, y0: 2145, y1: 2595 }; this.hole = { x: 0, y: 2370, r: 30 }; this.R = 25; this.th = 5; this.bbH = 300;
+    this.startY = 0; this.fixedX = 0; this.maxAng = 7.5 * DEG; this.angSnap = 1 * DEG; this.angK = 0.45; this.tone = 3000; this.showReady = false;
+    this.world = new World({ decel: 2600, e: 0.4 });
+    this.who = this.unit.who; this.need = this.m.s.left[this.who]; this.toads = Math.min(4, this.need); this.thrown = 0; this.flights = [];
+    this.inHole = 0; this.ended = null;
+  }
+  look() { return { top: '#e6e4ec', edge: '#a29db0', ring: 'rgba(78,31,77,.18)', th: 5 }; }
+  nextShooter() { if (this.ended || this.thrown >= this.toads) return null; const p = this.m.players[this.who]; return { side: 0, cpu: p.kind === 'cpu', name: p.name }; }
+  onTop(x, y) { return x >= this.T.x0 && x <= this.T.x1 && y >= this.T.y0 && y <= this.T.y1; }
+  inHoleXY(x, y, sp = 0) { return Math.hypot(x - this.hole.x, y - this.hole.y) < (this.hole.r - this.R * 0.3) * (sp > 260 ? 0.45 : 1); }
+  hook(w, b) {
+    if (this.inHoleXY(b.x, b.y, Math.hypot(b.vx, b.vy))) { b.out = 'hole'; w.data.hole = (w.data.hole || 0) + 1; if (!w.sim) { b.fall = 0; Sound.thud(0.5); } return; }
+    if (!this.onTop(b.x, b.y)) { b.out = 'off'; if (!w.sim) { b.fall = 0; Sound.thud(0.2); } }
+  }
+  tally() { const on = this.world.bodies.filter(b => !b.out).length, hole = this.world.bodies.filter(b => b.out === 'hole').length; return { on, hole, pts: on + 2 * hole }; }
+  status() {
+    const p = this.m.players[this.who], t = this.tally();
+    return [`${p.name} · toad ${Math.min(this.toads, this.thrown + 1)} of ${this.toads}`, `Needs ${this.need} · this turn ${t.pts}${t.hole ? ` (${t.hole} in the hole)` : ''}`];
+  }
+  tipText() { return 'Pull back to aim and set the distance, let go to throw'; }
+  dragShot() {
+    if (!this.drag) return null; const dx = this.drag.sx - this.drag.x, dy = this.drag.sy - this.drag.y, L = Math.hypot(dx, dy); if (L < 5) return null;
+    const raw = Math.atan2(dx, -dy), a = Math.abs(raw) <= this.angSnap ? 0 : Math.sign(raw) * (Math.abs(raw) - this.angSnap) * this.angK;
+    return { x: 0, ang: clamp(a, -this.maxAng, this.maxAng), pow: clamp(L / this.pullMax, 0, 1) };
+  }
+  landing(s) { const D = 1900 + s.pow * 1000; return [Math.sin(s.ang) * D, Math.cos(s.ang) * D]; }
+  shoot(shot) {
+    Sound.init(); this.thrown++; this.state = 'moving'; this.ui.tip(null);
+    let [lx, ly] = this.landing(shot); lx += gauss() * 24; ly += gauss() * 38;
+    const S = [0, 1830, 170], h = 330 + shot.pow * 120, dur = 0.6;
+    // does it hit the backboard first?
+    let hitBB = null;
+    if (ly > this.T.y1) { const t = (this.T.y1 - S[1]) / (ly - S[1]), z = lerp(S[2], 0, t) + 4 * h * t * (1 - t), x = lerp(S[0], lx, t); if (z < this.bbH && Math.abs(x) < 265) hitBB = { t, x, z }; }
+    this.flights.push({ S, Lx: lx, Ly: ly, h, t: 0, dur, hitBB, ang: shot.ang });
+    this.refresh();
+  }
+  update(dt) {
+    for (const f of this.flights) {
+      f.t += dt / f.dur;
+      if (f.hitBB && f.t >= f.hitBB.t && !f.done) { f.done = 'bb'; Sound.clack(900, 700); this.ui.flash('Backboard!', '0 points'); f.drop = { x: f.hitBB.x, y: this.T.y1 - 30, z: f.hitBB.z, t: 0 }; }
+      if (!f.done && f.t >= 1) {
+        f.done = 'land'; const x = f.Lx, y = f.Ly;
+        if (this.inHoleXY(x, y)) { f.done = 'hole'; Sound.thud(0.6); this.world.data.hole = (this.world.data.hole || 0) + 1; this.world.add({ x, y, r: this.R, out: 'hole', fall: 0 }); }
+        else if (this.onTop(x, y)) { Sound.clack(1200, 2600); const vs = 420 + gauss() * 90; this.world.add({ x, y, r: this.R, vx: Math.sin(f.ang) * vs + gauss() * 40, vy: Math.cos(f.ang) * vs }); }
+        else { f.done = 'off'; Sound.thud(0.2); f.drop = { x, y, z: 0, t: 0 }; }
+      }
+      if (f.drop) f.drop.t += dt * 2.4;
+    }
+    this.flights = this.flights.filter(f => !(f.done && (!f.drop || f.drop.t >= 1)));
+    if (this.state === 'moving' && !this.flights.length && !this.world.moving() && !this.animating()) {
+      this.state = 'rest'; const t = this.tally();
+      if (t.pts === this.need) this.ended = 'win'; else if (t.pts > this.need) this.ended = 'bust';
+      this.refresh();
+      if (this.ended === 'bust') this.ui.flash('Bust!', `${t.pts} is too many. Stays on ${this.need}`, true);
+      else if (this.ended === 'win') this.ui.flash('Spot on!', `Exactly ${this.need}`);
+      setTimeout(() => !this.dead && this.next(), (this.ended ? 1100 : 450) / SPEED);
+    }
+  }
+  result() { const t = this.tally(); return { hole: t.hole, on: t.on, pts: t.pts, toads: this.toads }; }
+  async plan() {
+    const t = this.tally(), r = this.need - t.pts; let tx = 0, ty = this.hole.y;
+    if (r === 1 || r === 0) { // need a toad on the table but not in the hole (or a deliberate miss)
+      if (r === 0) return { x: 0, ang: 0, pow: 0.02 };
+      const busy = s => this.world.bodies.filter(b => !b.out && Math.hypot(b.x - s * 120, b.y - 2300) < 70).length;
+      tx = busy(1) <= busy(-1) ? 120 : -120; ty = 2300;
+    }
+    const D = Math.hypot(tx, ty - 34), ang = Math.atan2(tx, ty - 34);
+    return { x: 0, ang, pow: clamp((D - 1900) / 1000, 0, 1) };
+  }
+  camPresets(W, H) { const p = fitCam([0, 1350, 1200], [0, 2380, 0], [...rectPts(-300, 2120, 300, 2620), [-280, 2600, this.bbH + 20], [280, 2600, this.bbH + 20], [-260, 2145, -420], [260, 2145, -420]], { x: 18, y: 10, w: W - 36, h: H * 0.74 - 10 }); return { aim: p, watch: p }; }
+  drawTable(g) {
+    const c = this.cam, T = this.T, hb = this.hole;
+    // floor shadow and legs
+    gfill(g, c, rectPts(-250, 2160, 250, 2600, -740), 'rgba(78,31,77,.12)');
+    for (const [x, y] of [[-205, 2170], [205, 2170]]) gfill(g, c, [[x - 14, y, 0], [x + 14, y, 0], [x + 14, y, -740], [x - 14, y, -740]], COL.plum2);
+    // backboard
+    gfill(g, c, [[-265, T.y1, 0], [265, T.y1, 0], [265, T.y1, this.bbH], [-265, T.y1, this.bbH]], COL.plum);
+    gfill(g, c, [[-245, T.y1 - 1, 20], [245, T.y1 - 1, 20], [245, T.y1 - 1, this.bbH - 20], [-245, T.y1 - 1, this.bbH - 20]], COL.plum2);
+    gtext(g, c, '31', 0, T.y1 - 2, 150, 'rgba(248,220,168,.25)', { z: 210 });
+    // top and front apron
+    gfill(g, c, rectPts(T.x0 - 18, T.y0 - 18, T.x1 + 18, T.y1), '#6b4a2f');
+    gfill(g, c, rectPts(T.x0, T.y0, T.x1, T.y1), '#aaa4b7');
+    gfill(g, c, [[T.x0 - 18, T.y0 - 18, 0], [T.x1 + 18, T.y0 - 18, 0], [T.x1 + 18, T.y0 - 18, -130], [T.x0 - 18, T.y0 - 18, -130]], '#5a3b24');
+    for (let k = 1; k < 6; k++) gfill(g, c, circPts(hb.x, hb.y, hb.r + k * 30, 40), null, 'rgba(255,255,255,.06)', 1);
+    gfill(g, c, circPts(hb.x, hb.y, hb.r, 40), '#1d0a1c', COL.plum, 2);
+    gfill(g, c, circPts(hb.x, hb.y + 6, hb.r - 8, 32), '#000');
+    const t = this.tally(); if (t.hole) gtext(g, c, '×' + t.hole, hb.x, hb.y - hb.r - 22, 26, COL.gold, { a: 0.95 });
+  }
+  drawExtra(g) {
+    const c = this.cam;
+    for (const f of this.flights) {
+      let x, y, z, a = 1;
+      if (f.drop) { x = f.drop.x; y = f.drop.y; z = f.drop.z - f.drop.t * f.drop.t * 800; a = 1 - f.drop.t; }
+      else { const t = clamp(f.t, 0, 1); x = lerp(f.S[0], f.Lx, t); y = lerp(f.S[1], f.Ly, t); z = lerp(f.S[2], 0, t) + 4 * f.h * t * (1 - t); }
+      if (this.onTop(x, y) && !f.drop) { const p = c.p(x, y, 0); g.fillStyle = 'rgba(30,10,30,.25)'; g.beginPath(); g.ellipse(p[0], p[1], this.R * p[2], this.R * p[2] * 0.4, 0, 0, 7); g.fill(); }
+      gdisc(g, c, x, y, this.R, this.th, '#e6e4ec', '#a29db0', { z, alpha: a });
+    }
+    // toads still in hand
+    const left = this.toads - this.thrown, x0 = this.W / 2, y0 = this.H - 60;
+    for (let i = 0; i < left; i++) { g.save(); g.fillStyle = '#a29db0'; g.strokeStyle = COL.plum; g.lineWidth = 2; g.beginPath(); g.ellipse(x0 + (i - (left - 1) / 2) * 30, y0, 12, 6, 0, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#e6e4ec'; g.beginPath(); g.ellipse(x0 + (i - (left - 1) / 2) * 30, y0 - 3, 12, 6, 0, 0, 7); g.fill(); g.stroke(); g.restore(); }
+  }
+  drawAim(g, sh) {
+    const [lx, ly] = this.landing(sh), c = this.cam, p = c.p(lx, ly, 0), q = c.p(0, 1450, 260);
+    const hx = this.W / 2, hy = this.H - 60;
+    g.save(); g.strokeStyle = COL.orange; g.lineWidth = 3; g.setLineDash([7, 7]); g.beginPath(); g.moveTo(hx, hy);
+    g.quadraticCurveTo((hx + p[0]) / 2, Math.min(hy, p[1]) - 140, p[0], p[1]); g.stroke(); g.setLineDash([]);
+    g.strokeStyle = COL.orange; g.lineWidth = 2.5; g.beginPath(); g.ellipse(p[0], p[1], 30 * p[2], 30 * p[2] * 0.42, 0, 0, 7); g.stroke(); g.restore();
+    SlideTable.prototype.drawAim.call(this, g, Object.assign({}, sh, { _noDisc: true }));
+  }
+}
+// skip the disc preview from the base aim (the toad flies from your hand)
+ToadTable.prototype.aimPath = function () { return []; };
+
+GAMES.toad = {
+  id: 'toad', name: 'Toad in the Hole', short: 'Toad in the Hole', tag: 'Throw. Find the hole. Hit 31 exactly.', icon: ICON.toad,
+  blurb: 'Lob four toads at the table. Count down from 31.', Table: ToadTable, kind: 'turns',
+  seat: { min: 2, max: 6, label: 'Players or teams' },
+  options: [{ id: 'start', label: 'Count down from', sub: 'Finish on exactly zero', choices: [[31, '31'], [21, '21 · quick']], def: 31 },
+    { id: 'first', label: 'Who throws first', sub: '', choices: [['toss', 'Coin toss'], [0, '@0']], def: 'toss' }],
+  info: [['board', '1 toad table', 'throw from 2.37 m (7 ft 9 in)'], ['coin', '4 toads', 'flat steel discs'], ['people', '2 players', 'or two teams']],
+  init(m) { const n = m.players.length; m.s = { left: Array(n).fill(m.opts.start), cur: m.opts.first === 'toss' ? Math.floor(Math.random() * n) : 0, log: [] }; },
+  unit(m) { const s = m.s, need = s.left[s.cur], t = Math.min(4, need); return { who: s.cur, title: `${rname(m, s.cur)}'s turn`, sub: `Needs ${need} · throw ${plural(t, 'toad')}` }; },
+  apply(m, res) {
+    const s = m.s, who = s.cur, need = s.left[who], pts = res.hole * 2 + res.on, bust = pts > need;
+    s.log.push({ who, hole: res.hole, on: res.on, pts, bust, before: need, where: res.where });
+    if (!bust) s.left[who] = need - pts;
+    if (s.left[who] === 0) { m.over = true; m.winner = [who]; return { t: `${rname(m, who)} hits ${m.opts.start} exactly!`, s: '' }; }
+    s.cur = (who + 1) % m.players.length;
+    return bust ? { t: `Bust! ${rname(m, who)} stays on ${need}`, s: `${pts} was too many` } : { t: `${rname(m, who)} scores ${pts}`, s: `${s.left[who]} to go` };
+  },
+  chips(m) { return m.players.map((p, i) => ({ name: p.name, v: m.s.left[i], small: ' left', sub: m.s.left[i] <= 3 ? `${plural(m.s.left[i], 'toad')} only` : 'needs', on: !m.over && m.s.cur === i })); },
+  board(m) {
+    const rows = m.s.log.slice().reverse().map(l => `<div class="tr ${l.bust ? '' : ''}"><div class="tx"><b>${pname(m, l.who)}${l.bust ? ' · bust' : ''}</b><span>${l.hole} in the hole, ${l.on} on the table${l.where === 'real' ? ' · real table' : ''}</span></div><div class="v">${l.bust ? '0' : '−' + l.pts}<small> ${l.bust ? 'stays ' + l.before : '→ ' + (l.before - l.pts)}</small></div></div>`).join('');
+    return `<table class="grid"><tr><th>Player</th><th>Needs</th><th>Turns</th></tr>${m.players.map((p, i) => `<tr><td class="nm">${pname(m, i)}</td><td class="tot">${m.s.left[i]}</td><td>${m.s.log.filter(l => l.who === i).length}</td></tr>`).join('')}</table>
+    <div class="tbl" style="margin-top:12px"><div class="th"><span>Turn by turn · latest first</span><span>Score</span></div>${rows || '<div class="tr"><div class="tx"><span>No turns yet</span></div></div>'}</div>`;
+  },
+  entryInit() { return { hole: 0, on: 0 }; },
+  entryHTML(m, st, u) {
+    const need = m.s.left[u.who], t = Math.min(4, need), pts = st.hole * 2 + st.on, off = t - st.hole - st.on;
+    return `<div class="panel lite"><h3>${pname(m, u.who)} throws ${plural(t, 'toad')} · needs ${need}</h3><p class="note" style="margin:0 0 4px">Once they've all landed, where did they end up?</p>
+    ${stepperHTML('hole', 'In the hole', '2 points each', st.hole, 0, t - st.on)}${stepperHTML('on', 'Flat on the table', '1 point each', st.on, 0, t - st.hole)}
+    <div class="stepper"><div class="l"><b>Off, or hit the backboard</b><span>0 points</span></div><div class="ctl"><output>${off}</output></div></div></div>
+    <div class="big" style="margin-top:12px">${pts}<small>${pts > need ? `Bust! Stays on ${need}` : pts === need ? 'Exactly! That’s the game' : `leaves ${need - pts}`}</small></div>
+    <div class="btns"><button class="btn primary wide" data-tg="e:done">Save turn</button></div>`;
+  },
+  entryAct(m, st, a, v) {
+    const t = Math.min(4, m.s.left[m.s.cur]);
+    if (a === 'inc' && st.hole + st.on < t) st[v]++; else if (a === 'dec' && st[v] > 0) st[v]--;
+    else if (a === 'done') return { done: { hole: st.hole, on: st.on, toads: t } };
+  },
+  rules: {
+    s1: ['Play a turn', [['Stand behind the line.', 'Toss a coin to see who goes first.'], ['Throw four toads underarm,', 'one at a time, at the table.'], ['Score, then pass the toads on.', 'The next player takes their turn.']]],
+    s2: ['Scoring', [[2, 'points', 'In the hole'], [1, 'point', 'Flat on the table'], [0, 'points', 'Off, or hits the backboard']], ['2 + 1 + 1 + 0', '= 4 points']],
+    s3: ['Count down from 31', 'Start on 31. Take off each turn’s score.', ['Toads thrown · a finish to the game', 'Left'], [['Need 7, score 4', 'All four toads in play.', 3], ['Need 3, score 4', 'Only 3 toads. Bust, so stay on 3.', 3], ['Need 3, score 3', 'Exactly zero. You win!', 0]]],
+    s4: ['Finish exactly', [['Too many', 'Go over? You’re bust. That turn doesn’t count.'], ['Bust', 'Need 3 or fewer? Throw only that many toads.'], ['Knock-ons', 'Knock-ons count. A toad knocked into the hole still scores.']]],
+    banner: ['First to exactly <em>31</em> wins!', 'Count down from 31 to zero.']
+  },
+  appNotes: ['Pull back further to throw further. The landing ring shows where you’re aiming, but every throw wobbles a little.', 'In the app your turn stops as soon as you hit the number exactly, or go bust.']
+};
+
+/* =========================================================
+   Sjoelbak (Dutch shuffleboard)
+   ========================================================= */
+function sjoelScore(c) { const s = Math.min(...c); return 20 * s + 2 * (c[0] - s) + 3 * (c[1] - s) + 4 * (c[2] - s) + 1 * (c[3] - s); }
+
+class SjoelTable extends SlideTable {
+  init() {
+    this.Wd = 400; this.R = 26; this.th = 11; this.startY = 55; this.bar = 110; this.gateY = 1800; this.gateD = 30; this.boxBack = 1950;
+    this.vmax = 1500; this.decel = 380; this.aimLen = 800; this.maxAng = 4 * DEG; this.tone = 1800; this.noiseA = 0.55 * DEG;
+    this.vals = [2, 3, 4, 1]; this.gx = [-150, -50, 50, 150]; this.half = 36;
+    const e = 0.45, tf = 0.9, walls = [wallSeg(-200, 0, -200, this.gateY, e, tf), wallSeg(200, 0, 200, this.gateY, e, tf), wallSeg(-200, this.boxBack, 200, this.boxBack, 0.2, 0.8)];
+    const edges = [-200, ...this.gx.flatMap(x => [x - this.half, x + this.half]), 200];
+    for (let i = 0; i < edges.length; i += 2) if (edges[i + 1] - edges[i] > 0.5) walls.push(...boxWalls(edges[i], this.gateY, edges[i + 1], this.gateY + this.gateD, 0.4, 0.9));
+    this.world = new World({ decel: this.decel, e: 0.7, walls, data: { counts: [0, 0, 0, 0] } });
+    this.who = this.unit.who; this.go = 1; this.pile = this.m.opts.discs; this.cool = 0; this.aimX = this.gx[2];
+  }
+  look() { return { top: '#ecc283', edge: '#bf8a45', ring: 'rgba(176,96,27,.35)' }; }
+  xRange() { return [-200 + this.R + 2, 200 - this.R - 2]; }
+  nextShooter() { if (this.go > 3) return null; const p = this.m.players[this.who]; return { side: 0, cpu: p.kind === 'cpu', name: p.name }; }
+  launch(w, s) { const sp = this.vmax * Math.sqrt(s.pow); return w.add({ x: s.x, y: this.startY, r: this.R, vx: Math.sin(s.ang) * sp, vy: Math.cos(s.ang) * sp, side: 0 }); }
+  hook(w, b) {
+    if (b.y - b.r >= this.gateY + this.gateD) { const i = clamp(Math.floor((b.x + 200) / 100), 0, 3); w.data.counts[i]++; b.out = 'box'; if (!w.sim) { Sound.clack(500, 900); this.refresh(); } return; }
+    if (b.vy < 0 && b.y < this.bar - b.r) { b.out = 'back'; if (!w.sim) b.fade = 0; }
+  }
+  counts() { return this.world.data.counts; }
+  status() {
+    const p = this.m.players[this.who], c = this.counts();
+    return [`${p.name} · go ${Math.min(3, this.go)} of 3`, `${plural(this.pile, 'disc')} to slide · ${sjoelScore(c)} so far`];
+  }
+  tipText() { return 'Touch in line with a gate, pull back, let go. Slide them fast!'; }
+  shoot(shot) {
+    shot = this.noisy(shot); Sound.init(); Sound.slide(); this.lastBody = this.launch(this.world, shot, this.shooter);
+    this.pile--; this.cool = 0.16; this.ui.tip(null); this.refresh();
+    if (this.pile <= 0) this.state = 'moving';
+    else if (this.shooter.cpu) { this.state = 'cpu'; setTimeout(() => !this.dead && this.cpuGo(), 260 / SPEED); }
+    else this.state = 'aim';
+  }
+  down(e) { if (this.cool > 0) return; super.down(e); }
+  update(dt) {
+    if (this.cool > 0) this.cool -= dt;
+    if (this.state === 'moving' && !this.world.moving() && !this.animating()) { this.state = 'rest'; setTimeout(() => !this.dead && this.endGo(), 600 / SPEED); }
+  }
+  endGo() {
+    const left = this.world.bodies.filter(b => !b.out || b.out === 'back').length;
+    this.world.bodies = []; this.go++; this.pile = left;
+    if (this.go > 3 || left === 0) { this.go = 4; this.refresh(); this.finish(); return; }
+    this.ui.flash(`Go ${this.go} of 3`, `Gather up ${plural(left, 'disc')} and slide again`); this.next();
+  }
+  result() { return { counts: this.counts().slice() }; }
+  async cpuGo() {
+    // quick computer: no thinking pause between discs
+    if (this.dead || this.state !== 'cpu') return; const shot = await this.plan(); if (!shot || this.dead) return;
+    const D = DIFF[this.m.diff || 'med'];
+    this.aimShow = { shot, t: 0 }; await sleep(240 / SPEED); this.aimShow = null; if (this.dead) return;
+    this.shoot(Object.assign({}, shot, { ang: shot.ang + gauss() * D.a * 0.5, pow: clamp(shot.pow * (1 + gauss() * D.p), 0.05, 1) }));
+  }
+  async plan() {
+    const c = this.counts();
+    // spread them out: go for the emptiest box, the 4 box first on a tie
+    const order = [0, 1, 2, 3].sort((a, b) => (c[a] - (a === 2 ? 0.5 : 0)) - (c[b] - (b === 2 ? 0.5 : 0)) || this.vals[b] - this.vals[a]);
+    const pNeed = Math.pow(Math.sqrt(2 * this.decel * (this.gateY + this.gateD + this.R + 60 - this.startY)) / this.vmax, 2);
+    const C = []; for (const i of order.slice(0, 2)) for (const dx of [0, -9, 9, -18, 18, -30, 30]) C.push({ x: this.gx[i] + dx, ang: 0, pow: pNeed * 1.08 }, { x: this.gx[i] + dx, ang: Math.atan2(-dx, 1750), pow: pNeed * 1.08 });
+    const ev = w => sjoelScore(w.data.counts) + 8 * Math.min(...w.data.counts) - 0.4 * w.bodies.filter(b => !b.out && b.y > this.gateY - 200).length;
+    const r = await this.search(C, ev, 140); return r ? r.best : null;
+  }
+  camPresets(W, H) {
+    const p = fitCam([0, -650, 1150], [0, 1150, 0], rectPts(-240, -30, 240, this.boxBack + 40), { x: 12, y: 8, w: W - 24, h: H * 0.82 - 8 });
+    return { aim: p, watch: p, inset: Object.assign(fitCam([0, 1350, 700], [0, 1880, 0], [...rectPts(-240, 1660, 240, this.boxBack + 40), [-200, this.boxBack, 180], [200, this.boxBack, 180]], { x: W * 0.64, y: 8, w: W * 0.36 - 8, h: H * 0.24 }), { label: 'GATES' }) };
+  }
+  drawTable(g) {
+    const c = this.cam, gy = this.gateY, bb = this.boxBack;
+    gfill(g, c, rectPts(-240, -30, 240, bb + 40), COL.plum);
+    gfill(g, c, rectPts(-200, 0, 200, gy), COL.sand);
+    for (let x = -170; x < 200; x += 48) gvbar(g, c, x, 0, gy, 2, 'rgba(176,96,27,.1)');
+    gfill(g, c, rectPts(-200, gy + this.gateD, 200, bb), '#e6c08a');
+    for (const x of [-100, 0, 100]) gvbar(g, c, x, gy + this.gateD, bb, 6, COL.plum);
+    gbar(g, c, -200, 200, this.bar, 8, COL.plum); gtext(g, c, 'START', 0, this.bar - 34, 30, COL.plum, { a: 0.5 });
+    gbar(g, c, -200, 200, 900, 3, 'rgba(78,31,77,.18)');
+    const cnt = this.counts();
+    this.gx.forEach((x, i) => {
+      gfill(g, c, rectPts(x - this.half, gy, x + this.half, gy + this.gateD), '#c9a06a');
+      gtext(g, c, String(this.vals[i]), x, gy - 70, 70, COL.plum, { a: 0.75 });
+      for (let k = 0; k < Math.min(cnt[i], 12); k++) gdisc(g, c, x, gy + this.gateD + 62, this.R, this.th, '#ecc283', '#bf8a45', { z: k * this.th, lw: 1.2 });
+      if (cnt[i]) { const p = c.p(x, gy + this.gateD + 62, Math.min(cnt[i], 12) * this.th + 28); g.save(); g.fillStyle = COL.orange; g.beginPath(); g.arc(p[0], p[1], 10, 0, 7); g.fill(); g.fillStyle = '#fff'; g.font = '700 12px Lexend, system-ui'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(cnt[i], p[0], p[1] + 0.5); g.restore(); }
+    });
+    const edges = [-200, ...this.gx.flatMap(x => [x - this.half, x + this.half]), 200];
+    for (let i = 0; i < edges.length; i += 2) if (edges[i + 1] - edges[i] > 0.5) { gfill(g, c, rectPts(edges[i], gy, edges[i + 1], gy + this.gateD, 34), COL.plum2); gfill(g, c, rectPts(edges[i], gy - 1, edges[i + 1], gy, 0), COL.plum); }
+  }
+}
+
+GAMES.sjoel = {
+  id: 'sjoel', name: 'Sjoelbak', short: 'Sjoelbak', tag: 'Slide the discs. Fill every box. Score sets.', icon: ICON.sjoel,
+  blurb: 'Dutch shuffleboard: 30 discs, four gates.', Table: SjoelTable, kind: 'turns',
+  seat: { min: 1, max: 6, label: 'Players' },
+  options: [{ id: 'discs', label: 'Discs', sub: 'Per turn, over three goes', choices: [[30, '30'], [15, '15 · quick']], def: 30 },
+    { id: 'turns', label: 'Turns each', sub: 'Totals add up', choices: [[1, '1'], [2, '2'], [3, '3']], def: 1 }],
+  info: [['board', '1 sjoelbak', 'Dutch shuffleboard'], ['disc', '30 discs', 'flat wooden pucks'], ['people', '2+ players', 'best total wins']],
+  init(m) { const n = m.players.length; m.s = { tot: Array(n).fill(0), log: m.players.map(() => []), cur: 0, rnd: 1 }; },
+  unit(m) { const s = m.s; return { who: s.cur, title: `${rname(m, s.cur)}'s turn`, sub: m.opts.turns > 1 ? `Turn ${s.rnd} of ${m.opts.turns}` : `${m.opts.discs} discs, three goes` }; },
+  apply(m, res) {
+    const s = m.s, sc = sjoelScore(res.counts), who = s.cur; s.log[who].push({ counts: res.counts, sc, where: res.where }); s.tot[who] += sc;
+    s.cur++; if (s.cur >= m.players.length) { s.cur = 0; s.rnd++; }
+    if (s.rnd > m.opts.turns) { m.over = true; const top = Math.max(...s.tot); m.winner = s.tot.map((v, i) => v === top ? i : -1).filter(i => i >= 0); }
+    const sets = Math.min(...res.counts);
+    return { t: `${rname(m, who)} scores ${sc}`, s: `${plural(sets, 'full set')} · boxes ${res.counts.join(' · ')}` };
+  },
+  chips(m) { return m.players.map((p, i) => ({ name: p.name, v: m.s.tot[i], small: '', sub: m.s.log[i].length ? `last ${m.s.log[i][m.s.log[i].length - 1].sc}` : 'to go', on: !m.over && m.s.cur === i })); },
+  board(m) {
+    const T = m.opts.turns, s = m.s;
+    return `<table class="grid"><tr><th>Player</th>${[...Array(T)].map((_, i) => `<th>Turn ${i + 1}</th>`).join('')}<th>Total</th></tr>
+    ${m.players.map((p, i) => `<tr><td class="nm">${pname(m, i)}</td>${[...Array(T)].map((_, k) => { const t = s.log[i][k]; return `<td class="${t ? '' : 'dim'}">${t ? t.sc + `<br><small style="color:#8b6d8b;font-weight:500">${t.counts.join('·')}</small>` : '–'}</td>`; }).join('')}<td class="tot">${s.tot[i]}</td></tr>`).join('')}</table>
+    <p class="note">Small numbers are discs in the 2 · 3 · 4 · 1 boxes. A set (one in every box) is worth 20.</p>`;
+  },
+  entryInit(m) { return { c: [0, 0, 0, 0] }; },
+  entryHTML(m, st, u) {
+    const sum = st.c.reduce((a, b) => a + b, 0), max = m.opts.discs, sets = Math.min(...st.c);
+    return `<div class="panel lite"><h3>${pname(m, u.who)}: count the boxes</h3><p class="note" style="margin:0 0 4px">After the third go, how many discs are fully in each box?</p>
+    ${[0, 1, 2, 3].map(i => stepperHTML(i, `The ${[2, 3, 4, 1][i]} box`, i === 0 ? 'Left-hand box' : i === 3 ? 'Right-hand box' : '', st.c[i], 0, max - sum + st.c[i])).join('')}</div>
+    <div class="big" style="margin-top:12px">${sjoelScore(st.c)}<small>${plural(sets, 'set')} of 20 + spares · ${sum} of ${max} discs</small></div>
+    <div class="btns"><button class="btn primary wide" data-tg="e:done">Save ${pname(m, u.who)}'s score</button></div>`;
+  },
+  entryAct(m, st, a, v) {
+    const sum = st.c.reduce((x, y) => x + y, 0);
+    if (a === 'inc' && sum < m.opts.discs) st.c[+v]++; else if (a === 'dec' && st.c[+v] > 0) st.c[+v]--;
+    else if (a === 'done') return { done: { counts: st.c.slice() } };
+  },
+  rules: {
+    s1: ['Play a turn', [['Slide all 30 discs.', 'Push them one at a time from the open end.'], ['Leave the ones that score.', 'Discs in a box stay put. Gather up the rest.'], ['Slide again.', 'Three goes in all, each with the discs left over.'], ['Count up after the third go.', 'Empty the boxes and pass the board on.']]],
+    s2: ['Scoring', [[20, 'points', 'One in every box'], [3, 'points', 'Spare in the 3 box'], [0, 'points', 'Stuck in the gate']], ['×6 ×5 ×7 ×5', '5 sets + 2 + 8 = 110 points'], 'Boxes score 2, 3, 4, 1 from the left.'],
+    s3: ['Spread them out', 'Same 20 discs. Very different scores.', ['Discs in the 2 · 3 · 4 · 1 boxes', 'Score'], [['5 · 5 · 5 · 5', '5 in every box: five full sets of 20.', 100], ['0 · 0 · 20 · 0', 'All 20 in the 4: no sets, just 20 × 4.', 80], ['6 · 6 · 6 · 2', 'Few in the 1 box: only 2 sets. The 1 box matters!', 76]]],
+    s4: ['Does it count?', [['Half in', 'Slide again. A disc only scores once it’s fully past the gate.'], ['Bounced back', 'Off the board, or back past the start bar? It sits out until your next go.'], ['Hands off', 'Hands off the board until your go is over.']]],
+    banner: ['Highest score wins!', 'A perfect turn scores 148: seven sets, plus two spare in the 4.']
+  },
+  appNotes: ['You can slide the next disc while others are still moving, just like the real thing.', 'Discs that stop on the board stay there until the go ends, so they can block a gate.']
+};
+
+/* =========================================================
+   Shuffleboard (table) and Bank Shot (rebound) shuffleboard
+   ========================================================= */
+function puckLook(b) { const c = COL.side[b.side || 0]; return { top: c.top, edge: c.edge, ring: b.side ? 'rgba(248,220,168,.55)' : 'rgba(255,255,255,.45)' }; }
+
+class ShuffleTable extends SlideTable {
+  init() {
+    const L = this.L = 3660; this.W2 = 508; this.R = 29; this.foul = L - 1830; this.l2 = L - 305; this.l3 = L - 152;
+    this.startY = 110; this.th = 16; this.vmax = 1950; this.aimLen = 1100; this.maxAng = 5 * DEG; this.decel = 420;
+    this.world = new World({ decel: this.decel, e: 0.88 });
+    this.order = []; const h = this.unit.hammer; for (let i = 0; i < 4; i++) this.order.push(1 - h, h); this.thrown = 0;
+  }
+  look(b) { return puckLook(b); }
+  xRange() { const h = this.W2 / 2 - this.R - 3; return [-h, h]; }
+  nextShooter() { if (this.thrown >= 8) return null; const side = this.order[this.thrown], p = this.m.players[side]; return { side, cpu: p.kind === 'cpu', name: p.name }; }
+  launch(w, s, sh) { const sp = this.vmax * Math.sqrt(s.pow); return w.add({ x: s.x, y: this.startY, r: this.R, vx: Math.sin(s.ang) * sp, vy: Math.cos(s.ang) * sp, side: sh.side }); }
+  onShot() { this.thrown++; }
+  hook(w, b) { if (b.y > this.L || Math.abs(b.x) > this.W2 / 2) { b.out = 'off'; if (!w.sim) { b.fall = 0; Sound.thud(0.2); } } }
+  rest(w, live) { for (const b of w.bodies) if (!b.out && b.y - b.r < this.foul) { b.out = 'short'; if (live) b.fade = 0; } }
+  val(b) { if (b.y + b.r > this.L) return 4; if (b.y - b.r >= this.l3) return 3; if (b.y - b.r >= this.l2) return 2; return 1; }
+  depth(b) { return b.y; }
+  score(w) { return sideScore(w.bodies.filter(b => !b.out), b => this.val(b), b => this.depth(b)); }
+  result() { const s = this.score(this.world); return { side: s.side, pts: s.pts }; }
+  status() {
+    const sh = this.shooter; if (!sh) return ['', ''];
+    const mine = Math.floor((this.thrown) / 2) + 1, s = this.score(this.world);
+    const lie = s.side >= 0 ? `${this.m.players[s.side].name} lying ${s.pts}` : 'Nobody lying yet';
+    return [`${sh.name}'s shot`, `Puck ${Math.min(4, mine)} of 4 · ${lie}`];
+  }
+  tipText() { return 'Touch where to shoot from, pull back, let go'; }
+  camPresets(W, H) {
+    const hw = this.W2 / 2, L = this.L;
+    return {
+      aim: fitCam([0, -1000, 1250], [0, L * 0.58, 0], rectPts(-hw - 70, -60, hw + 70, L + 110), { x: 14, y: 10, w: W - 28, h: H * 0.8 - 10 }),
+      watch: fitCam([0, L - 1650, 1250], [0, L - 300, 0], rectPts(-hw - 70, this.foul + 500, hw + 70, L + 110), { x: 14, y: 12, w: W - 28, h: H - 24 }),
+      inset: Object.assign(fitCam([0, L - 900, 1500], [0, L - 250, 0], rectPts(-hw - 30, L - 640, hw + 30, L + 90), { x: W * 0.64, y: 8, w: W * 0.36 - 8, h: H * 0.3 }), { label: 'FAR END' })
+    };
+  }
+  drawTable(g) {
+    const c = this.cam, L = this.L, hw = this.W2 / 2;
+    gfill(g, c, rectPts(-hw - 70, -60, hw + 70, L + 110), COL.plum);
+    gfill(g, c, rectPts(-hw - 8, -10, hw + 8, L + 8), '#2e0f2d');
+    gfill(g, c, rectPts(-hw, 0, hw, L), COL.sand);
+    for (let x = -hw + 45; x < hw; x += 64) gvbar(g, c, x, 0, L, 2, 'rgba(176,96,27,.09)');
+    gfill(g, c, rectPts(-hw, this.l3, hw, L), '#f4c27e'); gfill(g, c, rectPts(-hw, this.l2, hw, this.l3), '#fae6c2');
+    gfill(g, c, rectPts(-hw, 0, hw, 152), 'rgba(244,194,126,.45)'); gfill(g, c, rectPts(-hw, 152, hw, 305), 'rgba(250,230,194,.5)');
+    gbar(g, c, -hw, hw, this.foul, 9, COL.orange); gbar(g, c, -hw, hw, this.l2, 6, COL.plum); gbar(g, c, -hw, hw, this.l3, 6, COL.plum);
+    gbar(g, c, -hw, hw, 1830, 5, 'rgba(78,31,77,.25)'); gbar(g, c, -hw, hw, 305, 4, 'rgba(78,31,77,.25)'); gbar(g, c, -hw, hw, 152, 4, 'rgba(78,31,77,.25)');
+    gtext(g, c, '1', 0, this.l2 - 300, 190, COL.plum, { a: 0.5 }); gtext(g, c, '2', 0, (this.l2 + this.l3) / 2, 115, COL.plum, { a: 0.6 }); gtext(g, c, '3', 0, (this.l3 + L) / 2, 115, COL.plum, { a: 0.6 });
+    gtext(g, c, 'FOUL LINE', 0, this.foul - 55, 48, COL.orange, { a: 0.9 }); gtext(g, c, '4 HANGING OVER', 0, L + 62, 38, COL.sand, { a: 0.9 });
+  }
+  async plan() {
+    const me = this.shooter.side, a = this.decel, C = [], L = this.L;
+    const powFor = d => clamp(Math.pow(Math.sqrt(2 * a * Math.max(20, d - this.startY)) / this.vmax, 2), 0.02, 1);
+    for (const x of [-150, -75, 0, 75, 150]) for (const d of [L - 50, L - 110, L - 220, L - 420, L - 900, L + 6]) for (const an of [0, -0.35, 0.35]) C.push({ x, ang: an * DEG, pow: powFor(d) });
+    for (const b of this.world.bodies) if (!b.out && b.side !== me) for (const x of [-170, -85, 0, 85, 170]) {
+      const ang = Math.atan2(b.x - x, b.y - this.startY); if (Math.abs(ang) < this.maxAng) for (const p of [0.8, 0.92, 1]) C.push({ x, ang, pow: p });
+    }
+    const ev = w => { const s = this.score(w); return s.side === me ? s.pts : s.side >= 0 ? -s.pts : 0; };
+    const r = await this.search(C, ev, 520); if (!r) return null; return await this.refine(r.best, r.v, ev, 18);
+  }
+}
+
+class BankTable extends ShuffleTable {
+  init() {
+    this.L = 2100; this.W2 = 1000; this.R = 29; this.startY = 90; this.th = 16; this.vmax = 3000; this.aimLen = 650; this.maxAng = 24 * DEG; this.decel = 420;
+    this.div = 1250; this.first = 600; this.lines = [150, 300, 450]; this.angSnap = 0; this.angK = 1; this.noiseA = 0.18 * DEG; this.aiScale = 0.6;
+    const e = 0.8, tf = 0.97, W = 500, cr = 250, cy = this.L - cr;
+    const walls = [wallSeg(-W, 0, -W, cy, e, tf), wallSeg(W, 0, W, cy, e, tf), wallSeg(-cr, this.L, cr, this.L, e, tf),
+      ...arcWalls(-W + cr, cy, cr, Math.PI, Math.PI / 2, 10, e, tf), ...arcWalls(W - cr, cy, cr, Math.PI / 2, 0, 10, e, tf),
+      ...boxWalls(-15, -40, 15, this.div, 0.7, 0.97)];
+    this.world = new World({ decel: this.decel, e: 0.88, walls });
+    this.order = []; const h = this.unit.hammer; for (let i = 0; i < 4; i++) this.order.push(1 - h, h); this.thrown = 0; this.aimX = -250;
+  }
+  xRange() { return [-500 + this.R + 4, -15 - this.R - 4]; }
+  hook(w, b) { if (b.y < 0 || b.y > this.L + 50 || Math.abs(b.x) > 560) { b.out = 'off'; if (!w.sim) { b.fall = 0; Sound.thud(0.2); } } }
+  rest(w, live) { for (const b of w.bodies) if (!b.out && (b.x < 15 || b.y + b.r > this.first)) { b.out = 'dead'; if (live) b.fade = 0; } }
+  val(b) { const f = b.y + b.r; return f <= 150 ? 4 : f <= 300 ? 3 : f <= 450 ? 2 : f <= 600 ? 1 : 0; }
+  depth(b) { return -b.y; }
+  tipText() { return 'Bank it off the back cushion: aim up and to the right'; }
+  camPresets(W, H) {
+    const p = fitCam([0, -1150, 2100], [0, 1050, 0], rectPts(-560, -50, 560, this.L + 60), { x: 12, y: 10, w: W - 24, h: H * 0.84 - 10 });
+    return { aim: p, watch: p };
+  }
+  outline(o) { // playfield boundary, grown by o mm
+    const W = 500 + o, cr = 250 + o, cy = this.L - 250, pts = [[-W, -o * 0.6], [-W, cy]];
+    for (let i = 1; i <= 10; i++) { const t = Math.PI - i / 10 * Math.PI / 2; pts.push([-250 + cr * Math.cos(t), cy + cr * Math.sin(t)]); }
+    for (let i = 0; i <= 10; i++) { const t = Math.PI / 2 - i / 10 * Math.PI / 2; pts.push([250 + cr * Math.cos(t), cy + cr * Math.sin(t)]); }
+    pts.push([W, -o * 0.6]); return pts;
+  }
+  drawTable(g) {
+    const c = this.cam;
+    gfill(g, c, this.outline(55), COL.plum); gfill(g, c, this.outline(0), COL.sand);
+    for (let x = -460; x < 500; x += 70) gvbar(g, c, x, 0, this.L - (Math.abs(x) > 250 ? 250 - Math.sqrt(Math.max(0, 250 * 250 - Math.pow(Math.abs(x) - 250, 2))) : 0), 2, 'rgba(176,96,27,.08)');
+    gfill(g, c, rectPts(15, 0, 500, 150), '#f4c27e'); gfill(g, c, rectPts(15, 150, 500, 300), '#f7d49e'); gfill(g, c, rectPts(15, 300, 500, 450), '#fae6c2');
+    for (const y of this.lines) gbar(g, c, 15, 500, y, 6, COL.plum); gbar(g, c, 15, 500, this.first, 9, COL.orange);
+    [['4', 75], ['3', 225], ['2', 375], ['1', 525]].forEach(([t, y]) => gtext(g, c, t, 258, y, 92, COL.plum, { a: 0.62 }));
+    gtext(g, c, 'FIRST LINE', 258, this.first + 50, 40, COL.orange, { a: 0.9 });
+    dashLine(g, c, [[-300, 420], [-300, 1650], [-150, 1980], [150, 1980], [300, 1650], [300, 760]], 'rgba(78,31,77,.18)', 3, [4, 9]);
+    gtext(g, c, 'SHOOT UP', -258, 360, 46, COL.plum, { a: 0.45 }); gtext(g, c, 'THE BEND', 0, this.L - 130, 46, COL.plum, { a: 0.4 });
+    gfill(g, c, rectPts(-15, -30, 15, this.div), COL.plum); gfill(g, c, circPts(0, this.div, 15, 16), COL.plum);
+  }
+  async plan() {
+    const me = this.shooter.side, C = [];
+    for (const x of [-420, -330, -240, -150, -70]) for (let a = 1; a <= 22; a += 2.2) for (let p = 0.3; p <= 0.98; p += 0.085) C.push({ x, ang: a * DEG, pow: p });
+    C.sort(() => Math.random() - 0.5);
+    const ev = w => { const s = this.score(w); return s.side === me ? s.pts : s.side >= 0 ? -s.pts : 0; };
+    const r = await this.search(C, ev, 700); if (!r) return null; return await this.refine(r.best, r.v, ev, 28, 0.8 * DEG, 0.03, 10);
+  }
+}
+
+GAMES.shuffle = puckRoundsGame({
+  id: 'shuffle', name: 'Shuffleboard', short: 'Shuffleboard', tag: 'Slide far. Knock theirs off. Hang one over.', icon: ICON.shuffle,
+  blurb: 'Slide your pucks the length of the table.', Table: ShuffleTable,
+  vals: [[1, 'Near'], [2, 'Middle'], [3, 'Far'], [4, 'Hanger']],
+  options: [{ id: 'to', label: 'Play to', sub: 'Points to win', choices: [[15, '15'], [21, '21']], def: 15 },
+    { id: 'hammer', label: 'Last shot in round 1', sub: 'The hammer', choices: [['toss', 'Coin toss'], [0, '@0'], [1, '@1']], def: 'toss' }],
+  info: [['board', '1 shuffleboard table', 'dust it with shuffleboard wax'], ['disc', '8 pucks', '4 each, in two colours'], ['people', '2 players', 'or two teams of two']],
+  rules: {
+    s1: ['Play a round', [['Toss a coin.', 'The winner shoots last. That’s called the hammer.'], ['Take turns, one puck at a time.', 'Slide from your end of the table.'], ['Knock theirs off.', 'Bumping their pucks off the table is fair play.'], ['Score when all 8 are played.', 'Agree it before anyone moves a puck.']]],
+    s2: ['Scoring', [[4, 'points', 'Hanging over the end'], [3, 'points', 'Far zone'], [2, 'points', 'Middle zone'], [1, 'point', 'Near zone']], ['On the 3 line', '= 2 points']],
+    s3: ['Who scores?', 'Only one side scores. Count your pucks that are past their best one.', ['Your pucks in orange · end of the round', 'You score'], [['Two past their best', 'Hanger 4, plus 3.', 7], ['One past their best', 'Your puck in the 1 is behind theirs.', 3], ['Theirs is furthest', 'They score 3. You get nothing.', 0]]],
+    s4: ['Fouls', [['Too short', 'Pass the foul line. Short pucks are lifted off straight away.'], ['Off', 'Knocked off? It’s out until the next round.'], ['Next round', 'Scored this round? You shoot first next round.']]],
+    banner: ['First to <em>15</em> wins!', 'Want a longer game? Play to 21.']
+  },
+  appNotes: ['A 12 ft table, 4 pucks each. Pucks short of the foul line come off when they stop.', 'Pucks touching a line score the lower zone. A hanger is a puck over the far edge that hasn’t dropped.']
+});
+
+GAMES.bank = puckRoundsGame({
+  id: 'bank', name: 'Bank Shot Shuffleboard', short: 'Bank Shot', tag: 'Bank it off the back. Round the bend. Land it on their side.', icon: ICON.bank,
+  blurb: 'Rebound off the back cushion into the zones.', Table: BankTable,
+  vals: [[1, 'Past first line'], [2, 'Zone 2'], [3, 'Zone 3'], [4, 'By the edge']],
+  options: [{ id: 'to', label: 'Play to', sub: 'Points to win', choices: [[15, '15'], [21, '21']], def: 15 },
+    { id: 'hammer', label: 'Last shot in round 1', sub: 'The hammer', choices: [['toss', 'Coin toss'], [0, '@0'], [1, '@1']], def: 'toss' }],
+  info: [['board', '1 bank shot table', 'short and wide, split down the middle'], ['disc', '8 pucks', '4 each, in two colours'], ['people', '2 players', 'or two teams']],
+  rules: {
+    s1: ['Play a round', [['Toss a coin.', 'The winner shoots last: the hammer.'], ['Shoot up your side.', 'Everyone shoots from the same end, one puck at a time.'], ['Bank it round the bend.', 'Bounce off the back cushion so it comes back down the other side.'], ['Score when all 8 are played.', 'Knocking theirs off is fair play.']]],
+    s2: ['Scoring', [[4, 'points', 'Nearest the front edge'], [3, 'points', 'Next zone back'], [2, 'points', 'Middle zone'], [1, 'point', 'Just past the first line']], ['Touching the 3 line', '= 2 points']],
+    s3: ['Who scores?', 'Only one side scores. Count your pucks nearer the edge than their best one.', ['Your pucks in orange · end of the round', 'You score'], [['Two nearer than theirs', '4 by the edge, plus 3.', 7], ['One nearer than theirs', 'Your other puck is behind theirs.', 2], ['Theirs is nearest', 'They score. You get nothing.', 0]]],
+    s4: ['Dead pucks', [['Didn’t come round', 'Left on the shooting side? Take it off.'], ['Short', 'Not past the first line? Off too.'], ['Over the edge', 'Gone until the next round. Scored this round? You shoot first next round.']]],
+    banner: ['First to <em>15</em> wins!', 'Want a longer game? Play to 21.']
+  },
+  appNotes: ['The rebound table found in UK bars: shoot up the left, bounce off the back cushion, score on the right.', 'Zones run 1 to 4, highest by the front edge. Pucks over the edge are gone.']
+});
+
+/* =========================================================
+   Indoor (tabletop) curling
+   ========================================================= */
+class CurlTable extends SlideTable {
+  init() {
+    this.L = 3300; this.W2 = 600; this.R = 38; this.th = 24; this.startY = 150; this.release = 450; this.hog = 1900;
+    this.tee = 2750; this.houseR = 230; this.back = this.tee + this.houseR; this.vmax = 1400; this.decel = 260; this.curlK = 34;
+    this.aimLen = 1500; this.maxAng = 6 * DEG; this.tone = 1500; this.bg = '#ece2ee';
+    this.world = new World({ decel: this.decel, e: 0.86, curlK: this.curlK });
+    const n = this.m.opts.stones, h = this.unit.hammer; this.n = n; this.order = []; for (let i = 0; i < n; i++) this.order.push(1 - h, h); this.thrown = 0;
+    this.spin = store.get('curl', 1); this.sweeping = false;
+  }
+  look(b) { const c = COL.side[b.side || 0]; return { top: c.top, edge: '#9d95ab', th: this.th, ring: 'rgba(255,255,255,.45)' }; }
+  xRange() { return [-200, 200]; }
+  nextShooter() { if (this.thrown >= this.order.length) return null; const side = this.order[this.thrown], p = this.m.players[side]; return { side, cpu: p.kind === 'cpu', name: p.name }; }
+  launch(w, s, sh) { const sp = this.vmax * Math.sqrt(s.pow); return w.add({ x: s.x, y: this.startY, r: this.R, vx: Math.sin(s.ang) * sp, vy: Math.cos(s.ang) * sp, side: sh.side, spin: s.spin || 1 }); }
+  onShot() { this.thrown++; this.tools(); }
+  hook(w, b) { if (b.y > this.L || Math.abs(b.x) > this.W2 / 2) { b.out = 'off'; if (!w.sim) { b.fall = 0; Sound.thud(0.25); } } }
+  rest(w, live) {
+    for (const b of w.bodies) if (!b.out && (b.y - b.r < this.hog || b.y + b.r > this.back)) { b.out = b.y < this.hog ? 'hog' : 'back'; if (live) b.fade = 0; }
+    for (const b of w.bodies) { b.fr = 1; b.curlM = 1; }
+  }
+  dist(b) { return Math.hypot(b.x, b.y - this.tee); }
+  score(w) { return sideScore(w.bodies.filter(b => !b.out), b => (this.dist(b) - b.r <= this.houseR ? 1 : 0), b => -this.dist(b)); }
+  result() { const s = this.score(this.world); return { side: s.side, pts: s.pts }; }
+  status() {
+    const sh = this.shooter; if (!sh) return ['', ''];
+    const k = Math.floor(this.thrown / 2) + 1, s = this.score(this.world);
+    const lie = s.side >= 0 ? `${this.m.players[s.side].name} lying ${s.pts}` : 'Nobody in the house';
+    return [`${sh.name}'s stone`, `Stone ${Math.min(k, this.n)} of ${this.n} · ${lie}`];
+  }
+  tipText() { return 'Pick the curl, then pull back and let go'; }
+  begin() { this.tools(); this.next(); }
+  next() { super.next(); this.tools(); }
+  tools() {
+    const sh = this.shooter, mine = this.state === 'moving' && this.lastBody && !this.m.players[this.lastBody.side].cpu;
+    const aiming = this.state === 'aim';
+    this.ui.tools(`<div class="seg" role="group" aria-label="Curl"><button data-tg="t:curl:-1" class="${this.spin < 0 ? 'on' : ''}" ${aiming ? '' : 'disabled'}>↰ Curl left</button><button data-tg="t:curl:1" class="${this.spin > 0 ? 'on' : ''}" ${aiming ? '' : 'disabled'}>Curl right ↱</button></div>
+      <button class="sweep ${this.sweeping ? 'on' : ''}" data-hold="sweep" ${mine ? '' : 'disabled'}>Hold to sweep</button>`);
+  }
+  toolAct(a, v) { if (a === 'curl') { this.spin = +v; store.set('curl', this.spin); this.tools(); } }
+  hold(name, on) { if (name !== 'sweep') return; this.sweeping = on && this.state === 'moving'; const b = this.lastBody; if (b && !b.out) { b.fr = this.sweeping ? 0.72 : 1; b.curlM = this.sweeping ? 0.5 : 1; } this.ui.toolsClass('sweep', this.sweeping); }
+  update(dt) {
+    if (this.state === 'moving' && this.sweeping && this.lastBody && !this.lastBody.out && (this.lastBody.vx || this.lastBody.vy)) { this.sweepT = (this.sweepT || 0) + dt; if (this.sweepT > 0.12) { this.sweepT = 0; Sound.slide(); } }
+    const was = this.state; super.update(dt); if (was === 'moving' && this.state !== 'moving') { this.sweeping = false; this.tools(); }
+  }
+  camPresets(W, H) {
+    const hw = this.W2 / 2;
+    return {
+      aim: fitCam([0, -850, 1350], [0, 2000, 0], rectPts(-hw - 50, -40, hw + 50, this.L + 60), { x: 14, y: 10, w: W - 28, h: H * 0.8 - 10 }),
+      inset: Object.assign(fitCam([0, this.tee - 700, 1500], [0, this.tee, 0], rectPts(-hw - 10, this.tee - 300, hw + 10, this.back + 70), { x: W * 0.64, y: 8, w: W * 0.36 - 8, h: H * 0.28 }), { label: 'HOUSE' }),
+      watch: fitCam([0, this.tee - 1500, 1600], [0, this.tee - 80, 0], rectPts(-hw - 50, this.hog + 150, hw + 50, this.L + 60), { x: 14, y: 12, w: W - 28, h: H - 24 })
+    };
+  }
+  drawTable(g) {
+    const c = this.cam, hw = this.W2 / 2, L = this.L, t = this.tee;
+    gfill(g, c, rectPts(-hw - 50, -40, hw + 50, L + 60), COL.plum);
+    gfill(g, c, rectPts(-hw, 0, hw, L), '#fbf8fb');
+    gfill(g, c, circPts(0, t, this.houseR, 64), '#7a3f78'); gfill(g, c, circPts(0, t, 155, 64), '#fbf8fb');
+    gfill(g, c, circPts(0, t, 85, 56), COL.orange); gfill(g, c, circPts(0, t, 30, 40), '#fbf8fb');
+    gvbar(g, c, 0, this.release, L, 3, 'rgba(78,31,77,.35)'); gbar(g, c, -hw, hw, t, 3, 'rgba(78,31,77,.55)');
+    gbar(g, c, -hw, hw, this.hog, 10, COL.orange); gbar(g, c, -hw, hw, this.back, 5, COL.plum);
+    dashLine(g, c, [[-hw, this.release], [hw, this.release]], COL.plum, 2, [6, 6]);
+    gfill(g, c, rectPts(-45, 60, 45, 120), 'rgba(78,31,77,.35)');
+    gtext(g, c, 'LET GO BEFORE THIS LINE', 0, this.release + 40, 34, COL.plum, { a: 0.6 });
+    gtext(g, c, 'SECOND LINE', 0, this.hog - 50, 44, COL.orange, { a: 0.9 }); gtext(g, c, 'BACK LINE', 0, this.back + 45, 36, COL.plum, { a: 0.7 });
+  }
+  drawBodies(g) {
+    for (const b of this.bodyOrder()) {
+      const L = this.look(b); let z = 0, alpha = 1;
+      if (b.out && b.fall != null) { z -= b.fall * b.fall * 700; alpha = 1 - b.fall; } if (b.out && b.fade != null) alpha = 1 - b.fade;
+      gdisc(g, this.cam, b.x, b.y, b.r, L.th, L.top, L.edge, { z, alpha, shadow: !b.out, ring: L.ring });
+      this.handle(g, b.x, b.y, b.r, L.th + z, alpha);
+    }
+  }
+  handle(g, x, y, r, z, alpha = 1) {
+    const a = this.cam.p(x - r * 0.42, y, z + 5), b = this.cam.p(x + r * 0.42, y, z + 5);
+    g.save(); g.globalAlpha = alpha; g.strokeStyle = COL.plum; g.lineCap = 'round'; g.lineWidth = Math.max(3, r * a[2] * 0.36); g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke();
+    g.strokeStyle = COL.sand; g.lineWidth = Math.max(1.5, r * a[2] * 0.2); g.stroke(); g.restore();
+  }
+  drawReady(g) { super.drawReady(g); this.handle(g, this.aimX, this.startY, this.R, this.th); }
+  aimPath(sh) {
+    const len = this.aimLen * (0.3 + 0.7 * sh.pow), pts = [];
+    for (let i = 0; i <= 16; i++) { const t = i / 16; pts.push([sh.x + Math.sin(sh.ang) * len * t + (sh.spin || 1) * 160 * t * t * t, this.startY + Math.cos(sh.ang) * len * t]); }
+    return pts;
+  }
+  /* computer player: solve draws and take-outs by simulating the stone alone, then score each in the real position */
+  probe(shot, ty) {
+    const w = new World({ decel: this.decel, e: 0.86, curlK: this.curlK }); w.sim = true; const b = this.launch(w, shot, this.shooter);
+    let t = 0, hit = null; while (w.moving() && t < 16) { w.step(1 / 60); t += 1 / 60; if (ty != null && !hit && b.y >= ty) hit = [b.x, b.y]; }
+    return { x: b.x, y: b.y, hit };
+  }
+  solveDraw(tx, ty, spin, x0) {
+    let s = { x: x0, ang: 0, pow: clamp((2 * this.decel * (ty - this.startY)) / (this.vmax * this.vmax), 0.05, 1), spin };
+    for (let i = 0; i < 4; i++) {
+      const r = this.probe(s); const d = ty - this.startY, got = Math.max(50, r.y - this.startY);
+      s.pow = clamp(s.pow * d / got, 0.03, 1); s.ang = clamp(s.ang + Math.atan2(tx - r.x, ty - this.startY), -this.maxAng, this.maxAng);
+    }
+    return s;
+  }
+  solveHit(b, spin, pow, x0) {
+    let s = { x: x0, ang: Math.atan2(b.x - x0, b.y - this.startY), pow, spin };
+    for (let i = 0; i < 3; i++) { const r = this.probe(s, b.y); if (!r.hit) break; s.ang = clamp(s.ang + Math.atan2(b.x - r.hit[0], b.y - this.startY), -this.maxAng, this.maxAng); }
+    return s;
+  }
+  async plan() {
+    const me = this.shooter.side, C = [], t = this.tee, last = this.thrown === this.order.length - 1;
+    const targets = [[0, t], [-55, t - 20], [55, t - 20], [0, t - 110], [0, t + 90], [-110, t + 40], [110, t + 40]];
+    if (!last) targets.push([-45, this.hog + 380], [45, this.hog + 380]);
+    for (const [tx, ty] of targets) for (const sp of [-1, 1]) { C.push(this.solveDraw(tx, ty, sp, -sp * 50)); if (C.length % 6 === 0) await sleep(0); }
+    for (const b of this.world.bodies) if (!b.out && b.side !== me) for (const sp of [-1, 1]) for (const p of [0.8, 0.98]) { C.push(this.solveHit(b, sp, p, -sp * 40)); await sleep(0); }
+    const ev = w => {
+      const s = this.score(w); let v = s.side === me ? s.pts : s.side >= 0 ? -s.pts * 1.05 : 0;
+      if (!last && s.side === me) for (const b of w.bodies) if (!b.out && b.side === me && Math.abs(b.x) < 120 && b.y > this.hog + 150 && b.y < t - this.houseR - 30) v += 0.2;
+      return v;
+    };
+    const r = await this.search(C, ev, 600); if (!r) return null; return await this.refine(r.best, r.v, ev, 14, 0.3 * DEG, 0.02, 8);
+  }
+}
+
+GAMES.curling = {
+  id: 'curling', name: 'Indoor Curling', short: 'Curling', tag: 'Slide to the button. Guard it. Knock them out.', icon: ICON.curling,
+  blurb: 'Tabletop curling, with curl and sweeping.', Table: CurlTable, kind: 'rounds',
+  seat: { min: 2, max: 2, label: 'Teams', sides: true, names: ['Orange', 'Plum'] },
+  options: [{ id: 'ends', label: 'Ends', sub: 'Most points after these wins', choices: [[8, '8'], [4, '4 · short']], def: 8 },
+    { id: 'stones', label: 'Stones each', sub: 'Per team, every end', choices: [[3, '3'], [4, '4'], [6, '6']], def: 4 },
+    { id: 'hammer', label: 'Last stone in end 1', sub: 'Or throw one each: nearest the centre goes last', choices: [['toss', 'Coin toss'], [0, '@0'], [1, '@1']], def: 'toss' }],
+  info: [['board', '1 curling board', 'the target end is the house'], ['target', 'Stones', 'two colours, half each'], ['people', '2 teams', '1 to 4 players each']],
+  init(m) { m.s = { pts: [0, 0], hammer: resolveFirst(m, m.opts.hammer), ends: [] }; },
+  unit(m) {
+    const n = m.s.ends.length + 1, h = m.s.hammer, extra = n > m.opts.ends;
+    return { round: n, hammer: h, title: extra ? `Extra end` : `End ${n} of ${m.opts.ends}`, sub: `${rname(m, h)} throws the last stone` };
+  },
+  apply(m, res) {
+    const s = m.s; s.ends.push({ side: res.side, pts: res.pts, hammer: s.hammer, where: res.where });
+    let msg;
+    if (res.side >= 0 && res.pts > 0) { s.pts[res.side] += res.pts; s.hammer = 1 - res.side; msg = { t: `${rname(m, res.side)} score ${res.pts}`, s: `${rname(m, res.side)} throw first next end` }; }
+    else msg = { t: 'Blank end', s: `${rname(m, s.hammer)} keep the last stone` };
+    if (s.ends.length >= m.opts.ends && s.pts[0] !== s.pts[1]) { m.over = true; m.winner = [s.pts[0] > s.pts[1] ? 0 : 1]; }
+    else if (s.ends.length >= m.opts.ends) msg.s = 'All square. Play an extra end!';
+    return msg;
+  },
+  chips(m) { return [0, 1].map(i => ({ name: m.players[i].name, dot: i, v: m.s.pts[i], small: '', sub: m.s.hammer === i ? 'last stone' : '&nbsp;', tag: m.s.hammer === i && !m.over ? 'hammer' : '' })); },
+  board(m) {
+    const s = m.s, n = Math.max(m.opts.ends, s.ends.length), cols = [...Array(n)].map((_, i) => i);
+    const row = k => `<tr><td class="nm">${dotHTML(k).replace('<i', '<i class="d"')} ${pname(m, k)}</td>${cols.map(i => { const e = s.ends[i]; return `<td class="${e && e.side === k ? '' : 'dim'}${e && e.hammer === k ? ' hm' : ''}">${e ? (e.side === k ? e.pts : (e.hammer === k ? '·' : '')) : ''}</td>`; }).join('')}<td class="tot">${s.pts[k]}</td></tr>`;
+    return `<div class="wrapx"><table class="grid"><tr><th>Team</th>${cols.map(i => `<th>${i < m.opts.ends ? i + 1 : 'X'}</th>`).join('')}<th>Tot</th></tr>${row(0)}${row(1)}</table></div>
+    <p class="note">Orange numbers show who had the last stone that end. Blank ends score nothing.</p>`;
+  },
+  entryInit() { return { side: null, n: 1 }; },
+  entryHTML(m, st, u) {
+    let h = `<div class="panel lite"><h3>${esc(u.title)} on the real board</h3><p class="note" style="margin:0 0 10px">${pname(m, 1 - u.hammer)} throw first, ${pname(m, u.hammer)} have the last stone. When every stone is in, who's nearest the button?</p>
+    <div class="choice">${[0, 1].map(i => `<button class="btn ${st.side === i ? 'on' : ''}" data-tg="e:side:${i}">${pname(m, i)}<small>nearest</small></button>`).join('')}<button class="btn ${st.side === -1 ? 'on' : ''}" data-tg="e:side:-1">Blank end<small>none in the house</small></button></div></div>`;
+    if (st.side >= 0) h += `<div class="panel" style="margin-top:10px">${stepperHTML('n', 'Stones that count', `In the house and nearer than ${pname(m, 1 - st.side)}'s best`, st.n, 1, m.opts.stones)}</div>`;
+    h += `<div class="btns"><button class="btn primary wide" data-tg="e:done" ${st.side == null ? 'disabled' : ''}>Save ${esc(u.title.toLowerCase())}</button></div>`;
+    return h;
+  },
+  entryAct(m, st, a, v) {
+    if (a === 'side') st.side = +v; else if (a === 'inc') st.n = Math.min(m.opts.stones, st.n + 1); else if (a === 'dec') st.n = Math.max(1, st.n - 1);
+    else if (a === 'done') return { done: { side: st.side, pts: st.side >= 0 ? st.n : 0 } };
+  },
+  rules: {
+    s1: ['Play an end', [['Pick who goes last.', 'One stone each: closest to the centre throws last.'], ['Take turns, one stone at a time.', 'Let go before the first line.'], ['Guard, draw or knock out.', 'Bumping other stones is all part of it.'], ['Score once every stone is in.', 'That’s one end. Then go again.']]],
+    s2: ['Scoring', [[1, 'point', 'Beats their best'], [1, 'point', 'Touching counts'], [0, 'points', 'Outside the house']], ['2 beat purple', '= 2 points'], 'Only the nearest team scores.'],
+    s3: ['Is it in play?', 'Check each stone as it stops.', ['Where your stone stops', 'Stays?'], [['Past the second line', 'In play. Leave it where it is.', 'Yes'], ['Short of the second line', 'Hogged! Take it off.', 'No'], ['On the back line, or off', 'Out for the rest of this end.', 'No']]],
+    s4: ['Next end', [['Scored', 'Scored last end? You throw first. They get the last stone.'], ['Go first', 'Nobody scored? Keep the same order.'], ['Last stone', 'Last stone is gold. Nobody can answer it.']]],
+    banner: ['Most points after <em>8</em> ends wins!', 'Tied? Play an extra end. Short on time? Play 4 ends.']
+  },
+  appNotes: ['Choose curl left or right before each throw. Hold Sweep while your stone runs to carry it further and straighter.', 'The app tosses a coin for the first end’s last stone, unless you pick.']
+};
+
+/* =========================================================
+   Shove ha'penny
+   ========================================================= */
+function shoveMarks(beds, me, list, per) {
+  const b = [beds[0].slice(), beds[1].slice()], o = 1 - me, log = [];
+  for (const k of list) {
+    if (b[me].every(v => v >= per)) { log.push({ k, to: -1 }); continue; }
+    if (b[me][k] < per) { b[me][k]++; log.push({ k, to: me }); }
+    else if (b[o][k] < per) {
+      const theirLast = b[o].every((v, i) => (i === k ? v + 1 >= per : v >= per));
+      if (theirLast) log.push({ k, to: -1, why: 'last' }); else { b[o][k]++; log.push({ k, to: o }); }
+    } else log.push({ k, to: -1 });
+  }
+  return { b, log, win: b[me].every(v => v >= per) };
+}
+
+class ShoveTable extends SlideTable {
+  init() {
+    this.W2 = 356; this.L = 508; this.R = 12.75; this.th = 3; this.startY = 13; this.first = 102; this.bed = 31.75; this.lw = 1.6;
+    this.inner = 146.25; this.vmax = 1050; this.decel = 900; this.aimLen = 300; this.maxAng = 12 * DEG; this.tone = 3600;
+    this.angSnap = 1.5 * DEG; this.angK = 0.6; this.noiseP = 0.008; this.bg = '#ece2ee'; this.aiScale = 0.3;
+    this.world = new World({ decel: this.decel, e: 0.72 });
+    this.who = this.unit.who; this.played = 0; this.aimX = 0;
+  }
+  line(k) { return this.first + k * this.bed; }
+  look() { return { top: '#d08a45', edge: '#94572a', ring: 'rgba(255,230,190,.55)', th: 3 }; }
+  xRange() { return [-this.W2 / 2 + 16, this.W2 / 2 - 16]; }
+  nextShooter() { if (this.played >= 5) return null; const p = this.m.players[this.who]; return { side: this.who, cpu: p.kind === 'cpu', name: p.name }; }
+  launch(w, s, sh) { const sp = this.vmax * Math.sqrt(s.pow); return w.add({ x: s.x, y: this.startY, r: this.R, vx: Math.sin(s.ang) * sp, vy: Math.cos(s.ang) * sp, side: sh ? sh.side : 0, maxY: this.startY }); }
+  hook(w, b) {
+    if (b.y > b.maxY) b.maxY = b.y;
+    if (b.y > this.L || Math.abs(b.x) > this.W2 / 2 || b.y < -5) { b.out = 'off'; if (!w.sim) { b.fall = 0; Sound.thud(0.15); } }
+  }
+  rest(w, live) {
+    const b = live ? this.lastBody : w.bodies[w.bodies.length - 1];
+    if (b && !b.out && b.maxY + b.r < this.first) { b.out = 'short'; if (live) { b.fade = 0; this.short = true; } }
+  }
+  bedOf(b) {
+    if (Math.abs(b.x) + b.r >= this.inner) return -1;
+    for (let k = 0; k < 9; k++) { const lo = this.line(k) + this.lw / 2, hi = this.line(k + 1) - this.lw / 2; if (b.y - b.r > lo && b.y + b.r < hi) return k; }
+    return -1;
+  }
+  hits(w) { return w.bodies.filter(b => !b.out).map(b => this.bedOf(b)).filter(k => k >= 0).sort((a, b) => a - b); }
+  marks(w) { return shoveMarks(this.m.s.beds, this.who, this.hits(w), this.m.opts.per); }
+  afterShot() {
+    if (this.short) { this.short = false; this.ui.flash('Short of the first line', 'Not played. Shove it again'); }
+    else this.played++;
+    this.refresh(); this.next();
+  }
+  result() { return { beds: this.hits(this.world) }; }
+  status() {
+    const p = this.m.players[this.who], mk = this.marks(this.world), mine = mk.log.filter(l => l.to === this.who).length, gift = mk.log.filter(l => l.to === 1 - this.who).length;
+    return [`${p.name} · coin ${Math.min(5, this.played + 1)} of 5`, `${plural(mine, 'mark')} so far${gift ? ` · ${gift} going to ${this.m.players[1 - this.who].name}` : ''}`];
+  }
+  tipText() { return 'Touch where to set the coin, pull back, let go'; }
+  camPresets(W, H) { const p = fitCam([0, -70, 860], [0, 255, 0], rectPts(-200, -24, 200, this.L + 16), { x: 10, y: 8, w: W - 20, h: H * 0.8 - 8 }); return { aim: p, watch: p }; }
+  drawTable(g) {
+    const c = this.cam, hw = this.W2 / 2, L = this.L, per = this.m.opts.per;
+    gfill(g, c, rectPts(-hw - 18, -24, hw + 18, L + 16), '#7a4a2c');
+    gfill(g, c, rectPts(-hw, 0, hw, L), '#efc98f');
+    for (let x = -hw + 20; x < hw; x += 26) gvbar(g, c, x, 0, L, 1.2, 'rgba(140,80,30,.10)');
+    const y0 = this.line(0), y9 = this.line(9);
+    gfill(g, c, rectPts(-hw, y0, -this.inner, y9), '#3c2a3b'); gfill(g, c, rectPts(this.inner, y0, hw, y9), '#3c2a3b');
+    for (let k = 0; k <= 9; k++) gbar(g, c, -hw, hw, this.line(k), this.lw, COL.plum);
+    gvbar(g, c, -this.inner, y0, y9, this.lw, COL.plum); gvbar(g, c, this.inner, y0, y9, this.lw, COL.plum);
+    const mk = this.marks(this.world), base = this.m.s.beds;
+    for (let k = 0; k < 9; k++) {
+      gtext(g, c, String(k + 1), -this.inner + 14, this.line(k) + this.bed / 2, 15, COL.plum, { a: 0.35 });
+      for (const side of [0, 1]) {
+        const n = mk.b[side][k], had = base[side][k], xs = side === 0 ? -hw + 8 : this.inner + 8;
+        for (let j = 0; j < Math.min(n, per); j++) { const x = xs + j * 8.5 + (per === 1 ? 8 : 0); gfill(g, c, [[x, this.line(k) + 6], [x + 3, this.line(k) + 6], [x + 4.5, this.line(k + 1) - 6], [x + 1.5, this.line(k + 1) - 6]], j >= had ? COL.gold : '#fff'); }
+      }
+    }
+    gtext(g, c, this.m.players[0].name.slice(0, 10), -hw + 16, y9 + 14, 10, COL.plum, { a: 0.7 }); gtext(g, c, this.m.players[1].name.slice(0, 10), hw - 16, y9 + 14, 10, COL.plum, { a: 0.7 });
+    gtext(g, c, 'FIRST LINE', 0, y0 - 12, 12, COL.plum, { a: 0.45 });
+    // coins still to play
+    for (let i = 0; i < 5 - this.played - (this.state === 'aim' || this.state === 'cpu' ? 1 : 0); i++) gdisc(g, c, hw - 14 - i * 30, -12, this.R, this.th, '#d08a45', '#94572a', { lw: 1 });
+  }
+  async plan() {
+    const me = this.who, per = this.m.opts.per, beds = this.m.s.beds, C = [];
+    const cur = this.marks(this.world).b[me];
+    for (let k = 0; k < 9; k++) {
+      const yc = this.line(k) + this.bed / 2, p = Math.pow(Math.sqrt(2 * this.decel * (yc - this.startY)) / this.vmax, 2);
+      const need = cur[k] < per ? 1 : 0.15;
+      for (const x of [-90, -45, 0, 45, 90]) for (const f of [1, 0.985, 1.015]) C.push({ x, ang: 0, pow: p * f, w: need });
+    }
+    const ev = w => { const r = shoveMarks(beds, me, this.hits(w), per); let v = 0; for (const l of r.log) v += l.to === me ? 1 : l.to === 1 - me ? -0.9 : 0; return v + (r.win ? 50 : 0); };
+    const res = await this.search(C, ev, 450); if (!res) return null; return await this.refine(res.best, res.v, ev, 16, 0.4 * DEG, 0.01, 10);
+  }
+}
+
+GAMES.shove = {
+  id: 'shove', name: 'Shove Ha’penny', short: 'Shove Ha’penny', tag: 'Shove five coins. Chalk up the beds. Fill all nine.', icon: ICON.shove,
+  blurb: 'Five coins, nine beds, chalk on the side.', Table: ShoveTable, kind: 'turns',
+  seat: { min: 2, max: 2, label: 'Players or teams' },
+  options: [{ id: 'per', label: 'Marks to fill a bed', sub: 'Three is the classic game', choices: [[3, '3'], [1, '1 · quick']], def: 3 },
+    { id: 'first', label: 'Who shoves first', sub: '', choices: [['toss', 'Coin toss'], [0, '@0'], [1, '@1']], def: 'toss' }],
+  info: [['board', '1 board', 'nine beds, chalk squares at the sides'], ['coin', '5 ha’pennies', 'smooth and polished'], ['people', '2 players', 'or two teams']],
+  init(m) { m.s = { beds: [Array(9).fill(0), Array(9).fill(0)], cur: resolveFirst(m, m.opts.first), log: [] }; },
+  unit(m) { const s = m.s, left = s.beds[s.cur].filter(v => v < m.opts.per).length; return { who: s.cur, title: `${rname(m, s.cur)}'s turn`, sub: `${plural(left, 'bed')} still to fill` }; },
+  apply(m, res) {
+    const s = m.s, me = s.cur, r = shoveMarks(s.beds, me, res.beds, m.opts.per); s.beds = r.b;
+    const mine = r.log.filter(l => l.to === me).map(l => l.k + 1), gift = r.log.filter(l => l.to === 1 - me).map(l => l.k + 1);
+    s.log.push({ who: me, beds: res.beds.map(k => k + 1), mine, gift, where: res.where });
+    if (r.win) { m.over = true; m.winner = [me]; }
+    s.cur = 1 - me;
+    let t = mine.length ? `${rname(m, me)} chalks up ${listAnd(mine.map(String))}` : `${rname(m, me)}: nothing in a bed`;
+    if (mine.length > 1) t = `${rname(m, me)} chalks up beds ${listAnd(mine.map(String))}`; else if (mine.length) t = `${rname(m, me)} chalks up bed ${mine[0]}`;
+    return { t, s: gift.length ? `Bed ${listAnd(gift.map(String))} was full, so ${rname(m, 1 - me)} gets it` : '' };
+  },
+  chips(m) { return [0, 1].map(i => { const f = m.s.beds[i].filter(v => v >= m.opts.per).length; return { name: m.players[i].name, v: f, small: '/9 beds', sub: `${m.s.beds[i].reduce((a, b) => a + b, 0)} marks`, on: !m.over && m.s.cur === i }; }); },
+  chalk(m, beds, prov, tapSide) {
+    const per = m.opts.per, cell = (side, k) => {
+      const n = (prov || beds)[side][k], had = beds[side][k];
+      return [...Array(Math.min(n, per))].map((_, j) => `<span class="m ${j >= had ? 'new' : ''}"></span>`).join('') || `<span class="sl">·</span>`;
+    };
+    let h = `<div class="chalk"><div class="hd ${m.s.cur === 0 ? 'on' : ''}">${pname(m, 0)}</div><div class="hd">Bed</div><div class="hd ${m.s.cur === 1 ? 'on' : ''}">${pname(m, 1)}</div>`;
+    for (let k = 8; k >= 0; k--) {
+      const full = s => (prov || beds)[s][k] >= per ? ' full' : '';
+      const tag = tapSide != null ? `button data-tg="e:bed:${k}"` : 'div';
+      h += `<${tag} class="bed${full(0)}${tapSide != null ? ' tap' : ''}">${cell(0, k)}</${tag.split(' ')[0]}><${tag} class="bed num${tapSide != null ? ' tap' : ''}">${k + 1}</${tag.split(' ')[0]}><${tag} class="bed${full(1)}${tapSide != null ? ' tap' : ''}">${cell(1, k)}</${tag.split(' ')[0]}>`;
+    }
+    return h + `</div>`;
+  },
+  board(m) {
+    const log = m.s.log.slice(-8).reverse().map(l => `<div>${pname(m, l.who)}: ${l.mine.length ? 'bed ' + l.mine.join(', ') : 'no score'}${l.gift.length ? ` · gave bed ${l.gift.join(', ')}` : ''}</div>`).join('');
+    return this.chalk(m, m.s.beds) + `<p class="note">Bed 1 is nearest the player. Three marks fill a bed${m.opts.per === 1 ? ' (one in the quick game)' : ''}. Once yours is full, more scores there go to the other side, but never their last one.</p>${log ? `<div class="log">${log}</div>` : ''}`;
+  },
+  entryInit() { return { list: [] }; },
+  entryHTML(m, st, u) {
+    const r = shoveMarks(m.s.beds, u.who, st.list.slice().sort((a, b) => a - b), m.opts.per);
+    const gift = r.log.filter(l => l.to === 1 - u.who).length;
+    return `<div class="panel lite" style="margin-bottom:10px"><h3>${pname(m, u.who)}: tap a bed for each coin that's fully in it</h3>
+    <p class="note" style="margin:0">Touching a line doesn't count. ${st.list.length} of 5 coins chalked.${gift ? ` ${gift} will go to ${pname(m, 1 - u.who)} (bed full).` : ''}</p></div>
+    ${this.chalk(m, m.s.beds, r.b, u.who)}
+    <div class="btns"><button class="btn" data-tg="e:pop" ${st.list.length ? '' : 'disabled'}>Undo coin</button><button class="btn primary" data-tg="e:done">Save turn</button></div>`;
+  },
+  entryAct(m, st, a, v) {
+    if (a === 'bed' && st.list.length < 5) st.list.push(+v); else if (a === 'pop') st.list.pop();
+    else if (a === 'done') return { done: { beds: st.list.slice().sort((x, y) => x - y) } };
+  },
+  rules: {
+    s1: ['Play a turn', [['Set a coin at the front edge.', 'Just over the lip, nearest you.'], ['Shove it up the board', 'with the heel of your hand.'], ['Play all five.', 'Knocking earlier coins on is fair play.'], ['Score when all five stop.', 'Chalk up, gather the coins, pass them on.']]],
+    s2: ['Scoring', [[1, 'mark', 'Wholly inside a bed'], [0, 'marks', 'Touching a line'], [0, 'marks', 'Off the board']], ['Coins in beds 2, 2 and 5', '= 2 marks in bed 2, 1 in bed 5'], 'Each bed is the strip between two lines.'],
+    s3: ['Fill the beds', 'Three marks fill a bed. Then what?', ['Another score in a full bed', 'Goes to'], [['Your bed is full', 'The mark goes to them instead.', 'Them'], ['Theirs is full too', 'Nobody gets it.', '—'], ['It would be their last mark', 'Never given away. They must score it.', '—']]],
+    s4: ['Good to know', [['Too short', 'Didn’t reach the first line? It doesn’t count as played. Shove it again.'], ['Off', 'Off the end or the side? Dead for this turn.'], ['Careful', 'Filling a bed too early hands spare scores to them.']]],
+    banner: ['First to fill all <em>nine</em> beds wins!', 'Quick game? One mark fills a bed.']
+  },
+  appNotes: ['Chalk marks show on the sides of the board as you play: gold ones are this turn’s.', 'Gifts to the other side are worked out for you, including the never-their-last-mark rule.']
+};
+
+/* =========================================================
+   App shell: home, setup, play loop, score entry, overlays
+   ========================================================= */
+const CPU_NAMES = ['Hamish', 'Fiona', 'Angus', 'Isla', 'Rab', 'Kirsty'];
+const isCpuName = n => n === 'Computer' || CPU_NAMES.includes(n);
+const cpuName = i => CPU_NAMES[Math.max(0, i - 1) % CPU_NAMES.length];
+function humanName(i) {
+  const names = store.get('names', []); if (names[i]) return names[i];
+  if (i === 0) { try { const f = JSON.parse(localStorage.getItem('pubgames.firstName')); if (f) return f; } catch (e) { } if (window.PubHome) return 'Jeanette'; }
+  return `Player ${i + 1}`;
+}
+const ORDER = ['toad', 'sjoel', 'shuffle', 'bank', 'curling', 'shove'];
+const MODES = {
+  app: { n: 'Play in the app', d: 'Slide, throw and shove on the phone. Add the computer if you’re short of players.', ic: 'phone' },
+  real: { n: 'Keep score at the real table', d: 'Play the real board. The app keeps the score and the rules.', ic: 'pencil' },
+  hybrid: { n: 'Hybrid', d: '', ic: 'mix' }
+};
+const hybridText = G => G.kind === 'turns'
+  ? 'Some play the real board, some play on the phone, all on one scoreboard. Set each player below.'
+  : 'One match, two places. Before each round, pick the real table or the app. Handy when the table’s busy.';
+
+const App = {
+  root: null, m: null, G: null, table: null, est: null, unit: null, where: null, setup: null, ov: null,
+  R() { // our own mount inside #app, wrapped in .tg so our styles never touch the host app
+    let r = document.getElementById('tgroot'); if (r) return r;
+    const a = document.getElementById('app'); a.innerHTML = '<div class="tg" id="tgroot"></div>'; return a.firstChild;
+  },
+  init() {
+    document.addEventListener('click', e => { const t = e.target.closest('[data-tg]'); if (t && !t.disabled) { this.act(t.dataset.tg, t, e); } });
+    document.addEventListener('input', e => { const t = e.target.closest('[data-tgname]'); if (t && this.setup) { this.setup.players[+t.dataset.tgname].name = t.value; this.saveSetup(); } });
+    document.addEventListener('pointerdown', () => Sound.init(), { once: true });
+    this.ui = {
+      status: (t, s) => { const el = $('#status'); if (el) el.innerHTML = `${esc(t)}${s ? `<small>${esc(s)}</small>` : ''}`; },
+      chips: () => this.renderChips(),
+      tip: t => { const el = $('#tip'); if (!el) return; if (t) { el.textContent = t; el.classList.remove('hide'); } else el.classList.add('hide'); },
+      flash: (t, s, orange) => { const el = $('#flash'); if (!el) return; el.className = 'flash show' + (orange ? ' or' : ''); el.innerHTML = `${esc(t)}${s ? `<small>${esc(s)}</small>` : ''}`; clearTimeout(this._ft); this._ft = setTimeout(() => el.classList.remove('show'), 1500 / Math.max(1, SPEED / 2)); },
+      tools: html => { const el = $('#tools'); if (el) { el.innerHTML = html; this.bindHolds(el); } },
+      toolsClass: (name, on) => { const el = document.querySelector(`[data-hold="${name}"]`); if (el) el.classList.toggle('on', on); }
+    };
+    const saved = location.hash.slice(1); if (saved && GAMES[saved]) this.openSetup(saved); else if (!window.PubHome) this.home();
+  },
+  setHash(h) { try { if (location.hash.slice(1) !== h) history.replaceState(null, '', h ? '#' + h : location.pathname + location.search); } catch (e) { } },
+  /* ---------- home ---------- */
+  home(fromHash) {
+    this.stopTable(); this.m = null; this.setup = null; this.closeOv(); if (!fromHash) this.setHash('');
+    if (window.PubHome) { window.PubHome(); window.scrollTo(0, 0); return; }
+    const tiles = ORDER.map(id => {
+      const G = GAMES[id], live = store.get('match.' + id, null);
+      return `<button class="tile" data-tg="open:${id}">${live && !live.over ? '<span class="resume">Game on</span>' : ''}<span class="ic">${G.icon}</span><b>${G.short}</b><small>${G.blurb}</small><span class="pp">${G.seat.max > 2 ? `${G.seat.min}–${G.seat.max} players` : G.seat.label === 'Teams' ? '2 teams' : '2 players or teams'}</span></button>`;
+    }).join('');
+    this.R().innerHTML = `<div class="sheet">
+      <div class="head"><div><p class="label">Pub games night</p><h1 class="title">Table Games</h1><p class="tagline">Slide, throw and shove. On your phone, or at the real table.</p></div><div class="art">${ICON.shuffle}</div></div>
+      <div class="info"><div>${ICON.phone}<p style="margin:0"><b>Play here</b><span>pull back, let go</span></p></div><div>${ICON.pencil}<p style="margin:0"><b>Keep score</b><span>at the real board</span></p></div><div>${ICON.mix}<p style="margin:0"><b>Hybrid</b><span>a bit of both</span></p></div></div>
+      <div class="tiles">${tiles}</div>
+      <div class="sec"><span class="n">1</span>How to aim</div>
+      <ol class="steps"><li><span class="L">A</span><span><b>Touch the table</b> where you want to shoot from.</span></li><li><span class="L">B</span><span><b>Pull back</b> like a catapult. Further back means more power.</span></li><li><span class="L">C</span><span><b>Let go</b> to shoot. Every shot wobbles a little, just like the real thing.</span></li></ol>
+      <div class="sec"><span class="n">2</span>Three ways to play</div>
+      <div class="modes">${['app', 'real', 'hybrid'].map(k => `<div class="mode"><span class="mi">${ICON[MODES[k].ic]}</span><span><b>${MODES[k].n}</b><span>${k === 'hybrid' ? 'Mix the real board and the phone in one match. Great when there’s only one table, or someone fancies a go on the app.' : MODES[k].d}</span></span></div>`).join('')}</div>
+      <div class="banner"><div><div class="t">Six games. <em>One</em> scoreboard.</div><div class="s">Every game has its rules card inside.</div></div><div class="ic">${ICON.crown}</div></div>
+      <p class="foot">Pub games night · table games</p></div>`;
+    window.scrollTo(0, 0);
+  },
+  /* ---------- setup ---------- */
+  defaultSetup(G) {
+    const names = store.get('names', []), n = G.seat.max === 2 || G.seat.min >= 2 ? 2 : 2;
+    return {
+      gid: G.id, mode: 'app', diff: 'med', opts: Object.fromEntries(G.options.map(o => [o.id, o.def])),
+      players: [...Array(n)].map((_, i) => ({ name: G.seat.names ? G.seat.names[i] : i === 1 ? cpuName(i) : humanName(i), kind: i === 0 ? 'human' : 'cpu', where: i === 0 ? 'real' : 'app' }))
+    };
+  },
+  openSetup(gid) {
+    this.stopTable(); this.m = null; this.closeOv(); const G = GAMES[gid]; this.G = G;
+    const s = store.get('setup.' + gid, null); this.setup = s && s.players ? s : this.defaultSetup(G);
+    this.setup.gid = gid; G.options.forEach(o => { if (!(o.id in this.setup.opts)) this.setup.opts[o.id] = o.def; });
+    this.setHash(gid); this.renderSetup(); window.scrollTo(0, 0);
+  },
+  saveSetup() { if (this.setup) store.set('setup.' + this.setup.gid, this.setup); },
+  renderSetup() {
+    const G = this.G, st = this.setup, live = store.get('match.' + G.id, null), mode = st.mode;
+    const kindSeg = (p, i) => {
+      if (mode === 'real' || (mode === 'hybrid' && G.kind === 'rounds')) return '';
+      if (mode === 'app') return `<div class="seg"><button class="${p.kind !== 'cpu' ? 'on' : ''}" data-tg="kind:${i}:human">Person</button><button class="${p.kind === 'cpu' ? 'on' : ''}" data-tg="kind:${i}:cpu">Computer</button></div>`;
+      return `<div class="seg"><button class="${p.where === 'real' ? 'on' : ''}" data-tg="where:${i}:real">Real board</button><button class="${p.where === 'app' ? 'on' : ''}" data-tg="where:${i}:app">App</button><button class="${p.where === 'cpu' ? 'on' : ''}" data-tg="where:${i}:cpu">Computer</button></div>`;
+    };
+    const players = st.players.map((p, i) => `<div class="prow">${G.seat.sides ? `<span class="dot" style="background:${COL.side[i].top}"></span>` : ''}<input data-tgname="${i}" value="${esc(p.name)}" maxlength="18" aria-label="Name ${i + 1}" placeholder="Player ${i + 1}">${kindSeg(p, i)}${st.players.length > G.seat.min && st.players.length > 1 && !G.seat.sides && G.seat.max > 2 ? `<button class="x" data-tg="rmp:${i}" aria-label="Remove">×</button>` : ''}</div>`).join('');
+    const anyCpu = mode !== 'real' && !(mode === 'hybrid' && G.kind === 'rounds') && st.players.some(p => (mode === 'app' ? p.kind === 'cpu' : p.where === 'cpu'));
+    const optRow = o => `<div class="opt"><div class="l"><b>${o.label}</b>${o.sub ? `<span>${o.sub}</span>` : ''}</div><div class="seg">${o.choices.map(([v, l]) => `<button class="${String(st.opts[o.id]) === String(v) ? 'on' : ''}" data-tg="opt:${o.id}:${v}">${l[0] === '@' ? esc((st.players[+l.slice(1)] || {}).name || 'Player').slice(0, 10) : l}</button>`).join('')}</div></div>`;
+    this.R().innerHTML = `<div class="sheet">
+      <div class="bar"><button class="iconbtn" data-tg="home" aria-label="Back to all games">${ICON.back}Games</button><span class="nm"></span><button class="iconbtn" data-tg="rules:${G.id}">${ICON.book} Rules</button></div>
+      <div class="head"><div><p class="label">Pub games night</p><h1 class="title sm">${G.name}</h1><p class="tagline">${G.tag}</p></div><div class="art">${G.icon}</div></div>
+      <div class="info">${G.info.map(([ic, b, s]) => `<div>${ICON[ic]}<p style="margin:0"><b>${b}</b><span>${s}</span></p></div>`).join('')}</div>
+      ${live && !live.over ? `<div class="panel" style="margin-bottom:6px"><h3>Game in progress</h3><p class="note" style="margin:0 0 8px;color:var(--ink)">${live.players.map((p, i) => esc(p.name) + ': ' + GAMES[G.id].chips(live)[i].v).join(' · ')}. Starting a new game replaces it.</p><div class="btns" style="margin-top:0"><button class="btn primary" data-tg="resume">Carry on</button></div></div>` : ''}
+      <div class="sec"><span class="n">1</span>How are you playing?</div>
+      <div class="modes">${['app', 'real', 'hybrid'].map(k => `<button class="mode ${mode === k ? 'on' : ''}" data-tg="mode:${k}"><span class="mi">${ICON[MODES[k].ic]}</span><span><b>${MODES[k].n}</b><span>${k === 'hybrid' ? hybridText(G) : MODES[k].d}</span></span></button>`).join('')}</div>
+      <div class="sec"><span class="n">2</span>${G.seat.label}${G.seat.max > 2 && st.players.length < G.seat.max ? `<button class="btn small right" data-tg="addp">+ Add</button>` : ''}</div>
+      ${players}
+      ${mode === 'hybrid' && G.kind === 'rounds' ? `<p class="note">The computer can’t join a hybrid game of ${G.short}, as the pucks meet on one table.</p>` : ''}
+      <div class="sec"><span class="n">3</span>Options</div>
+      <div class="panel lite">${G.options.map(optRow).join('')}${anyCpu ? `<div class="opt"><div class="l"><b>Computer</b><span>How steady its hand is</span></div><div class="seg">${Object.entries(DIFF).map(([k, v]) => `<button class="${st.diff === k ? 'on' : ''}" data-tg="diff:${k}">${v.n}</button>`).join('')}</div></div>` : ''}</div>
+      ${mode !== 'real' ? `<p class="note">${G.appNotes.join(' ')}</p>` : ''}
+      <div class="btns"><button class="btn orange wide" data-tg="start">Start the game</button></div>
+      <p class="foot">Rules are from the pub games night cards.</p></div>`;
+  },
+  /* ---------- match ---------- */
+  startMatch() {
+    const G = this.G, st = this.setup, mode = st.mode, rounds = G.kind === 'rounds';
+    const players = st.players.map((p, i) => {
+      const name = (p.name || '').trim() || `Player ${i + 1}`;
+      if (mode === 'real') return { name, kind: 'human', where: 'real' };
+      if (mode === 'app') return { name, kind: p.kind === 'cpu' ? 'cpu' : 'human', where: 'app' };
+      if (rounds) return { name, kind: 'human', where: 'real' };
+      return { name, kind: p.where === 'cpu' ? 'cpu' : 'human', where: p.where === 'cpu' ? 'app' : p.where };
+    });
+    if (!G.seat.names) { const names = store.get('names', []); players.forEach((p, i) => { if (p.kind === 'human' && !isCpuName(p.name)) names[i] = p.name; }); store.set('names', names); if (window.PubHome && players[0].kind === 'human') try { localStorage.setItem('pubgames.firstName', JSON.stringify(players[0].name)); } catch (e) { } }
+    const m = { gid: G.id, mode, players, opts: Object.assign({}, st.opts), diff: st.diff, hist: [], over: false, winner: null, t: Date.now() };
+    G.init(m); this.m = m; this.save(); this.nextUnit();
+  },
+  save() { if (this.m) store.set('match.' + this.m.gid, this.m); },
+  resume() { const m = store.get('match.' + this.G.id, null); if (!m) return; this.m = m; this.nextUnit(); },
+  whereFor(u) {
+    const m = this.m; if (m.mode === 'real') return 'real'; if (m.mode === 'app') return 'app';
+    return this.G.kind === 'turns' ? m.players[u.who].where : null;
+  },
+  nextUnit() {
+    const m = this.m; if (m.over) return this.finish();
+    const u = this.G.unit(m); this.unit = u; const w = this.whereFor(u);
+    if (!w) return this.askWhere(u);
+    this.startUnit(u, w);
+  },
+  startUnit(u, where) {
+    this.stopTable(); this.closeOv(); this.where = where; const G = this.G, m = this.m;
+    const realPill = m.mode === 'hybrid' ? `<div class="side"><span class="pill">${where === 'real' ? 'Real table' : 'In the app'}</span></div>` : '';
+    this.R().innerHTML = `<div class="sheet play">
+      <div class="bar"><button class="iconbtn" data-tg="quit" aria-label="Leave">${ICON.close}</button><span class="nm">${G.short}</span>
+      <button class="iconbtn" data-tg="sound" aria-label="Sound">${Sound.on ? ICON.sound : ICON.mute}</button><button class="iconbtn" data-tg="rules:${G.id}" aria-label="Rules">${ICON.book}</button><button class="iconbtn" data-tg="board">${ICON.list} Score</button></div>
+      <div class="chips" id="chips"></div>
+      ${where === 'real' ? `<div class="entry" id="entry"></div>` : `<div class="stage" id="stage"><div class="tip hide" id="tip"></div><div class="flash" id="flash"></div>${realPill}</div>`}
+      <div class="ctrl"><div class="status" id="status"></div><div class="tools" id="tools"></div>${this.swapHTML(u, where)}</div></div>`;
+    this.renderChips(); this.ui.status(u.title, u.sub);
+    if (where === 'real') { this.est = G.entryInit(m, u); this.renderEntry(); }
+    else { this.table = new G.Table({ match: m, unit: u, game: G, ui: this.ui, onDone: r => this.commit(r, 'app') }); this.table.mount($('#stage')); }
+  },
+  swapHTML(u, where) {
+    const m = this.m; if (m.mode !== 'hybrid') return '';
+    if (this.G.kind === 'turns') { const p = m.players[u.who]; if (p.kind === 'cpu') return ''; return `<p class="swap">${where === 'real' ? `${esc(p.name)} on the real board. <button data-tg="swap">Play this turn in the app</button>` : `<button data-tg="swap">Switch ${esc(p.name)} to the real board</button>`}</p>`; }
+    return `<p class="swap"><button data-tg="swap">Play this round ${where === 'real' ? 'in the app' : 'on the real table'} instead</button></p>`;
+  },
+  renderEntry() { const el = $('#entry'); if (!el) return; el.innerHTML = this.G.entryHTML(this.m, this.est, this.unit) + (this.m.hist.length ? `<p class="swap"><button data-tg="undo">Undo the last score</button></p>` : ''); },
+  renderChips() {
+    const el = $('#chips'); if (!el || !this.m) return; let cs = this.G.chips(this.m);
+    if (this.table && this.table.shooter && this.G.kind === 'rounds') cs = cs.map((c, i) => Object.assign({}, c, { on: i === this.table.shooter.side }));
+    el.innerHTML = cs.map(c => `<div class="chip ${c.on ? 'on' : ''}">${c.tag ? `<span class="tag ${c.on ? '' : 'p'}">${c.tag}</span>` : ''}<div class="who">${c.dot != null ? dotHTML(c.dot) : ''}${esc(c.name)}</div><div class="v">${c.v}<small>${c.small || ''}</small></div><div class="sub">${c.sub || ''}</div></div>`).join('');
+  },
+  commit(res, where) {
+    const m = this.m, G = this.G; if (!m) return;
+    m.hist.push(JSON.stringify({ s: m.s, over: m.over, winner: m.winner })); if (m.hist.length > 80) m.hist.shift();
+    res.where = where; const msg = G.apply(m, res); this.save(); this.stopTable();
+    if (m.over) { Sound.chime(true); return this.finish(msg); }
+    if (where === 'app') this.between(msg); else { this.toast(msg.t + (msg.s ? ' · ' + msg.s : '')); this.nextUnit(); }
+  },
+  undo() {
+    const m = this.m; if (!m || !m.hist.length) return; const h = JSON.parse(m.hist.pop());
+    m.s = h.s; m.over = h.over; m.winner = h.winner; this.save(); this.toast('Last score undone'); this.closeOv(); this.nextUnit();
+  },
+  between(msg) {
+    const m = this.m, u = this.G.unit(m), nextP = u.who != null ? m.players[u.who] : null;
+    this.openOv(`<div class="win"><h2>${esc(msg.t)}</h2>${msg.s ? `<p>${esc(msg.s)}</p>` : ''}</div>
+      <div class="chips" style="margin-top:12px">${this.G.chips(m).map(c => `<div class="chip ${c.on ? 'on' : ''}"><div class="who">${c.dot != null ? dotHTML(c.dot) : ''}${esc(c.name)}</div><div class="v">${c.v}<small>${c.small || ''}</small></div><div class="sub">${c.sub || ''}</div></div>`).join('')}</div>
+      <div class="panel lite" style="margin-top:10px"><h3>Next up: ${esc(u.title)}</h3><p class="note" style="margin:0">${esc(u.sub)}${nextP && nextP.kind === 'human' && m.players.filter(p => p.kind === 'human').length > 1 && m.mode !== 'real' ? ' · pass the phone' : ''}</p></div>
+      <div class="btns"><button class="btn" data-tg="board">${ICON.list} Scoreboard</button><button class="btn primary" data-tg="cont">Carry on</button></div>`, false);
+  },
+  askWhere(u) {
+    this.stopTable(); const G = this.G;
+    this.R().innerHTML = `<div class="sheet play"><div class="bar"><button class="iconbtn" data-tg="quit">${ICON.close}</button><span class="nm">${G.short}</span><button class="iconbtn" data-tg="board">${ICON.list} Score</button></div><div class="chips" id="chips"></div>
+      <div class="entry"><div class="sec"><span class="n">?</span>${esc(u.title)}: where are you playing it?</div><p class="note" style="margin-top:-4px">${esc(u.sub)}</p>
+      <div class="where"><button class="mode" data-tg="pick:real"><span class="mi">${ICON.pencil}</span><span><b>On the real table</b><span>Play it, then tap in who scored.</span></span></button>
+      <button class="mode" data-tg="pick:app"><span class="mi">${ICON.phone}</span><span><b>In the app</b><span>Play the round on the phone. Pass it between shots.</span></span></button></div>
+      ${this.m.hist.length ? `<p class="swap"><button data-tg="undo">Undo the last score</button></p>` : ''}</div></div>`;
+    this.renderChips();
+  },
+  finish(msg) {
+    const m = this.m, G = this.G, names = (m.winner || []).map(i => m.players[i].name);
+    store.del('match.' + m.gid);
+    const title = names.length > 1 ? `${listAnd(names.map(esc))} share it!` : `${esc(names[0] || 'Nobody')} wins!`;
+    this.R().innerHTML = `<div class="sheet"><div class="bar"><button class="iconbtn" data-tg="home">${ICON.back}</button><span class="nm">${G.short}</span><span style="width:36px"></span></div>
+      <div class="win"><div class="crown">${ICON.crown}</div><h2>${title}</h2>${msg ? `<p>${esc(msg.t)}${msg.s ? ' · ' + esc(msg.s) : ''}</p>` : ''}</div>
+      <div class="sec"><span class="n p">${ICON.list.replace('<svg', '<svg style="width:16px;height:16px;stroke:#fff"').replace(/stroke="#4e1f4d"/g, 'stroke="#fff"')}</span>Final scores</div>${G.board(m)}
+      <div class="btns"><button class="btn" data-tg="undo">${ICON.undo} Undo last</button><button class="btn orange" data-tg="again">Play again</button></div>
+      <div class="btns" style="margin-top:8px"><button class="btn ghost wide" data-tg="home">Back to all games</button></div></div>`;
+    this.lastDone = m; window.scrollTo(0, 0);
+  },
+  stopTable() { if (this.table) { this.table.destroy(); this.table = null; } },
+  /* ---------- overlays ---------- */
+  openOv(html, closable = true) {
+    this.closeOv(); const wrap = document.createElement('div'); wrap.className = 'tg'; const ov = document.createElement('div'); ov.className = 'ov'; wrap.appendChild(ov);
+    ov.innerHTML = `<div class="sheet">${closable ? `<button class="iconbtn close" data-tg="close" aria-label="Close">${ICON.close}</button>` : ''}${html}</div>`;
+    if (closable) ov.addEventListener('click', e => { if (e.target === ov) this.closeOv(); });
+    document.body.appendChild(wrap); this.ov = wrap; document.body.style.overflow = 'hidden';
+  },
+  closeOv() { if (this.ov) { this.ov.remove(); this.ov = null; document.body.style.overflow = ''; } },
+  showBoard() {
+    const m = this.m || this.lastDone; if (!m) return; const G = GAMES[m.gid];
+    const wasBetween = this.ov && this.ov.querySelector('[data-tg="cont"]');
+    this.openOv(`<p class="label">Scoreboard</p><h2 class="title sm" style="font-size:30px;margin-bottom:12px">${G.short}</h2>
+      <div class="chips">${G.chips(m).map(c => `<div class="chip"><div class="who">${c.dot != null ? dotHTML(c.dot) : ''}${esc(c.name)}</div><div class="v">${c.v}<small>${c.small || ''}</small></div><div class="sub">${c.sub || ''}</div></div>`).join('')}</div>
+      <div style="margin-top:8px">${G.board(m)}</div>
+      <div class="btns">${m.hist.length && this.m ? `<button class="btn" data-tg="undo">${ICON.undo} Undo last score</button>` : ''}<button class="btn primary" data-tg="${wasBetween ? 'cont' : 'close'}">${wasBetween ? 'Carry on' : 'Back to the game'}</button></div>
+      <p class="foot">${m.mode === 'hybrid' ? 'Hybrid match: real table and app on one board.' : m.mode === 'real' ? 'Scored from the real table.' : 'Played in the app.'}</p>`);
+  },
+  showRules(gid) { this.openOv(rulesHTML(GAMES[gid])); },
+  toast(t) {
+    let el = $('.tg .toast'); if (!el) { const w = document.createElement('div'); w.className = 'tg'; el = document.createElement('div'); el.className = 'toast'; w.appendChild(el); document.body.appendChild(w); }
+    el.textContent = t; el.classList.add('show'); clearTimeout(this._tt); this._tt = setTimeout(() => el.classList.remove('show'), 2400);
+  },
+  confirmQuit() {
+    this.openOv(`<h2 class="title sm" style="font-size:28px">Leave this game?</h2><p>The score is saved on this phone, so you can carry on later from the game's page.${this.where === 'app' && this.table && this.table.shots ? ' The turn in progress will start again.' : ''}</p>
+      <div class="btns"><button class="btn" data-tg="close">Stay</button><button class="btn primary" data-tg="leave">Leave</button></div>`);
+  },
+  bindHolds(el) {
+    el.querySelectorAll('[data-hold]').forEach(b => {
+      const on = e => { e.preventDefault(); if (b.disabled) return; try { b.setPointerCapture(e.pointerId); } catch (_) { } this.table && this.table.hold && this.table.hold(b.dataset.hold, true); };
+      const off = () => this.table && this.table.hold && this.table.hold(b.dataset.hold, false);
+      b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('lostpointercapture', off);
+      b.addEventListener('contextmenu', e => e.preventDefault());
+    });
+  },
+  /* ---------- actions ---------- */
+  act(a, el) {
+    const [k, x, y] = a.split(':'), st = this.setup;
+    switch (k) {
+      case 'home': this.home(); break;
+      case 'open': this.openSetup(x); break;
+      case 'rules': this.showRules(x); break;
+      case 'close': this.closeOv(); break;
+      case 'mode': {
+        st.mode = x; const noCpu = x === 'real' || (x === 'hybrid' && this.G.kind === 'rounds'), names = store.get('names', []);
+        st.players.forEach((p, i) => {
+          const cpu = !noCpu && (x === 'app' ? p.kind === 'cpu' : p.where === 'cpu');
+          if (!cpu && isCpuName(p.name)) p.name = this.G.seat.names ? this.G.seat.names[i] : humanName(i);
+          if (cpu && /^Player \d$/.test(p.name)) p.name = cpuName(i);
+        });
+        this.saveSetup(); this.renderSetup(); break;
+      }
+      case 'kind': { const p = st.players[+x]; p.kind = y; if (y === 'cpu' && /^Player \d$/.test(p.name)) p.name = cpuName(+x); if (y === 'human' && isCpuName(p.name)) p.name = humanName(+x); this.saveSetup(); this.renderSetup(); break; }
+      case 'where': { const p = st.players[+x]; p.where = y; if (y === 'cpu' && /^Player \d$/.test(p.name)) p.name = cpuName(+x); if (y !== 'cpu' && isCpuName(p.name)) p.name = humanName(+x); this.saveSetup(); this.renderSetup(); break; }
+      case 'addp': if (st.players.length < this.G.seat.max) { const i = st.players.length; st.players.push({ name: humanName(i), kind: 'human', where: 'real' }); this.saveSetup(); this.renderSetup(); } break;
+      case 'rmp': if (st.players.length > Math.max(1, this.G.seat.min)) { st.players.splice(+x, 1); this.saveSetup(); this.renderSetup(); } break;
+      case 'opt': { const o = this.G.options.find(o => o.id === x), ch = o.choices.find(c => String(c[0]) === y); st.opts[x] = ch ? ch[0] : y; this.saveSetup(); this.renderSetup(); break; }
+      case 'diff': st.diff = x; this.saveSetup(); this.renderSetup(); break;
+      case 'start': this.startMatch(); break;
+      case 'resume': this.resume(); break;
+      case 'board': this.showBoard(); break;
+      case 'undo': this.undo(); break;
+      case 'quit': this.confirmQuit(); break;
+      case 'leave': this.closeOv(); this.save(); this.openSetup(this.G.id); break;
+      case 'cont': this.closeOv(); this.nextUnit(); break;
+      case 'again': { const gid = (this.lastDone || this.m || {}).gid || this.G.id; this.m = null; if (!this.setup || this.setup.gid !== gid) this.openSetup(gid); this.startMatch(); break; }
+      case 'sound': Sound.toggle(); el.innerHTML = Sound.on ? ICON.sound : ICON.mute; if (Sound.on) Sound.init(); break;
+      case 'pick': this.startUnit(this.unit, x); break;
+      case 'swap': {
+        const m = this.m, u = this.unit;
+        if (this.G.kind === 'turns') { const p = m.players[u.who]; p.where = this.where === 'real' ? 'app' : 'real'; this.save(); this.startUnit(u, p.where); }
+        else this.startUnit(u, this.where === 'real' ? 'app' : 'real');
+        break;
+      }
+      case 'e': { const r = this.G.entryAct(this.m, this.est, x, y); if (r && r.done) this.commit(r.done, 'real'); else this.renderEntry(); break; }
+      case 't': if (this.table && this.table.toolAct) this.table.toolAct(x, y); break;
+    }
+  }
+};
+
+/* ---------- rules card page ---------- */
+function rulesHTML(G) {
+  const R = G.rules, L = 'ABCD';
+  const s2 = R.s2, s3 = R.s3, s4 = R.s4;
+  return `<div class="head"><div><p class="label">Pub games night</p><h2 class="title sm">${G.name}</h2><p class="tagline">${G.tag}</p></div><div class="art">${G.icon}</div></div>
+  <div class="info">${G.info.map(([ic, b, s]) => `<div>${ICON[ic]}<p style="margin:0"><b>${b}</b><span>${s}</span></p></div>`).join('')}</div>
+  <div class="sec"><span class="n">1</span>${R.s1[0]}</div><ol class="steps">${R.s1[1].map((s, i) => `<li><span class="L">${L[i]}</span><span><b>${s[0]}</b> ${s[1]}</span></li>`).join('')}</ol>
+  <div class="sec"><span class="n">2</span>${s2[0]}</div>${s2[3] ? `<p class="note" style="margin:-4px 0 8px;color:var(--ink)">${s2[3]}</p>` : ''}
+  <div class="scorecards" style="grid-template-columns:repeat(${s2[1].length},1fr)">${s2[1].map(c => `<div class="sc"><div class="v">${c[0]}</div><b>${c[1]}</b><span>${c[2]}</span></div>`).join('')}</div>
+  <div class="ex"><span>Example: ${s2[2][0]}</span><b>${s2[2][1]}</b></div>
+  <div class="sec"><span class="n">3</span>${s3[0]}</div><p class="note" style="margin:-4px 0 8px;color:var(--ink)">${s3[1]}</p>
+  <div class="tbl"><div class="th"><span>${s3[2][0]}</span><span>${s3[2][1]}</span></div>${s3[3].map((r, i) => `<div class="tr ${i === 0 ? 'hi' : ''}"><div class="tx"><b>${r[0]}</b><span>${r[1]}</span></div><div class="v">${r[2]}</div></div>`).join('')}</div>
+  <div class="sec"><span class="n">4</span>${s4[0]}</div><div class="goods">${s4[1].map((g, i) => `<div class="good ${i === 0 ? 'k' : ''}"><b>${g[0]}</b>${g[1]}</div>`).join('')}</div>
+  <div class="banner"><div><div class="t">${R.banner[0]}</div><div class="s">${R.banner[1]}</div></div><div class="ic">${G.icon}</div></div>
+  <div class="panel lite" style="margin-top:14px"><h3>In the app</h3><p class="note" style="margin:0;color:var(--ink)">${G.appNotes.join(' ')}</p></div>`;
+}
+
+window.TableGames = {
+  _app: App,
+  open: gid => App.openSetup(gid),
+  live: gid => { const m = store.get('match.' + gid, null); return !!(m && !m.over); },
+  list: () => ORDER.map(id => { const G = GAMES[id]; return { id, name: G.short, tag: G.blurb, icon: G.icon, players: G.seat.max > 2 ? `${G.seat.min}–${G.seat.max} players` : G.seat.label === 'Teams' ? '2 teams' : '2 players or teams' }; })
+};
+if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded', () => App.init()); else App.init();
+
+})();
+</script>
 <script>
 'use strict';
 /* ============ Basics ============ */
@@ -531,11 +2299,12 @@ function defaultSetup(g) {
 function homeView() {
   const tile = (id, k, arr) => { const g = G[id], wide = k === arr.length - 1 && arr.length % 2 === 1; return `<button class="tile ${wide ? 'wide' : ''}" data-act="open" data-arg="${id}"><span class="ic">${g.icon()}</span><span class="tx"><b>${g.name}</b><small>${g.tagline}</small><span class="pp">${I.people}${g.players}</span></span></button>`; };
   return `<div class="sheet">
-    ${headHTML('Dice &amp; Cards', 'Roll, deal and play. Every game from the rules cards, in one place.', homeArt())}
-    ${infoHTML([['dice', '5 dice games', 'Zanzibar to Pigs'], ['cards', '4 card &amp; tile games', 'Brag to Texas 42'], ['people', 'Play your way', 'friends or computer']])}
+    ${headHTML('Pub Games', 'Roll, deal, slide and throw. The games from the rules cards, in one place.', homeArt())}
+    ${infoHTML([['dice', '9 dice, card &amp; tile games', 'Zanzibar to Texas 42'], ['<svg viewBox="0 0 24 24" fill="none" stroke="#4e1f4d" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M8 3h8l4 18H4z" fill="#f8dca8"/><path d="M8.6 8h6.8"/><ellipse cx="12" cy="15.5" rx="3.2" ry="1.6" fill="#dd7f27"/></svg>', '6 table games', 'Toad to Shove Ha’penny'], ['people', 'Play your way', 'friends, computer or the real table']])}
     ${sec(1, 'Dice games')}<div class="tiles">${ORDER.dice.map(tile).join('')}</div>
     ${sec(2, 'Card games')}<div class="tiles">${ORDER.cards.map(tile).join('')}</div>
     ${sec(3, 'Dominoes')}<div class="tiles">${ORDER.dominoes.map(tile).join('')}</div>
+    ${window.TableGames ? `${sec(4, 'Table games')}<p class="note" style="margin:-4px 0 10px">Play them on the phone, keep score at the real table, or a bit of both.</p><div class="tiles">${TableGames.list().map(t => `<button class="tile" data-act="table" data-arg="${t.id}">${TableGames.live(t.id) ? '<span class="tgresume">Game on</span>' : ''}<span class="ic">${t.icon}</span><span class="tx"><b>${t.name}</b><small>${t.tag}</small><span class="pp">${I.people}${t.players}</span></span></button>`).join('')}</div>` : ''}
     ${banner('Pick a game and play to <em>win!</em>', 'One phone is enough. Pass it round, or let the computer fill the empty seats.', `<svg viewBox="0 0 48 48">${coinStack()}</svg>`)}
   </div>`;
 }
@@ -672,6 +2441,7 @@ function startGame() {
 function handle(a, arg) {
   const g = App.gid ? G[App.gid] : null;
   switch (a) {
+    case 'table': clearTimeout(App.timer); App.view = 'home'; App.st = null; App.overlay = null; App.busy = false; render(); window.TableGames.open(arg); return;
     case 'home': clearTimeout(App.timer); App.view = 'home'; App.st = null; App.overlay = null; App.busy = false; window.scrollTo(0, 0); break;
     case 'open': clearTimeout(App.timer); App.gid = arg; App.setup = defaultSetup(G[arg]); App.view = 'setup'; App.st = null; App.overlay = null; App.busy = false; window.scrollTo(0, 0); break;
     case 'rules': App.overlay = { type: 'rules', gid: arg }; clearTimeout(App.timer); break;
@@ -707,6 +2477,7 @@ document.addEventListener('input', e => {
   if (t.matches('[data-name]') && App.setup) App.setup.players[+t.dataset.name].name = t.value;
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && App.overlay) { App.overlay = null; render(); } });
+window.PubHome = () => handle('home');
 
 /* Helper for dice games: a die button */
 function dieBtn(d, i, o = {}) {
