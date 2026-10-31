@@ -2,7 +2,9 @@
 
 The dice, card, domino and table games from the pub games night rules cards, in one app you can install on a phone and play with no signal.
 
-**Play it:** https://appsbydave.github.io/Pub-games/
+**Play it:** https://pub-games.appsbydave.com/
+
+(The old address, https://appsbydave.github.io/Pub-games/, now forwards here.)
 
 ## Games
 
@@ -23,12 +25,14 @@ Bank Shot and Shove Ha'penny aren't on the printed cards yet, so their rules car
 
 ## Install it on your phone
 
-Open the link above once with signal. The app saves itself on the phone (you'll see "Saved — works offline now"), then:
+Open https://pub-games.appsbydave.com/ once with signal. The app saves itself on the phone (you'll see "Saved — works offline now"), then:
 
 - **iPhone / iPad (Safari):** tap **Share**, then **Add to Home Screen**.
 - **Android (Chrome):** tap **Install** on the bar at the bottom, or open the **⋮** menu and choose **Install app** / **Add to Home screen**.
 
 After that, open it from the home screen icon. It works in airplane mode.
+
+**Installed it from the old github.io address?** That copy keeps working, but open https://pub-games.appsbydave.com/ and add it to your home screen again, then remove the old icon. Scores and names saved on the phone stay with the old copy.
 
 ## Updating the app
 
@@ -56,5 +60,6 @@ To swap in a new version of the game page from Claude, replace `index.html` but 
 | `sw.js` | The service worker that keeps the saved copy and fetches updates. |
 | `manifest.webmanifest` | App name, colours and icons for the home screen. |
 | `icons/` | Home screen icons, drawn from the app's own dice-and-card artwork. |
+| `CNAME` | Tells GitHub Pages to serve the app at pub-games.appsbydave.com. |
 
 No build step and nothing to install: it's plain files served by GitHub Pages. Scores and settings are kept on each phone only.
