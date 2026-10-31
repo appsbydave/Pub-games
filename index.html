@@ -883,12 +883,12 @@ class SlideTable {
     this.aimX = shot.x; this.spin = shot.spin || this.spin; this.ui.status(this.status()[0], this.status()[1]);
     this.aimShow = { shot, t: 0 }; await sleep(700 / SPEED); if (this.dead) return; this.aimShow = null; this.shoot(shot);
   }
-  async search(cands, evalFn, budget = 450) {
+  async search(cands, evalFn, budget = 450, chunk = 12) {
     const t0 = performance.now(); let best = null, bv = -1e9, i = 0;
     for (const c of cands) {
       const w = this.world.clone(); this.launch(w, c, this.shooter); simulate(w); this.rest(w, false);
       const v = evalFn(w, c) + Math.random() * 1e-3; if (v > bv) { bv = v; best = c; }
-      if (++i % 12 === 0) { await sleep(0); if (this.dead) return null; if (performance.now() - t0 > budget) break; }
+      if (++i % chunk === 0) { await sleep(0); if (this.dead) return null; if (performance.now() - t0 > budget) break; }
     }
     return { best, v: bv };
   }
@@ -1219,27 +1219,49 @@ GAMES.toad = {
    Sjoelbak (Dutch shuffleboard)
    ========================================================= */
 function sjoelScore(c) { const s = Math.min(...c); return 20 * s + 2 * (c[0] - s) + 3 * (c[1] - s) + 4 * (c[2] - s) + 1 * (c[3] - s); }
+// discs in a box are stacked between goes: a pile of 4 at the back, then piles of 3 (the official way)
+function sjoelPiles(n) { const p = []; if (n > 0) { p.push(Math.min(4, n)); for (n -= p[0]; n > 0; n -= 3) p.push(Math.min(3, n)); } return p; }
 
+/* The board is laid out like a full-size one: 1570 mm from the start bar to the gates, boxes 390 mm deep
+   with 12 mm walls between them. Discs stay where they stop until the go ends, so a box fills up and can
+   block its own gate. Between goes the discs in each box are piled at the back, which clears the gate. */
 class SjoelTable extends SlideTable {
   init() {
-    this.Wd = 400; this.R = 26; this.th = 11; this.startY = 55; this.bar = 110; this.gateY = 1800; this.gateD = 30; this.boxBack = 1950;
+    this.Wd = 400; this.R = 26; this.th = 11; this.startY = 55; this.bar = 110; this.gateY = this.bar + 1570; this.gateD = 30; this.boxBack = this.gateY + this.gateD + 390;
     this.vmax = 1500; this.decel = 380; this.aimLen = 800; this.maxAng = 4 * DEG; this.tone = 1800; this.noiseA = 0.55 * DEG;
-    this.vals = [2, 3, 4, 1]; this.gx = [-150, -50, 50, 150]; this.half = 36;
-    const e = 0.45, tf = 0.9, walls = [wallSeg(-200, 0, -200, this.gateY, e, tf), wallSeg(200, 0, 200, this.gateY, e, tf), wallSeg(-200, this.boxBack, 200, this.boxBack, 0.2, 0.8)];
+    this.vals = [2, 3, 4, 1]; this.gx = [-150, -50, 50, 150]; this.half = 36; this.wall = 12;
+    const e = 0.45, tf = 0.9, gy = this.gateY, ge = gy + this.gateD, bb = this.boxBack, wh = this.wall / 2;
+    // all four boxes the same width: the side walls step in a little behind the gates
+    const bx = 200 - wh, walls = [wallSeg(-200, 0, -200, ge, e, tf), wallSeg(200, 0, 200, ge, e, tf), wallSeg(-bx, ge, -bx, bb, e, tf), wallSeg(bx, ge, bx, bb, e, tf), wallSeg(-200, bb, 200, bb, 0.2, 0.8)];
     const edges = [-200, ...this.gx.flatMap(x => [x - this.half, x + this.half]), 200];
-    for (let i = 0; i < edges.length; i += 2) if (edges[i + 1] - edges[i] > 0.5) walls.push(...boxWalls(edges[i], this.gateY, edges[i + 1], this.gateY + this.gateD, 0.4, 0.9));
-    this.world = new World({ decel: this.decel, e: 0.7, walls, data: { counts: [0, 0, 0, 0] } });
+    for (let i = 0; i < edges.length; i += 2) if (edges[i + 1] - edges[i] > 0.5) walls.push(...boxWalls(edges[i], gy, edges[i + 1], ge, 0.4, 0.9));
+    for (const x of [-100, 0, 100]) walls.push(...boxWalls(x - wh, ge, x + wh, bb, 0.4, 0.9)); // the walls between the boxes
+    this.boxMid = this.gx.slice();
+    this.world = new World({ decel: this.decel, e: 0.7, walls, data: { boxed: [0, 0, 0, 0] } });
     this.who = this.unit.who; this.go = 1; this.pile = this.m.opts.discs; this.cool = 0; this.aimX = this.gx[2];
   }
   look() { return { top: '#ecc283', edge: '#bf8a45', ring: 'rgba(176,96,27,.35)' }; }
   xRange() { return [-200 + this.R + 2, 200 - this.R - 2]; }
   nextShooter() { if (this.go > 3) return null; const p = this.m.players[this.who]; return { side: 0, cpu: p.kind === 'cpu', name: p.name }; }
   launch(w, s) { const sp = this.vmax * Math.sqrt(s.pow); return w.add({ x: s.x, y: this.startY, r: this.R, vx: Math.sin(s.ang) * sp, vy: Math.cos(s.ang) * sp, side: 0 }); }
+  boxOf(b) { return clamp(Math.floor((b.x + 200) / 100), 0, 3); }
+  inBox(b) { return !b.out && !b.stack && b.y - b.r >= this.gateY + this.gateD; } // only counts once it's fully past the gate
+  boxCounts(w) { const c = w.data.boxed.slice(); for (const b of w.bodies) if (this.inBox(b)) c[this.boxOf(b)]++; return c; }
+  counts() { return this.boxCounts(this.world); }
+  // piled discs from earlier goes sit at the back of each box as solid stacks
+  addPiles(w) {
+    const most = Math.floor((this.boxBack - this.gateY - this.gateD) / (2 * this.R));
+    w.data.boxed.forEach((n, i) => {
+      const p = sjoelPiles(n); while (p.length > most) p[most - 1] += p.pop();
+      p.forEach((h, k) => { const y = this.boxBack - this.R - 2 * this.R * k; w.add({ x: this.boxMid[i], y, sx: this.boxMid[i], sy: y, r: this.R, m: 1e9, stack: h }); });
+    });
+  }
   hook(w, b) {
-    if (b.y - b.r >= this.gateY + this.gateD) { const i = clamp(Math.floor((b.x + 200) / 100), 0, 3); w.data.counts[i]++; b.out = 'box'; if (!w.sim) { Sound.clack(500, 900); this.refresh(); } return; }
+    if (b.stack) { b.vx = b.vy = 0; b.x = b.sx; b.y = b.sy; return; }
+    const inn = b.y - b.r >= this.gateY + this.gateD;
+    if (inn !== !!b.inn) { b.inn = inn; if (!w.sim) { if (inn) Sound.clack(500, 900); this.refresh(); } }
     if (b.vy < 0 && b.y < this.bar - b.r) { b.out = 'back'; if (!w.sim) b.fade = 0; }
   }
-  counts() { return this.world.data.counts; }
   status() {
     const p = this.m.players[this.who], c = this.counts();
     return [`${p.name} · go ${Math.min(3, this.go)} of 3`, `${plural(this.pile, 'disc')} to slide · ${sjoelScore(c)} so far`];
@@ -1258,12 +1280,13 @@ class SjoelTable extends SlideTable {
     if (this.state === 'moving' && !this.world.moving() && !this.animating()) { this.state = 'rest'; setTimeout(() => !this.dead && this.endGo(), 600 / SPEED); }
   }
   endGo() {
-    const left = this.world.bodies.filter(b => !b.out || b.out === 'back').length;
-    this.world.bodies = []; this.go++; this.pile = left;
+    // pile up what's in the boxes and gather the rest: stuck in a gate, short, or bounced back
+    const w = this.world, c = this.boxCounts(w), left = w.bodies.filter(b => !b.stack && !this.inBox(b)).length;
+    w.data.boxed = c; w.bodies = []; this.addPiles(w); this.go++; this.pile = left;
     if (this.go > 3 || left === 0) { this.go = 4; this.refresh(); this.finish(); return; }
     this.ui.flash(`Go ${this.go} of 3`, `Gather up ${plural(left, 'disc')} and slide again`); this.next();
   }
-  result() { return { counts: this.counts().slice() }; }
+  result() { return { counts: this.counts() }; }
   async cpuGo() {
     // quick computer: no thinking pause between discs
     if (this.dead || this.state !== 'cpu') return; const shot = await this.plan(); if (!shot || this.dead) return;
@@ -1272,17 +1295,36 @@ class SjoelTable extends SlideTable {
     this.shoot(Object.assign({}, shot, { ang: shot.ang + gauss() * D.a * 0.5, pow: clamp(shot.pow * (1 + gauss() * D.p), 0.05, 1) }));
   }
   async plan() {
-    const c = this.counts();
+    const c = this.counts(), gy = this.gateY, ge = gy + this.gateD, R = this.R;
     // spread them out: go for the emptiest box, the 4 box first on a tie
     const order = [0, 1, 2, 3].sort((a, b) => (c[a] - (a === 2 ? 0.5 : 0)) - (c[b] - (b === 2 ? 0.5 : 0)) || this.vals[b] - this.vals[a]);
-    const pNeed = Math.pow(Math.sqrt(2 * this.decel * (this.gateY + this.gateD + this.R + 60 - this.startY)) / this.vmax, 2);
-    const C = []; for (const i of order.slice(0, 2)) for (const dx of [0, -9, 9, -18, 18, -30, 30]) C.push({ x: this.gx[i] + dx, ang: 0, pow: pNeed * 1.08 }, { x: this.gx[i] + dx, ang: Math.atan2(-dx, 1750), pow: pNeed * 1.08 });
-    const ev = w => sjoelScore(w.data.counts) + 8 * Math.min(...w.data.counts) - 0.4 * w.bodies.filter(b => !b.out && b.y > this.gateY - 200).length;
-    const r = await this.search(C, ev, 140); return r ? r.best : null;
+    // slide well into the box (most of the way to the back), so it doesn't fill up from the gate
+    const pow = 0.95 * Math.pow(Math.sqrt(2 * this.decel * (this.boxBack - R - this.startY)) / this.vmax, 2);
+    const C = []; for (const i of order.slice(0, 2)) for (const dx of [0, -9, 9, -18, 18, -30, 30]) C.push({ x: this.gx[i] + dx, ang: 0, pow }, { x: this.gx[i] + dx, ang: Math.atan2(-dx, gy - this.startY), pow });
+    const ev = w => {
+      const k = this.boxCounts(w); let v = sjoelScore(k) + 8 * Math.min(...k);
+      for (const b of w.bodies) if (!b.out && !b.stack) { if (this.inBox(b)) { if (b.y - b.r < ge + 2 * R) v -= 0.6; } else if (b.y > gy - 200) v -= 0.4; }
+      return v;
+    };
+    const r = await this.search(C, ev, 160, 4); return r ? r.best : null;
+  }
+  bodyOrder() { return super.bodyOrder().filter(b => !b.stack); }
+  drawBodies(g) {
+    if (!this.world) return; const c = this.cam;
+    for (const b of this.world.bodies.filter(b => b.stack).sort((a, b) => b.y - a.y))
+      for (let k = 0; k < b.stack; k++) gdisc(g, c, b.x, b.y, b.r, this.th, '#ecc283', '#bf8a45', { z: k * this.th, lw: 1.2, shadow: !k });
+    super.drawBodies(g);
+    // how many are in each box so far, above the back of the box
+    this.counts().forEach((n, i) => {
+      if (!n) return; const p = c.p(this.boxMid[i], this.boxBack - this.R, 4 * this.th + 30);
+      g.save(); g.fillStyle = COL.orange; g.beginPath(); g.arc(p[0], p[1], 10, 0, 7); g.fill(); g.fillStyle = '#fff'; g.font = '700 12px Lexend, system-ui'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(n, p[0], p[1] + 0.5); g.restore();
+    });
   }
   camPresets(W, H) {
-    const p = fitCam([0, -650, 1150], [0, 1150, 0], rectPts(-240, -30, 240, this.boxBack + 40), { x: 12, y: 8, w: W - 24, h: H * 0.82 - 8 });
-    return { aim: p, watch: p, inset: Object.assign(fitCam([0, 1350, 700], [0, 1880, 0], [...rectPts(-240, 1660, 240, this.boxBack + 40), [-200, this.boxBack, 180], [200, this.boxBack, 180]], { x: W * 0.64, y: 8, w: W * 0.36 - 8, h: H * 0.24 }), { label: 'GATES' }) };
+    const gy = this.gateY, bb = this.boxBack;
+    const up = 4 * this.th + 46; // leave room for the count bubbles above the back of the boxes
+    const p = fitCam([0, -650, 1150], [0, 1150, 0], [...rectPts(-240, -30, 240, bb + 40), [-200, bb, up], [200, bb, up]], { x: 12, y: 8, w: W - 24, h: H * 0.82 - 8 });
+    return { aim: p, watch: p, inset: Object.assign(fitCam([0, gy - 330, 760], [0, gy + 170, 0], [...rectPts(-240, gy - 120, 240, bb + 40), [-200, bb, up], [200, bb, up]], { x: W * 0.64, y: 8, w: W * 0.36 - 8, h: H * 0.24 }), { label: 'GATES' }) };
   }
   drawTable(g) {
     const c = this.cam, gy = this.gateY, bb = this.boxBack;
@@ -1290,15 +1332,13 @@ class SjoelTable extends SlideTable {
     gfill(g, c, rectPts(-200, 0, 200, gy), COL.sand);
     for (let x = -170; x < 200; x += 48) gvbar(g, c, x, 0, gy, 2, 'rgba(176,96,27,.1)');
     gfill(g, c, rectPts(-200, gy + this.gateD, 200, bb), '#e6c08a');
-    for (const x of [-100, 0, 100]) gvbar(g, c, x, gy + this.gateD, bb, 6, COL.plum);
+    for (const x of [-100, 0, 100]) gvbar(g, c, x, gy + this.gateD, bb, this.wall, COL.plum);
+    for (const x of [-200, 200]) gvbar(g, c, x, gy + this.gateD, bb, this.wall, COL.plum);
     gbar(g, c, -200, 200, this.bar, 8, COL.plum); gtext(g, c, 'START', 0, this.bar - 34, 30, COL.plum, { a: 0.5 });
-    gbar(g, c, -200, 200, 900, 3, 'rgba(78,31,77,.18)');
-    const cnt = this.counts();
+    gbar(g, c, -200, 200, (this.bar + gy) / 2, 3, 'rgba(78,31,77,.18)');
     this.gx.forEach((x, i) => {
       gfill(g, c, rectPts(x - this.half, gy, x + this.half, gy + this.gateD), '#c9a06a');
       gtext(g, c, String(this.vals[i]), x, gy - 70, 70, COL.plum, { a: 0.75 });
-      for (let k = 0; k < Math.min(cnt[i], 12); k++) gdisc(g, c, x, gy + this.gateD + 62, this.R, this.th, '#ecc283', '#bf8a45', { z: k * this.th, lw: 1.2 });
-      if (cnt[i]) { const p = c.p(x, gy + this.gateD + 62, Math.min(cnt[i], 12) * this.th + 28); g.save(); g.fillStyle = COL.orange; g.beginPath(); g.arc(p[0], p[1], 10, 0, 7); g.fill(); g.fillStyle = '#fff'; g.font = '700 12px Lexend, system-ui'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(cnt[i], p[0], p[1] + 0.5); g.restore(); }
     });
     const edges = [-200, ...this.gx.flatMap(x => [x - this.half, x + this.half]), 200];
     for (let i = 0; i < edges.length; i += 2) if (edges[i + 1] - edges[i] > 0.5) { gfill(g, c, rectPts(edges[i], gy, edges[i + 1], gy + this.gateD, 34), COL.plum2); gfill(g, c, rectPts(edges[i], gy - 1, edges[i + 1], gy, 0), COL.plum); }
@@ -1348,7 +1388,7 @@ GAMES.sjoel = {
     s4: ['Does it count?', [['Half in', 'Slide again. A disc only scores once it’s fully past the gate.'], ['Bounced back', 'Off the board, or back past the start bar? It sits out until your next go.'], ['Hands off', 'Hands off the board until your go is over.']]],
     banner: ['Highest score wins!', 'A perfect turn scores 148: seven sets, plus two spare in the 4.']
   },
-  appNotes: ['You can slide the next disc while others are still moving, just like the real thing.', 'Discs that stop on the board stay there until the go ends, so they can block a gate.']
+  appNotes: ['You can slide the next disc while others are still moving, just like the real thing.', 'Discs stay where they stop until the go ends, on the board or in a box. A box only has room for so many, so a crowded box can block its own gate. Slide them firmly to the back.', 'Between goes the discs in each box are stacked at the back, like on a real board, which clears the gates again.']
 };
 
 /* =========================================================
