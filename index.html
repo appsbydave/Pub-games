@@ -599,6 +599,10 @@ const store = {
   set(k, v) { try { localStorage.setItem('ptg.' + k, JSON.stringify(v)); } catch (e) { } },
   del(k) { try { localStorage.removeItem('ptg.' + k); } catch (e) { } }
 };
+// the board in play (pucks and discs where they stopped), saved per game for the round or turn in progress
+const BOARD_KEY = gid => 'board.' + gid;
+const BOARD_SKIP = new Set(['vx', 'vy', 'id', 'fall', 'fade']);
+const boardId = (m, u) => [m.t, m.hist.length, JSON.stringify(u)].join('|');
 
 /* ---------- sound (tiny synth, starts on first touch) ---------- */
 const Sound = {
@@ -830,6 +834,23 @@ class SlideTable {
     this.bg = COL.soft; this.th = 14;
     this.init();
     if (this.world) { this.world.hook = (w, b) => this.hook(w, b); this.world.onHit = (v) => Sound.clack(v, this.tone || 2400); }
+    this.bid = boardId(this.m, this.unit); this.restored = this.loadBoard();
+  }
+  /* --- keeping the board: played pieces stay where they stopped until the round (or go) is over,
+     even if you leave the game or the phone closes the app. Tables that want this set keepBoard. --- */
+  get keepBoard() { return ''; }
+  boardExtra() { return {}; } loadExtra() { }
+  saveBoard() {
+    if (!this.keepBoard || !this.world || !this.shots) return;
+    let w = this.world; if (w.moving()) { w = simulate(w.clone(), 30); this.rest(w, false); } // still moving: save where they'll stop
+    const bodies = w.bodies.map(b => { const o = {}; for (const k in b) if (!BOARD_SKIP.has(k)) o[k] = b[k]; return o; });
+    store.set(BOARD_KEY(this.G.id), { id: this.bid, bodies, data: w.data, shots: this.shots, x: this.boardExtra() });
+  }
+  loadBoard() {
+    const s = this.keepBoard && this.world && store.get(BOARD_KEY(this.G.id), null);
+    if (!s || s.id !== this.bid) return false;
+    this.world.bodies = []; this.world.data = s.data; s.bodies.forEach(b => this.world.add(b));
+    this.shots = s.shots; this.loadExtra(s.x || {}); return true;
   }
   /* --- to override --- */
   init() { } hook() { } rest() { } drawTable() { } drawExtra() { } look() { return { top: COL.sand, edge: COL.plum }; }
@@ -847,7 +868,7 @@ class SlideTable {
     this.raf = requestAnimationFrame(loop);
     setTimeout(() => !this.dead && this.begin(), 60);
   }
-  destroy() { this.dead = true; cancelAnimationFrame(this.raf); if (this.ro) this.ro.disconnect(); }
+  destroy() { if (!this.dead && this.state !== 'done') this.saveBoard(); this.dead = true; cancelAnimationFrame(this.raf); if (this.ro) this.ro.disconnect(); }
   resize() {
     const r = this.stage.getBoundingClientRect(); if (!r.width || !r.height) return;
     this.W = r.width; this.H = r.height; this.dpr = Math.min(3, window.devicePixelRatio || 1);
@@ -875,13 +896,13 @@ class SlideTable {
   animating() { if (!this.world) return false; for (const b of this.world.bodies) if ((b.fall != null && b.fall < 1) || (b.fade != null && b.fade < 1)) return true; return false; }
   update() {
     if (this.state === 'moving' && !this.world.moving() && !this.animating()) {
-      this.state = 'rest'; this.rest(this.world, true);
+      this.state = 'rest'; this.rest(this.world, true); this.saveBoard();
       setTimeout(() => { if (!this.dead) this.afterShot(); }, 380 / SPEED);
     }
   }
   afterShot() { this.next(); }
   /* --- flow --- */
-  begin() { this.next(); }
+  begin() { if (this.restored) this.ui.flash('Carry on', `${this.keepBoard} are where you left them`); this.next(); }
   next() {
     if (this.dead) return; const s = this.nextShooter();
     if (!s) { this.finish(); return; }
@@ -1265,6 +1286,15 @@ class SjoelTable extends SlideTable {
     this.world = new World({ decel: this.decel, e: 0.7, walls, data: { boxed: [0, 0, 0, 0] } });
     this.who = this.unit.who; this.go = 1; this.pile = this.m.opts.discs; this.cool = 0; this.aimX = this.gx[2];
   }
+  // discs stay where they stop until the go ends, so a turn you leave carries on as it was
+  get keepBoard() { return 'The discs'; }
+  boardExtra() { return { go: this.go, pile: this.pile }; }
+  loadExtra(x) { this.go = x.go || 1; this.pile = x.pile == null ? this.pile : x.pile; }
+  begin() {
+    // came back after the last disc of a go was slid: finish that go now
+    if (this.restored && this.pile <= 0) { this.state = 'rest'; this.endGo(); return; }
+    super.begin();
+  }
   look() { return { top: '#ecc283', edge: '#bf8a45', ring: 'rgba(176,96,27,.35)' }; }
   xRange() { return [-200 + this.R + 2, 200 - this.R - 2]; }
   nextShooter() { if (this.go > 3) return null; const p = this.m.players[this.who]; return { side: 0, cpu: p.kind === 'cpu', name: p.name }; }
@@ -1294,7 +1324,7 @@ class SjoelTable extends SlideTable {
   tipText() { return 'Touch in line with a gate, pull back, let go. Slide them fast!'; }
   shoot(shot) {
     shot = this.noisy(shot); Sound.init(); Sound.slide(); this.lastBody = this.launch(this.world, shot, this.shooter);
-    this.pile--; this.cool = 0.16; this.ui.tip(null); this.refresh();
+    this.pile--; this.shots++; this.dirty = true; this.cool = 0.16; this.ui.tip(null); this.refresh();
     if (this.pile <= 0) this.state = 'moving';
     else if (this.shooter.cpu) { this.state = 'cpu'; setTimeout(() => !this.dead && this.cpuGo(), 260 / SPEED); }
     else this.state = 'aim';
@@ -1302,13 +1332,16 @@ class SjoelTable extends SlideTable {
   down(e) { if (this.cool > 0) return; super.down(e); }
   update(dt) {
     if (this.cool > 0) this.cool -= dt;
-    if (this.state === 'moving' && !this.world.moving() && !this.animating()) { this.state = 'rest'; setTimeout(() => !this.dead && this.endGo(), 600 / SPEED); }
+    const still = !this.world.moving() && !this.animating();
+    if (still && this.dirty) { this.dirty = false; this.saveBoard(); }
+    if (this.state === 'moving' && still) { this.state = 'rest'; setTimeout(() => !this.dead && this.endGo(), 600 / SPEED); }
   }
   endGo() {
     // pile up what's in the boxes and gather the rest: stuck in a gate, short, or bounced back
     const w = this.world, c = this.boxCounts(w), left = w.bodies.filter(b => !b.stack && !this.inBox(b)).length;
     w.data.boxed = c; w.bodies = []; this.addPiles(w); this.go++; this.pile = left;
     if (this.go > 3 || left === 0) { this.go = 4; this.refresh(); this.finish(); return; }
+    this.saveBoard();
     this.ui.flash(`Go ${this.go} of 3`, `Gather up ${plural(left, 'disc')} and slide again`); this.next();
   }
   result() { return { counts: this.counts() }; }
@@ -1413,7 +1446,7 @@ GAMES.sjoel = {
     s4: ['Does it count?', [['Half in', 'Slide again. A disc only scores once it’s fully past the gate.'], ['Bounced back', 'Off the board, or back past the start bar? It sits out until your next go.'], ['Hands off', 'Hands off the board until your go is over.']]],
     banner: ['Highest score wins!', 'A perfect turn scores 148: seven sets, plus two spare in the 4.']
   },
-  appNotes: ['You can slide the next disc while others are still moving, just like the real thing.', 'Discs stay where they stop until the go ends, on the board or in a box. A box only has room for so many, so a crowded box can block its own gate. Slide them firmly to the back.', 'Between goes the discs in each box are stacked at the back, like on a real board, which clears the gates again.']
+  appNotes: ['You can slide the next disc while others are still moving, just like the real thing.', 'Discs stay where they stop until the go ends, on the board or in a box, even if you leave the game and carry on later. A box only has room for so many, so a crowded box can block its own gate. Slide them firmly to the back.', 'Between goes the discs in each box are stacked at the back, like on a real board, which clears the gates again.']
 };
 
 /* =========================================================
@@ -1428,6 +1461,10 @@ class ShuffleTable extends SlideTable {
     this.world = new World({ decel: this.decel, e: 0.88 });
     this.order = []; const h = this.unit.hammer; for (let i = 0; i < 4; i++) this.order.push(1 - h, h); this.thrown = 0;
   }
+  // pucks stay on the table until all 8 are played and scored, so a round you leave carries on as it was
+  get keepBoard() { return 'The pucks'; }
+  boardExtra() { return { thrown: this.thrown }; }
+  loadExtra(x) { this.thrown = x.thrown || 0; }
   look(b) { return puckLook(b); }
   xRange() { const h = this.W2 / 2 - this.R - 3; return [-h, h]; }
   nextShooter() { if (this.thrown >= 8) return null; const side = this.order[this.thrown], p = this.m.players[side]; return { side, cpu: p.kind === 'cpu', name: p.name }; }
@@ -1541,7 +1578,7 @@ GAMES.shuffle = puckRoundsGame({
     s4: ['Fouls', [['Too short', 'Pass the foul line. Short pucks are lifted off straight away.'], ['Off', 'Knocked off? It’s out until the next round.'], ['Next round', 'Scored this round? You shoot first next round.']]],
     banner: ['First to <em>15</em> wins!', 'Want a longer game? Play to 21.']
   },
-  appNotes: ['A 12 ft table, 4 pucks each. Pucks short of the foul line come off when they stop.', 'Pucks touching a line score the lower zone. A hanger is a puck over the far edge that hasn’t dropped.']
+  appNotes: ['A 12 ft table, 4 pucks each. Pucks short of the foul line come off when they stop. The rest stay where they stop until all 8 are played, even if you leave the game and carry on later.', 'Pucks touching a line score the lower zone. A hanger is a puck over the far edge that hasn’t dropped.']
 });
 
 GAMES.bank = puckRoundsGame({
@@ -1558,7 +1595,7 @@ GAMES.bank = puckRoundsGame({
     s4: ['Dead pucks', [['Didn’t come round', 'Left on the shooting side? Take it off.'], ['Short', 'Not past the first line? Off too.'], ['Over the edge', 'Gone until the next round. Scored this round? You shoot first next round.']]],
     banner: ['First to <em>15</em> wins!', 'Want a longer game? Play to 21.']
   },
-  appNotes: ['The rebound table found in UK bars: shoot up the left, bounce off the back cushion, score on the right.', 'Zones run 1 to 4, highest by the front edge. Pucks over the edge are gone.']
+  appNotes: ['The rebound table found in UK bars: shoot up the left, bounce off the back cushion, score on the right.', 'Zones run 1 to 4, highest by the front edge. Pucks over the edge are gone. The rest stay put until the round is scored, even if you leave and carry on later.']
 });
 
 /* =========================================================
@@ -1914,6 +1951,10 @@ const App = {
     document.addEventListener('click', e => { const t = e.target.closest('[data-tg]'); if (t && !t.disabled) { this.act(t.dataset.tg, t, e); } });
     document.addEventListener('input', e => { const t = e.target.closest('[data-tgname]'); if (t && this.setup) { this.setup.players[+t.dataset.tgname].name = t.value; this.saveSetup(); } });
     document.addEventListener('pointerdown', () => Sound.init(), { once: true });
+    // the phone may close the app while it's in the background: keep the board in play
+    const keep = () => { if (this.table) this.table.saveBoard(); };
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') keep(); });
+    window.addEventListener('pagehide', keep);
     this.ui = {
       status: (t, s) => { const el = $('#status'); if (el) el.innerHTML = `${esc(t)}${s ? `<small>${esc(s)}</small>` : ''}`; },
       chips: () => this.renderChips(),
@@ -1998,7 +2039,7 @@ const App = {
     });
     if (!G.seat.names) { const names = store.get('names', []); players.forEach((p, i) => { if (p.kind === 'human' && !isCpuName(p.name)) names[i] = p.name; }); store.set('names', names); if (window.PubHome && players[0].kind === 'human') try { localStorage.setItem('pubgames.firstName', JSON.stringify(players[0].name)); } catch (e) { } }
     const m = { gid: G.id, mode, players, opts: Object.assign({}, st.opts), diff: st.diff, hist: [], over: false, winner: null, t: Date.now() };
-    G.init(m); this.m = m; this.save(); this.nextUnit();
+    G.init(m); this.m = m; this.save(); store.del(BOARD_KEY(G.id)); this.nextUnit();
   },
   save() { if (this.m) store.set('match.' + this.m.gid, this.m); },
   resume() { const m = store.get('match.' + this.G.id, null); if (!m) return; this.m = m; this.nextUnit(); },
@@ -2009,7 +2050,7 @@ const App = {
   nextUnit() {
     const m = this.m; if (m.over) return this.finish();
     const u = this.G.unit(m); this.unit = u; const w = this.whereFor(u);
-    if (!w) return this.askWhere(u);
+    if (!w) { const b = store.get(BOARD_KEY(m.gid), null); return b && b.id === boardId(m, u) ? this.startUnit(u, 'app') : this.askWhere(u); }
     this.startUnit(u, w);
   },
   startUnit(u, where) {
@@ -2022,7 +2063,7 @@ const App = {
       ${where === 'real' ? `<div class="entry" id="entry"></div>` : `<div class="stage" id="stage"><div class="tip hide" id="tip"></div><div class="flash" id="flash"></div>${realPill}</div>`}
       <div class="ctrl"><div class="status" id="status"></div><div class="tools" id="tools"></div>${this.swapHTML(u, where)}</div></div>`;
     this.renderChips(); this.ui.status(u.title, u.sub);
-    if (where === 'real') { this.est = G.entryInit(m, u); this.renderEntry(); }
+    if (where === 'real') { store.del(BOARD_KEY(G.id)); this.est = G.entryInit(m, u); this.renderEntry(); }
     else { this.table = new G.Table({ match: m, unit: u, game: G, ui: this.ui, onDone: r => this.commit(r, 'app') }); this.table.mount($('#stage')); }
   },
   swapHTML(u, where) {
@@ -2039,13 +2080,13 @@ const App = {
   commit(res, where) {
     const m = this.m, G = this.G; if (!m) return;
     m.hist.push(JSON.stringify({ s: m.s, over: m.over, winner: m.winner })); if (m.hist.length > 80) m.hist.shift();
-    res.where = where; const msg = G.apply(m, res); this.save(); this.stopTable();
+    res.where = where; const msg = G.apply(m, res); this.save(); this.stopTable(); store.del(BOARD_KEY(m.gid));
     if (m.over) { Sound.chime(true); return this.finish(msg); }
     if (where === 'app') this.between(msg); else { this.toast(msg.t + (msg.s ? ' · ' + msg.s : '')); this.nextUnit(); }
   },
   undo() {
     const m = this.m; if (!m || !m.hist.length) return; const h = JSON.parse(m.hist.pop());
-    m.s = h.s; m.over = h.over; m.winner = h.winner; this.save(); this.toast('Last score undone'); this.closeOv(); this.nextUnit();
+    m.s = h.s; m.over = h.over; m.winner = h.winner; this.save(); this.stopTable(); store.del(BOARD_KEY(m.gid)); this.toast('Last score undone'); this.closeOv(); this.nextUnit();
   },
   between(msg) {
     const m = this.m, u = this.G.unit(m), nextP = u.who != null ? m.players[u.who] : null;
@@ -2065,7 +2106,7 @@ const App = {
   },
   finish(msg) {
     const m = this.m, G = this.G, names = (m.winner || []).map(i => m.players[i].name);
-    store.del('match.' + m.gid);
+    store.del('match.' + m.gid); store.del(BOARD_KEY(m.gid));
     const title = names.length > 1 ? `${listAnd(names.map(esc))} share it!` : `${esc(names[0] || 'Nobody')} wins!`;
     this.R().innerHTML = `<div class="sheet"><div class="bar"><button class="iconbtn" data-tg="home">${ICON.back}</button><span class="nm">${G.short}</span><span style="width:36px"></span></div>
       <div class="win"><div class="crown">${ICON.crown}</div><h2>${title}</h2>${msg ? `<p>${esc(msg.t)}${msg.s ? ' · ' + esc(msg.s) : ''}</p>` : ''}</div>
@@ -2098,7 +2139,7 @@ const App = {
     el.textContent = t; el.classList.add('show'); clearTimeout(this._tt); this._tt = setTimeout(() => el.classList.remove('show'), 2400);
   },
   confirmQuit() {
-    this.openOv(`<h2 class="title sm" style="font-size:28px">Leave this game?</h2><p>The score is saved on this phone, so you can carry on later from the game's page.${this.where === 'app' && this.table && this.table.shots ? ' The turn in progress will start again.' : ''}</p>
+    this.openOv(`<h2 class="title sm" style="font-size:28px">Leave this game?</h2><p>The score is saved on this phone, so you can carry on later from the game's page.${this.where === 'app' && this.table && this.table.shots ? (this.table.keepBoard ? ` ${this.table.keepBoard} stay just where they are.` : ' The turn in progress will start again.') : ''}</p>
       <div class="btns"><button class="btn" data-tg="close">Stay</button><button class="btn primary" data-tg="leave">Leave</button></div>`);
   },
   bindHolds(el) {
