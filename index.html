@@ -162,6 +162,31 @@ b,strong{font-weight:600}
 .dice.n5{gap:8px}
 .dice.sm-row{gap:6px}
 .kept-lbl{font-size:11.5px;font-weight:700;color:var(--plum);text-transform:uppercase;letter-spacing:.06em;text-align:center;margin-top:6px}
+/* Real dice: tap in what landed */
+.rslot{width:60px;height:60px;border:2.5px dashed rgba(78,31,77,.35);border-radius:14px;flex:0 0 auto}
+.dice.n5 .rslot{width:52px;height:52px}
+.dice.rsm{gap:6px;flex-wrap:nowrap;min-height:48px}
+.dice.rsm .die,.dice.rsm .rslot{width:44px;height:44px}
+.rpad{background:#fff;border:2px solid var(--plum);border-radius:16px;padding:8px 8px 10px;margin-top:10px}
+.rpad .kept-lbl{margin:0 0 6px}
+.rpad .row{display:flex;justify-content:center;gap:6px}
+.rpad .die{width:44px;height:44px}
+.rpad .die[disabled]{opacity:.35}
+.rtag{display:inline-flex;align-items:center;gap:4px;background:#fff;border:2px solid var(--plum);color:var(--plum);border-radius:999px;padding:2px 9px;font-size:12px;font-weight:700;margin-top:6px}
+.rtag svg{width:14px;height:14px}
+.rseg{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;font-size:13px;font-weight:600;color:var(--plum)}
+.rundo{display:block;margin:8px auto 0;border:0;background:transparent;color:var(--plum);font-size:12.5px;font-weight:600;text-decoration:underline;padding:4px 8px}
+.rpigs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.rpigs button{border:2px solid var(--plum);background:#fff;border-radius:12px;padding:4px 2px 5px;color:var(--plum);font-weight:600;font-size:11.5px;line-height:1.15;display:flex;flex-direction:column;align-items:center}
+.rpigs button[disabled]{opacity:.35}
+.rpigs button svg{width:56px;height:38px;overflow:visible}
+.rpigs button b{font-size:11px;color:var(--orange)}
+.rpslot{width:118px;height:96px;border:2.5px dashed rgba(78,31,77,.35);border-radius:16px;display:grid;place-items:center;color:rgba(78,31,77,.5);font-weight:700;font-size:13px}
+.pigs .pig.rp{border:0;background:transparent;padding:0}
+.prow.three{flex-wrap:wrap;gap:6px 8px;padding-bottom:10px;border-bottom:2px dashed rgba(78,31,77,.18)}
+.prow.three input{flex:1 1 calc(100% - 50px)}
+.prow.three .seg{order:2;flex:1 1 100%}
+.prow.three .seg button{flex:1 1 0;justify-content:center;padding:8px 6px}
 .rolling svg{animation:tumble .55s cubic-bezier(.3,.7,.4,1)}
 @keyframes tumble{0%{transform:translate(-30px,-28px) rotate(-200deg) scale(.7)}60%{transform:translate(4px,4px) rotate(18deg) scale(1.06)}100%{transform:none}}
 .mini{display:inline-flex;gap:3px;vertical-align:middle}
@@ -2190,6 +2215,7 @@ const I = {
   pig: sv(`<ellipse cx="11" cy="13" rx="7" ry="5"/><circle cx="18" cy="11" r="3.4"/><path d="M7 17.5v2M14 17.5v2M4 12c-1.2-.5-1.6.8-.6 1.2"/><circle cx="11" cy="12.5" r="1" fill="${PLUM}"/>`),
   bot: sv(`<rect x="4" y="7" width="16" height="12" rx="3"/><path d="M12 7V4"/><circle cx="12" cy="3.5" r="1"/><circle cx="9" cy="13" r="1.2" fill="${PLUM}"/><circle cx="15" cy="13" r="1.2" fill="${PLUM}"/>`),
   person: sv(`<circle cx="12" cy="8" r="3.6"/><path d="M5 20c.6-4 3.3-6.2 7-6.2s6.4 2.2 7 6.2"/>`),
+  phone: sv(`<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/>`),
   back: sv(`<path d="M14.5 5.5L8 12l6.5 6.5"/>`),
   book: sv(`<path d="M4 5.5C6.5 4.5 9.5 4.6 12 6.2c2.5-1.6 5.5-1.7 8-.7v13c-2.5-1-5.5-.9-8 .7-2.5-1.6-5.5-1.7-8-.7z"/><path d="M12 6.2v13"/>`),
   dominoes: sv(`<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M7 12h10"/><circle cx="12" cy="7.2" r="1.2" fill="${PLUM}"/><circle cx="10" cy="15.5" r="1.1" fill="${PLUM}"/><circle cx="14" cy="17.7" r="1.1" fill="${PLUM}"/>`),
@@ -2282,7 +2308,7 @@ const headHTML = (title, tagline, art, small) => `<div class="head"><div><p clas
 const banner = (t, s, ic = '') => `<div class="banner pop"><div><div class="t">${t}</div>${s ? `<div class="s">${s}</div>` : ''}</div>${ic ? `<div class="ic">${ic}</div>` : ''}</div>`;
 const winsText = name => `${esc(name)} <em>wins!</em>`;
 const btn = (label, act, arg = '', cls = '', dis = false) => `<button class="btn ${cls}" data-act="${act}" data-arg="${esc(arg)}" ${dis ? 'disabled' : ''}>${label}</button>`;
-const who = p => `${p.cpu ? I.bot : I.person}`;
+const who = p => `${p.cpu ? I.bot : p.real ? I.dice : I.person}`;
 function chipsHTML(st, fn) {
   return `<div class="chips">${st.players.map((p, i) => {
     const c = fn(p, i);
@@ -2328,7 +2354,7 @@ function defaultSetup(g) {
   (g.options || []).forEach(o => opts[o.key] = o.def);
   if (saved && saved.players && saved.players.length >= g.min && saved.players.length <= g.max) {
     Object.assign(opts, saved.opts || {});
-    return { players: saved.players.map(p => ({ name: p.name, cpu: !!p.cpu })), opts };
+    return { players: saved.players.map(p => ({ name: p.name, cpu: !!p.cpu, real: g.kind === 'dice' && !p.cpu && !!p.real })), opts };
   }
   const first = store.get('firstName', 'Jeanette');
   const players = [{ name: first, cpu: false }];
@@ -2341,7 +2367,7 @@ function homeView() {
   return `<div class="sheet">
     ${headHTML('Pub Games', 'Roll, deal, slide and throw. The games from the rules cards, in one place.', homeArt())}
     ${infoHTML([['dice', '9 dice, card &amp; tile games', 'Zanzibar to Texas 42'], ['<svg viewBox="0 0 24 24" fill="none" stroke="#4e1f4d" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M8 3h8l4 18H4z" fill="#f8dca8"/><path d="M8.6 8h6.8"/><ellipse cx="12" cy="15.5" rx="3.2" ry="1.6" fill="#dd7f27"/></svg>', '6 table games', 'Toad to Shove Ha’penny'], ['people', 'Play your way', 'friends, computer or the real table']])}
-    ${sec(1, 'Dice games')}<div class="tiles">${ORDER.dice.map(tile).join('')}</div>
+    ${sec(1, 'Dice games')}<p class="note" style="margin:-4px 0 10px">Roll the app’s dice, roll your own and tap them in, or a bit of both.</p><div class="tiles">${ORDER.dice.map(tile).join('')}</div>
     ${sec(2, 'Card games')}<div class="tiles">${ORDER.cards.map(tile).join('')}</div>
     ${sec(3, 'Dominoes')}<div class="tiles">${ORDER.dominoes.map(tile).join('')}</div>
     ${window.TableGames ? `${sec(4, 'Table games')}<p class="note" style="margin:-4px 0 10px">Play them on the phone, keep score at the real table, or a bit of both.</p><div class="tiles">${TableGames.list().map(t => `<button class="tile" data-act="table" data-arg="${t.id}">${TableGames.live(t.id) ? '<span class="tgresume">Game on</span>' : ''}<span class="ic">${t.icon}</span><span class="tx"><b>${t.name}</b><small>${t.tag}</small><span class="pp">${I.people}${t.players}</span></span></button>`).join('')}</div>` : ''}
@@ -2355,12 +2381,15 @@ function homeArt() {
 
 function setupView() {
   const g = G[App.gid], s = App.setup;
-  const n = s.players.length;
-  const rows = s.players.map((p, i) => `<div class="prow">
+  const n = s.players.length, dice = g.kind === 'dice';
+  const rows = s.players.map((p, i) => `<div class="prow ${dice ? 'three' : ''}">
       <input data-name="${i}" value="${esc(p.name)}" maxlength="14" aria-label="Player ${i + 1} name" autocomplete="off">
-      <div class="seg" role="group"><button class="${!p.cpu ? 'on' : ''}" data-act="ptype" data-arg="${i}:0">${I.person}Person</button><button class="${p.cpu ? 'on' : ''}" data-act="ptype" data-arg="${i}:1">${I.bot}Computer</button></div>
+      ${dice
+      ? `<div class="seg" role="group" aria-label="How ${esc(p.name) || 'this player'} plays"><button class="${!p.cpu && !p.real ? 'on' : ''}" data-act="ptype" data-arg="${i}:0">${I.phone}App ${g.realWord || 'dice'}</button><button class="${p.real ? 'on' : ''}" data-act="ptype" data-arg="${i}:2">${g.id === 'pigs' ? I.pig : I.dice}Real ${g.realWord || 'dice'}</button><button class="${p.cpu ? 'on' : ''}" data-act="ptype" data-arg="${i}:1">${I.bot}Computer</button></div>`
+      : `<div class="seg" role="group"><button class="${!p.cpu ? 'on' : ''}" data-act="ptype" data-arg="${i}:0">${I.person}Person</button><button class="${p.cpu ? 'on' : ''}" data-act="ptype" data-arg="${i}:1">${I.bot}Computer</button></div>`}
       ${n > g.min ? `<button class="x" data-act="pdel" data-arg="${i}" aria-label="Remove">×</button>` : ''}
     </div>`).join('');
+  const reals = dice && s.players.some(p => p.real);
   const opts = (g.options || []).map(o => `<div class="opt"><div class="l"><b>${o.label}</b>${o.help ? `<span>${o.help}</span>` : ''}</div>
       <div class="seg">${o.choices.map(([v, l]) => `<button class="${s.opts[o.key] === v ? 'on' : ''}" data-act="opt" data-arg="${o.key}:${v}">${l}</button>`).join('')}</div></div>`).join('');
   const speed = `<div class="opt"><div class="l"><b>Computer speed</b><span>How long the computer takes over its go.</span></div><div class="seg">${[['slow', 'Steady'], ['normal', 'Normal'], ['fast', 'Quick']].map(([v, l]) => `<button class="${App.speed === v ? 'on' : ''}" data-act="speed" data-arg="${v}">${l}</button>`).join('')}</div></div>`;
@@ -2373,6 +2402,7 @@ function setupView() {
     ${rows}
     ${n < g.max ? `<button class="btn small" data-act="padd">+ Add a player</button>` : ''}
     ${g.priv && humans > 1 ? `<p class="note">Cards stay hidden. Before each person’s go, the app asks you to pass the phone.</p>` : ''}
+    ${dice ? `<p class="note">${reals ? `<b>Real ${g.realWord || 'dice'}:</b> ${g.realHow || 'roll your own dice at the table, then tap in how they landed.'} The app does the scoring for everyone.` : `Got your own ${g.realWord || 'dice'}? Set anyone to <b>Real ${g.realWord || 'dice'}</b> to ${g.id === 'pigs' ? 'throw' : 'roll'} at the table and tap in the result. Mix and match on one scoreboard.`}</p>` : ''}
     ${g.note ? `<p class="note">${g.note}</p>` : ''}
     ${sec(2, 'Options')}
     <div class="panel">${opts}${speed}</div>
@@ -2472,7 +2502,7 @@ function startGame() {
   if (new Set(names).size !== names.length) s.players.forEach((p, i) => { if (names.indexOf(p.name) !== i) p.name += ' ' + (i + 1); });
   store.set('setup.' + g.id, s);
   const h = s.players.find(p => !p.cpu); if (h) store.set('firstName', h.name);
-  App.st = g.create(s.players.map(p => ({ name: p.name, cpu: p.cpu })), { ...s.opts });
+  App.st = g.create(s.players.map(p => ({ name: p.name, cpu: p.cpu, ...(g.kind === 'dice' && !p.cpu && p.real ? { real: true } : {}) })), { ...s.opts });
   App.st.log = App.st.log || [];
   App.view = 'play';
   window.scrollTo(0, 0);
@@ -2487,7 +2517,7 @@ function handle(a, arg) {
     case 'rules': App.overlay = { type: 'rules', gid: arg }; clearTimeout(App.timer); break;
     case 'close': App.overlay = null; break;
     case 'close-bg': return;
-    case 'ptype': { const [i, c] = arg.split(':'); App.setup.players[+i].cpu = c === '1'; break; }
+    case 'ptype': { const [i, c] = arg.split(':'); const p = App.setup.players[+i]; p.cpu = c === '1'; p.real = c === '2'; break; }
     case 'pdel': App.setup.players.splice(+arg, 1); break;
     case 'padd': { const used = new Set(App.setup.players.map(p => p.name)); const nm = CPU_NAMES.find(n => !used.has(n)) || 'Player'; App.setup.players.push({ name: nm, cpu: true }); break; }
     case 'opt': { const [k, v] = arg.split(':'); const o = g.options.find(o => o.key === k); App.setup.opts[k] = typeof o.def === 'number' ? +v : v; break; }
@@ -2526,6 +2556,26 @@ function dieBtn(d, i, o = {}) {
 }
 const humanTurn = (st, a) => a >= 0 && !st.players[a].cpu;
 
+/* Real dice: a player rolls their own dice at the table, then taps in how they landed */
+const realTurn = (st, a) => a >= 0 && !st.players[a].cpu && !!st.players[a].real;
+const rTag = (word = 'dice') => `<div style="text-align:center"><span class="rtag">${word === 'pigs' ? I.pig + 'Throwing real pigs' : I.dice + 'Rolling real dice'}</span></div>`;
+function rPadAct(st, a, arg, n) {
+  st.rin = st.rin || [];
+  if (a === 'rset') { if (st.rin.length < n && +arg >= 1 && +arg <= 6) st.rin.push(+arg); return true; }
+  if (a === 'rdel') { st.rin.splice(+arg, 1); return true; }
+  return false;
+}
+function rSlots(vals, n, o = {}) {
+  let h = `<div class="dice ${o.sm ? 'rsm' : 'n' + n}">`;
+  for (let i = 0; i < n; i++) h += vals[i] ? `<button class="die" data-act="rdel" data-arg="${i}" aria-label="${vals[i]}, tap to take it out">${dieSVG(vals[i], !!o.kept)}</button>` : `<span class="rslot" aria-hidden="true"></span>`;
+  return h + `</div>`;
+}
+function rPad(vals, n, label) {
+  const full = vals.length >= n;
+  return `<div class="rpad"><div class="kept-lbl">${full ? 'All in · tap a die above to change it' : label}</div><div class="row">${[1, 2, 3, 4, 5, 6].map(v => `<button class="die" data-act="rset" data-arg="${v}" aria-label="Add a ${v}" ${full ? 'disabled' : ''}>${dieSVG(v)}</button>`).join('')}</div></div>`;
+}
+const rMore = (left, done) => left > 0 ? `Tap in ${plural(left, 'more die', 'more dice')}` : done;
+
 /* ================= Dice games ================= */
 const iconDice = (vals, kept = []) => `<svg viewBox="0 0 ${vals.length * 38 + 8} 46">${vals.map((v, i) => `<g transform="translate(${i * 38} 2) scale(.4)">${dieInner(v, kept.includes(i))}</g>`).join('')}</svg>`;
 const blankDice = n => Array.from({ length: n }, () => ({ v: 0, kept: false }));
@@ -2550,7 +2600,7 @@ const coinV = n => `${coinIc}${n}`;
   function round(st) {
     st.round++; st.order = rotation(st, st.starter); st.ti = 0; st.limit = 3; st.hands = {}; st.phase = 'turn'; st.res = null; turn(st);
   }
-  function turn(st) { st.dice = blankDice(3); st.rolls = 0; }
+  function turn(st) { st.dice = blankDice(3); st.rolls = 0; st.rin = []; st.rRolls = 0; }
   const actor = st => st.phase === 'turn' ? st.order[st.ti] : -1;
   function roll(st) {
     st.dice.forEach(d => { if (st.rolls === 0) d.kept = false; if (!d.kept) { d.v = d6(); d.spin = true; } });
@@ -2569,7 +2619,7 @@ const coinV = n => `${coinIc}${n}`;
     let g = [...group], guard = 0;
     while (g.length > 1 && guard++ < 30) {
       const rs = g.map(i => { const v = [d6(), d6(), d6()]; return { i, v, ev: zEval(v) }; });
-      notes.push(`Roll-off for ${high ? 'best' : 'worst'}: ` + rs.map(r => `${esc(st.players[r.i].name)} ${mini(r.v.join(''))}`).join(' · '));
+      notes.push(`Roll-off for ${high ? 'best' : 'worst'}${g.some(i => st.players[i].real) ? ' (rolled by the app)' : ''}: ` + rs.map(r => `${esc(st.players[r.i].name)} ${mini(r.v.join(''))}`).join(' · '));
       const t = rs.reduce((m, r) => !m || (high ? cmp(r.ev, m) > 0 : cmp(r.ev, m) < 0) ? r.ev : m, null);
       g = rs.filter(r => cmp(r.ev, t) === 0).map(r => r.i);
     }
@@ -2635,6 +2685,12 @@ const coinV = n => `${coinIc}${n}`;
     act(st, a, arg) {
       if (a === 'next' && st.phase === 'result' && !st.over) return round(st);
       const p = actor(st); if (p < 0 || st.players[p].cpu) return;
+      if (st.players[p].real) {
+        if (rPadAct(st, a, arg, 3)) return;
+        if (a === 'rrolls' && st.ti === 0) st.rRolls = Math.max(1, Math.min(3, +arg));
+        else if (a === 'rdone' && st.rin.length === 3 && (st.ti > 0 || st.rRolls)) { st.dice = st.rin.map(v => ({ v, kept: false })); st.rolls = st.ti === 0 ? st.rRolls : st.limit; stop(st); }
+        return;
+      }
       if (a === 'roll' && st.rolls < st.limit && (st.rolls === 0 || st.dice.some(d => !d.kept))) roll(st);
       else if (a === 'keep' && st.rolls > 0 && st.rolls < st.limit) st.dice[+arg].kept = !st.dice[+arg].kept;
       else if (a === 'stop' && st.rolls > 0) stop(st);
@@ -2643,7 +2699,16 @@ const coinV = n => `${coinIc}${n}`;
       const a = actor(st), hum = humanTurn(st, a);
       let h = chipsHTML(st, (p, i) => ({ v: coinV(p.counters), sub: 'counters', on: i === a, tag: st.phase === 'turn' && i === st.order[0] ? 'First' : (st.res && i === st.res.best ? 'Best' : st.res && i === st.res.worst ? 'Worst' : ''), tagCls: st.res && i === st.res.worst ? 'p' : '' }));
       h += `<div class="board">`;
-      if (st.phase === 'turn') {
+      if (st.phase === 'turn' && realTurn(st, a)) {
+        const vals = st.rin, ev = vals.length === 3 ? zEval(vals) : null, first = st.ti === 0;
+        h += `<div class="status">${esc(st.players[a].name)}’s turn<small>${first ? 'Going first, so your rolls set the limit for everyone.' : `Up to ${plural(st.limit, 'roll')} this round.`} Then tap in your hand.</small></div>${rTag()}`;
+        h += rSlots(vals, 3);
+        h += `<div class="verdict">${ev ? `<span class="vpill">${ev.name}</span><span class="vpill o">${evText(ev)}</span>` : ''}</div>`;
+        h += rPad(vals, 3, 'Tap in your three dice');
+        if (first) h += `<div class="rseg">Rolls you took<div class="seg">${[1, 2, 3].map(k => `<button class="${st.rRolls === k ? 'on' : ''}" data-act="rrolls" data-arg="${k}">${k}</button>`).join('')}</div></div>`;
+        const ready = vals.length === 3 && (!first || st.rRolls);
+        h += `<div class="btns">${btn(rMore(3 - vals.length, first && !st.rRolls ? 'How many rolls did you take?' : 'That’s my hand · pass the dice'), 'rdone', '', 'primary', !ready)}</div>`;
+      } else if (st.phase === 'turn') {
         const ev = st.rolls ? zEval(st.dice.map(d => d.v)) : null;
         const sub = st.rolls === 0 ? (st.ti === 0 ? 'Going first, so you set the limit for everyone.' : `Up to ${plural(st.limit, 'roll')} this round.`) : `Roll ${st.rolls} of ${st.limit}`;
         h += `<div class="status">${esc(st.players[a].name)}’s turn<small>${st.players[a].cpu && st.ti === 0 && st.rolls === 0 ? 'Goes first and sets the limit.' : sub}</small></div>`;
@@ -2693,7 +2758,7 @@ const coinV = n => `${coinIc}${n}`;
   const cargo = st => loaded(st) ? sum(st.dice.filter(d => d.role === 'cargo').map(d => d.v)) : 0;
   const actor = st => st.phase === 'turn' ? st.order[st.ti] : -1;
   function round(st, only) { st.order = only || rotation(st, st.starter); st.ti = 0; st.scores = {}; st.finals = {}; st.phase = 'turn'; st.res = null; st.tiebreak = !!only; turn(st); }
-  function turn(st) { st.dice = Array.from({ length: 5 }, () => ({ v: 0, role: null })); st.rolls = 0; }
+  function turn(st) { st.dice = Array.from({ length: 5 }, () => ({ v: 0, role: null })); st.rolls = 0; st.rin = []; }
   function roll(st) {
     const L = loaded(st);
     st.dice.forEach(d => { if (!d.role || (L && d.role === 'cargo')) { d.v = d6(); d.spin = true; } });
@@ -2711,7 +2776,7 @@ const coinV = n => `${coinIc}${n}`;
   function stop(st) {
     const a = actor(st), c = cargo(st);
     st.scores[a] = c; st.finals[a] = st.dice.map(d => ({ ...d }));
-    log(st, loaded(st) ? `${nm(st, a)} sails with ${c} cargo.` : `${nm(st, a)} ${st.dice.some(d => d.role === 'ship') ? 'never found a full crew' : 'never found a ship'}. No score.`);
+    log(st, loaded(st) ? `${nm(st, a)} sails with ${c} cargo.` : `${nm(st, a)} ${st.dice.every(d => !d.v) ? 'didn’t load the ship' : st.dice.some(d => d.role === 'ship') ? 'never found a full crew' : 'never found a ship'}. No score.`);
     st.ti++;
     if (st.ti < st.order.length) return turn(st);
     const top = Math.max(...st.order.map(i => st.scores[i]));
@@ -2746,9 +2811,15 @@ const coinV = n => `${coinIc}${n}`;
       if (st.phase === 'result' && !anyHuman(st)) return { ms: 2600, run: () => round(st, st.res.tie) };
       return null;
     },
-    act(st, a) {
+    act(st, a, arg) {
       if (a === 'next' && st.phase === 'result' && !st.over) return round(st, st.res.tie);
       const p = actor(st); if (p < 0 || st.players[p].cpu) return;
+      if (st.players[p].real) {
+        if (rPadAct(st, a, arg, 2)) return;
+        if (a === 'rdone' && st.rin.length === 2) { st.dice = ROLES.map(([role, v]) => ({ v, role })).concat(st.rin.map(v => ({ v, role: 'cargo' }))); st.rolls = 3; stop(st); }
+        else if (a === 'rnone') { st.dice = Array.from({ length: 5 }, () => ({ v: 0, role: null })); st.rolls = 3; stop(st); }
+        return;
+      }
       if (a === 'roll' && st.rolls < 3) roll(st);
       else if (a === 'stop' && st.rolls > 0) stop(st);
     },
@@ -2756,7 +2827,15 @@ const coinV = n => `${coinIc}${n}`;
       const a = actor(st), hum = humanTurn(st, a);
       let h = chipsHTML(st, (p, i) => ({ v: `${p.wins}<small> / ${st.target}</small>`, sub: 'rounds won', on: i === a, out: st.tiebreak && !st.order.includes(i) }));
       h += `<div class="board">`;
-      if (st.phase === 'turn') {
+      if (st.phase === 'turn' && realTurn(st, a)) {
+        const vals = st.rin, c = sum(vals);
+        h += `<div class="status">${esc(st.players[a].name)}’s turn<small>${st.tiebreak ? 'Tie-break! ' : ''}Three rolls to load the ship. Got the 6, 5 and 4? Tap in your cargo.</small></div>${rTag()}`;
+        h += `<div style="display:flex;justify-content:center;gap:14px;margin-top:12px">${ROLES.map(([r, v, l]) => `<div style="text-align:center">${dieBtn({ v }, 0, { sm: true })}<div class="kept-lbl" style="margin-top:3px">${l}</div></div>`).join('')}</div>`;
+        h += rSlots(vals, 2, { kept: true }) + `<div class="kept-lbl">Cargo</div>`;
+        h += `<div class="verdict">${vals.length === 2 ? `<span class="vpill or">${c} cargo</span>` : ''}</div>`;
+        h += rPad(vals, 2, 'Tap in your two cargo dice');
+        h += `<div class="btns">${btn(rMore(2 - vals.length, `Done · ${c} cargo`), 'rdone', '', 'primary', vals.length < 2)}</div><div class="btns">${btn('Couldn’t load the ship · no score', 'rnone', '', 'small')}</div>`;
+      } else if (st.phase === 'turn') {
         const L = loaded(st), c = cargo(st);
         h += `<div class="status">${esc(st.players[a].name)}’s turn<small>${st.tiebreak ? 'Tie-break! ' : ''}${st.rolls ? `Roll ${st.rolls} of 3` : 'Three rolls to load the ship.'}</small></div>`;
         h += `<div style="display:flex;justify-content:center;gap:14px;margin-top:12px">${ROLES.map(([r, v, l]) => slot(st, r, v, l)).join('')}</div>`;
@@ -2779,7 +2858,7 @@ const coinV = n => `${coinIc}${n}`;
       const done = st.order.filter(i => i in st.scores).sort((x, y) => st.scores[y] - st.scores[x]);
       if (done.length) {
         const top = Math.max(...done.map(i => st.scores[i]));
-        h += sec(3, 'Cargo so far') + tableHTML(['Final dice · best at the top', 'Cargo'], done.map(i => ({ ic: `<span class="mini">${st.finals[i].map(d => dieSVG(d.v, d.role === 'cargo', true)).join('')}</span>`, t: esc(st.players[i].name), s: st.scores[i] ? 'Loaded' : st.finals[i].some(d => d.role === 'ship') ? 'No crew' : 'No ship', v: st.scores[i], hi: st.phase === 'result' && st.scores[i] === top })));
+        h += sec(3, 'Cargo so far') + tableHTML(['Final dice · best at the top', 'Cargo'], done.map(i => ({ ic: `<span class="mini">${st.finals[i].map(d => dieSVG(d.v, d.role === 'cargo', true)).join('')}</span>`, t: esc(st.players[i].name), s: st.scores[i] ? 'Loaded' : st.finals[i].every(d => !d.v) ? 'Not loaded' : st.finals[i].some(d => d.role === 'ship') ? 'No crew' : 'No ship', v: st.scores[i], hi: st.phase === 'result' && st.scores[i] === top })));
       }
       return h;
     },
@@ -2828,7 +2907,20 @@ const coinV = n => `${coinIc}${n}`;
   const actor = st => st.over ? -1 : st.cur;
   const live = st => st.dice.map((d, i) => [d, i]).filter(([d]) => !d.set);
   const pickVals = st => st.dice.filter(d => d.pick).map(d => d.v);
-  function newTurn(st) { st.dice = Array.from({ length: 6 }, () => ({ v: 0 })); st.turn = 0; st.phase = 'start'; }
+  function newTurn(st) { st.dice = Array.from({ length: 6 }, () => ({ v: 0 })); st.turn = 0; st.phase = 'start'; st.rin = []; st.rSets = []; }
+  // Real dice: each set aside is tapped in and scored; six set aside means hot dice, so all six roll again
+  const rUsed = st => { let u = 0; for (const s of st.rSets) { u += s.v.length; if (u >= 6) u = 0; } return u; };
+  const rCanBank = (st, gs) => gs > 0 && (st.players[st.cur].score > 0 || !st.open500 || st.turn + gs >= 500);
+  function rAct(st, a, arg) {
+    if (rPadAct(st, a, arg, 6 - rUsed(st))) return;
+    const gs = st.rin.length ? fScore(st.rin) : 0;
+    if (a === 'rnext' && gs > 0) {
+      st.rSets.push({ v: st.rin.slice(), s: gs }); st.turn += gs; st.rin = [];
+      if (rUsed(st) === 0) log(st, `${nm(st, st.cur)} has hot dice! Rolling all six again.`);
+    } else if (a === 'rbank' && rCanBank(st, gs)) { st.rSets.push({ v: st.rin.slice(), s: gs }); st.turn += gs; st.rin = []; bank(st); }
+    else if (a === 'rfarkle') { log(st, `${nm(st, st.cur)} Farkles and loses ${fmt(st.turn)}.`); endTurn(st); }
+    else if (a === 'rundo' && st.rSets.length) { st.turn -= st.rSets.pop().s; st.rin = []; }
+  }
   function roll(st) {
     const pv = pickVals(st);
     if (st.phase === 'pick') { st.turn += fScore(pv); st.dice.forEach(d => { if (d.pick) { d.set = true; d.pick = false; } }); }
@@ -2896,6 +2988,7 @@ const coinV = n => `${coinIc}${n}`;
     next(st) { const a = actor(st); return a >= 0 && st.players[a].cpu ? { ms: st.phase === 'farkle' ? 1500 : st.dice.some(d => d.pick) ? 1000 : 750, run: () => ai(st) } : null; },
     act(st, a, arg) {
       if (st.players[st.cur].cpu) return;
+      if (st.players[st.cur].real) return rAct(st, a, arg);
       if (a === 'roll') { if (st.phase === 'start') roll(st); else if (st.phase === 'pick' && fScore(pickVals(st)) > 0) roll(st); }
       else if (a === 'pick' && st.phase === 'pick') { const d = st.dice[+arg]; if (!d.set) d.pick = !d.pick; }
       else if (a === 'bank' && canBank(st)) bank(st);
@@ -2911,7 +3004,20 @@ const coinV = n => `${coinIc}${n}`;
       let h = chipsHTML(st, (q, i) => ({ v: fmt(q.score), sub: st.final === i ? 'set the target' : (st.open500 && q.score === 0 ? 'not on the board' : 'points'), on: i === a, tag: st.final === i ? 'Target' : '' }));
       if (st.final !== null && !st.over) h += `<div class="hint" style="margin:-2px 0 6px"><b>Last chance!</b> Beat ${fmt(Math.max(...st.players.map(q => q.score)))} to win.</div>`;
       h += `<div class="board">`;
-      if (!st.over) {
+      if (!st.over && realTurn(st, a)) {
+        const vals = st.rin, free = 6 - rUsed(st), gs = vals.length ? fScore(vals) : 0, hot = st.rSets.length && free === 6;
+        const opening = st.open500 && p.score === 0;
+        h += `<div class="status">${esc(p.name)}’s turn<small>${st.rSets.length ? `Turn so far: <b>${fmt(st.turn)}</b>` : opening ? 'Bank 500 or more to get on the board.' : 'Roll all six to start.'}</small></div>${rTag()}`;
+        if (st.rSets.length) h += `<div class="kept-lbl" style="margin-top:10px">Set aside</div><div class="dice sm-row" style="margin-top:4px;min-height:44px">${st.rSets.map(s => s.v.map(v => dieBtn({ v }, 0, { sm: true, kept: true })).join('')).join('<span style="width:8px"></span>')}</div>`;
+        h += rSlots(vals, free, { kept: true, sm: true });
+        h += `<div class="verdict">${gs > 0 ? `<span class="vpill">This set: ${fmt(gs)}</span><span class="vpill o">Turn: ${fmt(st.turn + gs)}</span>` : vals.length ? `<span class="vpill o">Every die you set aside must score</span>` : ''}</div>`;
+        h += rPad(vals, free, hot ? `Hot dice! Roll all six again, then tap in what you set aside` : `Roll ${free === 6 ? 'six dice' : plural(free, 'die', 'dice')}, then tap in the ones you set aside`);
+        const left = free - vals.length, n = left === 0 ? 6 : left;
+        const why = gs > 0 && !rCanBank(st, gs) ? '<span class="sub">need 500 to open</span>' : '';
+        h += `<div class="btns">${btn(`Keep these · roll ${n}${left === 0 && gs > 0 ? ' <span class="sub">hot dice!</span>' : ''}`, 'rnext', '', 'stack', !(gs > 0))}${btn(`Bank ${gs > 0 ? fmt(st.turn + gs) : ''} ${why}`, 'rbank', '', 'primary stack', !rCanBank(st, gs))}</div>`;
+        h += `<div class="btns">${btn(`Farkle! Nothing scored${st.turn ? ` <span class="sub">lose ${fmt(st.turn)}</span>` : ''}`, 'rfarkle', '', 'small')}</div>`;
+        if (st.rSets.length) h += `<button class="rundo" data-act="rundo">Undo the last set</button>`;
+      } else if (!st.over) {
         const pv = pickVals(st), ps = st.phase === 'pick' && pv.length ? fScore(pv) : null;
         h += `<div class="status">${esc(p.name)}’s turn<small>${st.phase === 'start' ? (st.open500 && p.score === 0 ? 'Bank 500 or more to get on the board.' : 'Roll all six to start.') : `Turn so far: <b>${fmt(st.turn)}</b>`}</small></div>`;
         const setAside = st.dice.map((d, i) => [d, i]).filter(([d]) => d.set);
@@ -2957,7 +3063,7 @@ const coinV = n => `${coinIc}${n}`;
   }
   const actor = st => st.phase === 'turn' ? st.order[st.ti] : -1;
   function round(st) { st.order = rotation(st, st.starter); st.ti = 0; st.scores = {}; st.finals = {}; st.phase = 'turn'; st.res = null; turn(st); }
-  function turn(st) { st.dice = Array.from({ length: 6 }, () => ({ v: 0, kept: false })); st.rolls = 0; }
+  function turn(st) { st.dice = Array.from({ length: 6 }, () => ({ v: 0, kept: false })); st.rolls = 0; st.rin = []; }
   function roll(st) { st.dice.forEach(d => { d.pick = false; if (!d.kept) { d.v = d6(); d.spin = true; } }); st.rolls++; }
   function keep(st) {
     if (!st.dice.some(d => d.pick)) return;
@@ -2967,7 +3073,7 @@ const coinV = n => `${coinIc}${n}`;
   function finish(st) {
     const a = actor(st), vals = st.dice.map(d => d.v), s = mScore(vals);
     st.scores[a] = s; st.finals[a] = vals;
-    log(st, s ? `${nm(st, a)} scores ${s}${s === 24 ? '. Midnight!' : '.'}` : `${nm(st, a)} missed the ${vals.includes(1) ? '4' : '1'}. No score.`);
+    log(st, s ? `${nm(st, a)} scores ${s}${s === 24 ? '. Midnight!' : '.'}` : vals.every(v => !v) ? `${nm(st, a)} didn’t keep a 1 and a 4. No score.` : `${nm(st, a)} missed the ${vals.includes(1) ? '4' : '1'}. No score.`);
     st.ti++;
     if (st.ti < st.order.length) return turn(st);
     const top = Math.max(...st.order.map(i => st.scores[i])), tied = st.order.filter(i => st.scores[i] === top);
@@ -3008,6 +3114,12 @@ const coinV = n => `${coinIc}${n}`;
     act(st, a, arg) {
       if (a === 'next' && st.phase === 'result' && !st.over) return round(st);
       const p = actor(st); if (p < 0 || st.players[p].cpu) return;
+      if (st.players[p].real) {
+        if (rPadAct(st, a, arg, 6)) return;
+        if (a === 'rdone' && st.rin.length === 6) { st.dice = st.rin.map(v => ({ v, kept: true })); st.rolls = 1; finish(st); }
+        else if (a === 'rnone') { st.dice = Array.from({ length: 6 }, () => ({ v: 0, kept: true })); st.rolls = 1; finish(st); }
+        return;
+      }
       if (a === 'roll' && st.rolls === 0) roll(st);
       else if (a === 'pick' && st.rolls > 0 && !st.dice[+arg].kept) st.dice[+arg].pick = !st.dice[+arg].pick;
       else if (a === 'keep') keep(st);
@@ -3016,7 +3128,14 @@ const coinV = n => `${coinIc}${n}`;
       const a = actor(st), hum = humanTurn(st, a);
       let h = chipsHTML(st, (p, i) => ({ v: `${p.wins}<small> / ${st.target}</small>`, sub: 'rounds won', on: i === a }));
       h += `<div class="board">`;
-      if (st.phase === 'turn') {
+      if (st.phase === 'turn' && realTurn(st, a)) {
+        const vals = st.rin, has1 = vals.includes(1), has4 = vals.includes(4);
+        h += `<div class="status">${esc(st.players[a].name)}’s turn<small>${st.pot > 1 ? `This round is worth ${st.pot}! ` : ''}Keep at least one die each roll. When all six are kept, tap them in.</small></div>${rTag()}`;
+        h += rSlots(vals, 6);
+        h += `<div class="verdict">${vals.length ? `<span class="vpill ${has1 ? '' : 'o'}">${has1 ? '1 ✓' : 'Need a 1'}</span><span class="vpill ${has4 ? '' : 'o'}">${has4 ? '4 ✓' : 'Need a 4'}</span>${has1 && has4 ? `<span class="vpill or">Counting ${mScore(vals)}</span>` : ''}` : ''}</div>`;
+        h += rPad(vals, 6, 'Tap in your six kept dice');
+        h += `<div class="btns">${btn(rMore(6 - vals.length, `That’s my six · ${mScore(vals) ? plural(mScore(vals), 'point') : 'no score'}`), 'rdone', '', 'primary', vals.length < 6)}</div><div class="btns">${btn('Didn’t keep a 1 and a 4 · no score', 'rnone', '', 'small')}</div>`;
+      } else if (st.phase === 'turn') {
         const kept = st.dice.filter(d => d.kept).map(d => d.v), sel = st.dice.filter(d => d.pick).map(d => d.v), all = [...kept, ...sel];
         const free = st.dice.filter(d => !d.kept).length;
         h += `<div class="status">${esc(st.players[a].name)}’s turn<small>${st.rolls ? `Roll ${st.rolls} · ${plural(free, 'die', 'dice')} still rolling` : (st.pot > 1 ? `This round is worth ${st.pot}!` : 'Six dice, keep at least one each roll.')}</small></div>`;
@@ -3101,7 +3220,31 @@ const coinV = n => `${coinIc}${n}`;
   function endTurn(st) {
     const alive = st.players.filter(p => !p.out);
     if (alive.length === 1) { st.over = { t: winsText(alive[0].name), s: 'Last pig standing.', ic: `<svg viewBox="0 -8 124 84" width="56">${pigBody(false)}</svg>` }; return; }
-    st.cur = nextAlive(st, st.cur, p => !p.out); st.turn = 0; st.throws = 0; st.phase = 'go'; st.last = null; st.pigs = null;
+    st.cur = nextAlive(st, st.cur, p => !p.out); st.turn = 0; st.throws = 0; st.phase = 'go'; st.last = null; st.pigs = null; st.rin = []; st.rHist = [];
+  }
+  // Real pigs: tap in how each pig landed. Every throw can be undone until the pigs are passed on.
+  const RPOS = [['dotup', 'Side, dot up', ''], ['dotdown', 'Side, dot down', ''], ['razorback', 'Razorback', 5], ['trotter', 'Trotter', 5], ['snouter', 'Snouter', 10], ['jowler', 'Leaning Jowler', 15]];
+  const rSnap = st => JSON.stringify({ turn: st.turn, throws: st.throws, phase: st.phase, last: st.last, pigs: st.pigs, score: st.players[st.cur].score, out: !!st.players[st.cur].out });
+  function rAct(st, a, arg) {
+    const p = st.players[st.cur];
+    st.rin = st.rin || []; st.rHist = st.rHist || [];
+    if (a === 'rundo' && st.rHist.length) { const s = JSON.parse(st.rHist.pop()); st.turn = s.turn; st.throws = s.throws; st.phase = s.phase; st.last = s.last; st.pigs = s.pigs; p.score = s.score; p.out = s.out; st.rin = []; return; }
+    if (st.phase === 'bust') { if (a === 'pass') endTurn(st); return; }
+    if (st.phase !== 'go') return;
+    if (a === 'rpig' && st.rin.length < 2 && PIG_POS[arg] && arg !== 'bacon') { st.rin.push(arg); return; }
+    if (a === 'rdel') { st.rin.splice(+arg, 1); return; }
+    if (a === 'rbank' && !st.rin.length && st.turn > 0) return bank(st);
+    if ((a === 'rthrow' || a === 'rbank') && st.rin.length === 2) {
+      st.rHist.push(rSnap(st));
+      const [x, y] = st.rin, s = score(x, y);
+      st.pigs = [{ pos: x }, { pos: y }]; st.last = s; st.rin = [];
+      if (s.pigout) { log(st, `${nm(st, st.cur)} Pigs Out and loses ${st.turn}.`); st.turn = 0; st.phase = 'bust'; return; }
+      st.turn += s.pts; st.throws++;
+      if (a === 'rbank') bank(st);
+      return;
+    }
+    if (a === 'rbacon') { st.rHist.push(rSnap(st)); st.rin = []; st.pigs = [{ pos: 'bacon' }, { pos: 'bacon' }]; st.last = { name: 'Makin’ Bacon!', bacon: true }; log(st, `${nm(st, st.cur)} makes bacon! The pigs touch and ${fmt(p.score)} points are lost.`); p.score = 0; st.phase = 'bust'; return; }
+    if (a === 'rpiggy') { st.rHist.push(rSnap(st)); st.rin = []; st.pigs = [{ pos: 'trotter', stack: 1 }, { pos: 'razorback' }]; st.last = { name: 'Piggyback!', piggy: true }; p.out = true; log(st, `${nm(st, st.cur)} throws a Piggyback! Out of the game.`); st.phase = 'bust'; }
   }
   function ai(st) {
     if (st.phase === 'bust') return endTurn(st);
@@ -3111,15 +3254,17 @@ const coinV = n => `${coinIc}${n}`;
   }
   G.pigs = {
     id: 'pigs', kind: 'dice', name: 'Pass the Pigs', tagline: 'Throw two pigs. Score how they land.', players: '2+ players', min: 2, max: 8, defN: 3,
+    realWord: 'pigs', realHow: 'throw your own pigs, then tap in how each one landed.',
     art: () => `<svg viewBox="0 0 150 120"><path d="M30 92 C 18 60, 30 30, 58 18" stroke="${ORANGE}" stroke-width="3" stroke-dasharray="5 6" fill="none" stroke-linecap="round"/><path d="M100 60 C 98 45, 92 35, 82 30" stroke="${ORANGE}" stroke-width="3" stroke-dasharray="5 6" fill="none" stroke-linecap="round"/><line x1="40" y1="112" x2="146" y2="112" stroke="${PLUM}" stroke-width="3"/><g transform="translate(16 -4) rotate(-25 60 40) scale(.62)">${pigBody(true)}</g><g transform="translate(58 62) scale(.72)">${pigBody(false)}</g></svg>`,
     icon: () => `<svg viewBox="0 -8 124 84" height="44">${pigBody(true)}</svg>`,
     info: [['pig', '2 pigs', 'one has a dot on its side'], ['pencil', 'Scores kept', 'for you, as you play'], ['people', '2+ players', 'the more the merrier']],
     options: [{ key: 'target', label: 'Play to', help: 'First to this score wins.', def: 100, choices: [[100, '100'], [50, '50 · quick']] }],
-    create(players, o) { const st = { players: players.map(p => ({ ...p, score: 0 })), cur: 0, target: o.target, turn: 0, throws: 0, phase: 'go' }; return st; },
+    create(players, o) { const st = { players: players.map(p => ({ ...p, score: 0 })), cur: 0, target: o.target, turn: 0, throws: 0, phase: 'go', rin: [], rHist: [] }; return st; },
     actor,
     next(st) { const a = actor(st); return a >= 0 && st.players[a].cpu ? { ms: st.phase === 'bust' ? 1700 : st.throws ? 1200 : 700, run: () => ai(st) } : null; },
-    act(st, a) {
+    act(st, a, arg) {
       if (st.players[st.cur].cpu) return;
+      if (st.players[st.cur].real) return rAct(st, a, arg);
       if (a === 'throw' && st.phase === 'go') throwPigs(st);
       else if (a === 'bank' && st.phase === 'go' && st.turn > 0) bank(st);
       else if (a === 'pass' && st.phase === 'bust') endTurn(st);
@@ -3128,7 +3273,18 @@ const coinV = n => `${coinIc}${n}`;
       const a = actor(st), hum = humanTurn(st, a), p = st.players[st.cur];
       let h = chipsHTML(st, (q, i) => ({ v: `${q.score}<small> / ${st.target}</small>`, sub: q.out ? 'out!' : 'points', on: i === a, out: q.out }));
       h += `<div class="board">`;
-      if (!st.over) {
+      if (!st.over && st.phase === 'go' && realTurn(st, a)) {
+        const vals = st.rin || [], prev = vals.length === 2 ? score(vals[0], vals[1]) : null, L = st.last;
+        h += `<div class="status">${esc(p.name)}’s turn<small>${st.throws ? `This turn: <b>${st.turn}</b>` : 'Throw your pigs, then tap in how each one landed.'}</small></div>${rTag('pigs')}`;
+        h += `<div class="pigs">${[0, 1].map(i => vals[i] ? `<button class="pig rp" data-act="rdel" data-arg="${i}" aria-label="${PIG_POS[vals[i]].name}, tap to change">${pigSVG(vals[i])}<div class="pl">${PIG_POS[vals[i]].name}</div></button>` : `<div class="rpslot">Pig ${i + 1}</div>`).join('')}</div>`;
+        h += `<div class="verdict">${prev ? (prev.pigout ? `<span class="vpill or">Pig Out!</span><span class="vpill o">Lose this turn</span>` : `<span class="vpill">${prev.name}</span><span class="vpill or">+${prev.pts}</span>`) : L && !L.pigout ? `<span class="vpill o">Last throw: ${L.name} +${L.pts}</span>` : ''}</div>`;
+        h += `<div class="rpad"><div class="kept-lbl">${vals.length === 2 ? 'Both in · tap a pig to change it' : `How did pig ${vals.length + 1} land?`}</div><div class="rpigs">${RPOS.map(([k, l, v]) => `<button data-act="rpig" data-arg="${k}" ${vals.length === 2 ? 'disabled' : ''}>${pigMini(k)}<span>${l}</span>${v ? `<b>${v}</b>` : ''}</button>`).join('')}</div>
+          <div class="btns" style="margin-top:8px">${btn('Makin’ Bacon <span class="sub">pigs touching</span>', 'rbacon', '', 'small stack')}${btn('Piggyback <span class="sub">one on the other</span>', 'rpiggy', '', 'small stack')}</div></div>`;
+        if (prev && !prev.pigout) h += `<div class="btns">${btn(`Throw again <span class="sub">+${prev.pts}</span>`, 'rthrow', '', 'stack')}${btn(`Bank ${st.turn + prev.pts}`, 'rbank', '', 'primary')}</div>`;
+        else if (prev) h += `<div class="btns">${btn('Pig Out · lose this turn', 'rthrow', '', 'primary')}</div>`;
+        else h += `<div class="btns">${btn(vals.length ? 'Tap in the other pig' : 'Tap in both pigs', '', '', '', true)}${st.turn > 0 ? btn(`Bank ${st.turn}`, 'rbank', '', 'primary') : ''}</div>`;
+        if (st.rHist && st.rHist.length) h += `<button class="rundo" data-act="rundo">Undo the last throw</button>`;
+      } else if (!st.over) {
         h += `<div class="status">${esc(p.name)}’s turn<small>${st.throws || st.phase === 'bust' ? `This turn: <b>${st.turn}</b>` : 'Throw the pigs!'}</small></div>`;
         if (st.pigs) {
           const pg = st.pigs;
@@ -3140,7 +3296,7 @@ const coinV = n => `${coinIc}${n}`;
           h += `<div class="verdict">${L.pigout || L.bacon || L.piggy ? `<span class="vpill or shake">${L.name}</span><span class="vpill o">${L.pigout ? 'Lose this turn' : L.bacon ? 'Lose your whole score' : 'Out of the game'}</span>` : `<span class="vpill">${L.name}</span><span class="vpill or">+${L.pts}</span>`}</div>`;
         }
         if (hum) {
-          if (st.phase === 'bust') h += `<div class="btns">${btn('Pass the pigs', 'pass', '', 'primary')}</div>`;
+          if (st.phase === 'bust') h += `<div class="btns">${btn('Pass the pigs', 'pass', '', 'primary')}</div>${realTurn(st, a) && st.rHist && st.rHist.length ? `<button class="rundo" data-act="rundo">Undo · tapped the wrong thing</button>` : ''}`;
           else h += `<div class="btns">${btn(st.throws ? 'Throw again' : 'Throw the pigs', 'throw', '', st.throws ? '' : 'primary')}${st.throws ? btn(`Bank ${st.turn}`, 'bank', '', 'primary') : ''}</div>`;
         }
       }

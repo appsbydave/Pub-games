@@ -15,6 +15,8 @@ The dice, card, domino and table games from the pub games night rules cards, in 
 
 Player 1 starts as "Jeanette" and the computer fills any empty seats. With two or more people on one phone, the card and domino games ask you to pass the phone before each person's go. Every game has a **Rules** button that opens its rules card.
 
+The dice games can mix real dice and the app. Set each player to **App dice**, **Real dice** or **Computer** (in Pass the Pigs, **Real pigs**). Anyone on real dice rolls at the table, then taps in how their dice landed, and the app scores everyone on one scoreboard.
+
 The table games can be played three ways:
 
 - **In the app:** touch where to shoot from, pull back like a catapult, let go. The computer can take any seat.
