@@ -19,7 +19,7 @@ The dice games can mix real dice and the app. Set each player to **App dice**, *
 
 **Shut the Box** can be played solo (your best score is kept on the phone) or with up to eight. Players on real dice tap in each roll and shut the tiles in the app, or, if they're playing on a real box, just tap in the tiles left up at the end. There's a "Pick the best for me" helper, and the twist from the card (digital scoring: 2, 5 and 9 left reads 259) is an option.
 
-**Hookey** has all three games from its card: race to exactly 101 (with the Irish finish as an option), Round the Clock, and the kids' game to 50. In the app you pull back to throw rings at the board; at the real board you tap the hook each ring lands on, on a picture of the board.
+**Hookey** is laid out like our board: 50 in the middle, four 10s round it, and round the rim 20 top and bottom, 15 at the sides and 5 on the diagonals. It has all three games from its card: race to exactly 300 (or 200, or 500; go over and that ring comes off, or play the bust rule), Round the Board (hook a 5, 10, 15, 20, then the 50, in order), and the kids' game to 100. In the app you pull back to throw rings at the board; at the real board you tap the hook each ring lands on, on a picture of the board.
 
 The table games can be played three ways:
 

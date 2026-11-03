@@ -599,8 +599,7 @@ button.dom.ok:hover{transform:translateY(-4px)}
 .tg .hkr.b{border-color:#363236}
 .tg .hkr.miss{border-color:#d9c6d8;color:var(--muted)}
 .tg .hkr.e{border:2px dashed rgba(78,31,77,.35);box-shadow:none;color:var(--muted);font-weight:600;font-size:12px}
-.tg .hkpad{position:relative;width:min(300px,86vw);aspect-ratio:1;margin:12px auto 8px;border-radius:50%;background:var(--sand);border:3px solid var(--ink);box-shadow:5px 6px 0 var(--ink)}
-.tg .hkpad::before{content:'';position:absolute;inset:7%;border-radius:50%;border:1.5px solid var(--plum);pointer-events:none}
+.tg .hkpad{position:relative;width:min(300px,86vw);aspect-ratio:1;margin:12px auto 8px;border-radius:50%;background:radial-gradient(circle closest-side,#d9434f 0 15%,#d9b78e 15% 36%,#d9434f 36% 46%,#d9b78e 46% 86%,#d9434f 86% 95%,#d9b78e 95%);border:3px solid var(--ink);box-shadow:5px 6px 0 var(--ink)}
 .tg .hkpad button{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;border:2px solid var(--plum);background:#fff;color:var(--plum);font-weight:700;font-size:16px;display:grid;place-items:center;padding:0;font-family:inherit}
 .tg .hkpad button::after{content:'';position:absolute;left:50%;bottom:-5px;width:9px;height:9px;margin-left:-4.5px;border-radius:50%;background:var(--gold);border:1.5px solid var(--ink)}
 .tg .hkpad button:active{background:#d0452b;color:#fff;border-color:#d0452b}
@@ -1963,61 +1962,70 @@ GAMES.shove = {
 };
 
 /* =========================================================
-   Hookey: a round ring board on the wall, 13 brass hooks, rings thrown from 1.8 m.
+   Hookey: a round ring board on the wall, 13 hooks, rings thrown from 1.8 m.
+   Laid out like the board at pub games night: the 50 in the middle, four 10s round it, and
+   round the rim 20 at the top and bottom, 15 at the sides and 5 on the four diagonals.
    Board coordinates: u across and v up from the centre of the board, in millimetres.
    ========================================================= */
-const HK_HOOKS = [[13, 0, 0], [12, 44, 44], [11, 44, -44], [10, -44, -44], [9, -44, 44], [1, 0, 105], [5, 74, 74], [7, 105, 0], [3, 74, -74], [6, 0, -105], [4, -74, -74], [8, -105, 0], [2, -74, 74]].map(([n, u, v]) => ({ n, u, v }));
-const HK_AT = Object.fromEntries(HK_HOOKS.map(h => [h.n, h]));
+const HK_R = 200; // board radius
+const HK_HOOKS = (() => {
+  const i = 0.45 * HK_R / Math.SQRT2, o = 0.97 * HK_R, d = o / Math.SQRT2;
+  return [[50, 0, 0], [10, -i, i], [10, i, i], [10, -i, -i], [10, i, -i], [20, 0, o], [20, 0, -o], [15, -o, 0], [15, o, 0], [5, -d, d], [5, d, d], [5, -d, -d], [5, d, -d]].map(([n, u, v], k) => ({ n, u, v, k }));
+})();
+const HK_LADDER = [5, 10, 15, 20, 50]; // Round the Board: hook one of each, in this order
+const HK_KIDS = 100;
+const hkGoal = m => +m.opts.to || 300; // the race: count up to exactly this (300 unless set to 200 or 500)
+const HK_WOOD = '#d9b78e', HK_GRAIN = 'rgba(120,80,40,.13)', HK_RED = '#d9434f';
 const HK_RING = [{ c: '#d0452b', hi: '#f39a7e', name: 'red' }, { c: '#363236', hi: '#8a828b', name: 'black' }];
 const HK_SIG = { easy: 34, med: 22, hard: 14 }; // how far the computer's rings stray from where it aims (mm)
 const HK_WOBBLE = 16; // and a person's, on top of their own aim
-ICON.hookey = `<svg viewBox="0 0 64 48"><circle cx="36" cy="26" r="20" fill="#3b3b3b"/><circle cx="33" cy="23" r="20" fill="#f8dca8" ${S}/><circle cx="33" cy="23" r="16.4" fill="none" stroke="#4e1f4d" stroke-width="1"/>${[[33, 23], [39, 17], [39, 29], [27, 29], [27, 17], [33, 9.5], [42.5, 13.5], [46.5, 23], [42.5, 32.5], [33, 36.5], [23.5, 32.5], [19.5, 23], [23.5, 13.5]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.7" fill="#f2a91f" stroke="#3b3b3b" stroke-width=".9"/>`).join('')}<ellipse cx="33" cy="27.5" rx="4.3" ry="4.9" fill="none" stroke="#d0452b" stroke-width="2.8"/><ellipse cx="46.5" cy="27.5" rx="4.3" ry="4.9" fill="none" stroke="#363236" stroke-width="2.8"/><ellipse cx="8" cy="9" rx="6" ry="2.6" transform="rotate(-25 8 9)" fill="none" stroke="#d0452b" stroke-width="2.8"/></svg>`;
+ICON.hookey = `<svg viewBox="0 0 64 48"><circle cx="36" cy="26" r="20" fill="#3b3b3b"/><circle cx="33" cy="23" r="20" fill="#d9b78e" ${S}/><circle cx="33" cy="23" r="17" fill="none" stroke="#d9434f" stroke-width="2.4"/><circle cx="33" cy="23" r="9.9" fill="none" stroke="#d9434f" stroke-width="2"/><circle cx="33" cy="23" r="2.8" fill="#d9434f"/>${[[33, 23], [26.6, 16.6], [39.4, 16.6], [26.6, 29.4], [39.4, 29.4], [33, 3.6], [33, 42.4], [13.6, 23], [52.4, 23], [19.3, 9.3], [46.7, 9.3], [19.3, 36.7], [46.7, 36.7]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.6" fill="#f2a91f" stroke="#3b3b3b" stroke-width=".9"/>`).join('')}<ellipse cx="33" cy="27.6" rx="4.3" ry="4.9" fill="none" stroke="#d0452b" stroke-width="2.8"/><ellipse cx="52.4" cy="27.6" rx="4.3" ry="4.9" fill="none" stroke="#363236" stroke-width="2.8"/><ellipse cx="8" cy="9" rx="6" ry="2.6" transform="rotate(-25 8 9)" fill="none" stroke="#d0452b" stroke-width="2.8"/></svg>`;
 ICON.ring = `<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="7.4" stroke="#4e1f4d" stroke-width="6.2"/><circle cx="12" cy="12" r="7.4" stroke="#d0452b" stroke-width="3.6"/></svg>`;
 
 // Plays a turn's rings in order. Every way of playing Hookey is scored here: the app, the real-board
 // score entry and the scoreboard all use it, so they can never disagree.
 function hkRun(m, who, rings) {
-  const g = m.opts.game, irish = g === '101' && m.opts.irish === 'on', start = m.s.tot[who];
+  const g = m.opts.game, bust = m.opts.over === 'bust', start = m.s.tot[who];
   const sixOn = rings.length >= 6 && rings.slice(0, 6).every(v => v > 0), allowed = sixOn ? 7 : 6;
   let tot = start, end = null; const steps = [];
   for (let i = 0; i < rings.length && i < allowed && !end; i++) {
     const v = rings[i], before = tot; let kind;
     if (!v) kind = 'miss';
-    else if (g === 'clock') { if (v === tot) { tot++; kind = tot > 13 ? 'win' : 'next'; } else kind = 'wrong'; }
-    else if (g === '50') { tot += v; kind = tot >= 50 ? 'win' : 'add'; }
+    else if (g === 'ladder') { if (v === HK_LADDER[tot]) { tot++; kind = tot >= HK_LADDER.length ? 'win' : 'next'; } else kind = 'wrong'; }
+    else if (g === 'kids') { tot += v; kind = tot >= HK_KIDS ? 'win' : 'add'; }
     else {
-      const need = 101 - tot;
-      if (irish && need <= 13 && v !== need) kind = 'irish';
-      else if (v > need) { tot -= v; kind = 'over'; }
-      else { tot += v; kind = tot === 101 ? 'win' : 'add'; }
+      const goal = hkGoal(m), need = goal - tot;
+      if (v > need) { if (bust) kind = 'bust'; else { tot -= v; kind = 'over'; } }
+      else { tot += v; kind = tot === goal ? 'win' : 'add'; }
     }
     steps.push({ v, kind, before, after: tot });
-    if (kind === 'win' || kind === 'wrong' || kind === 'irish') end = kind;
+    if (kind === 'win' || kind === 'wrong' || kind === 'bust') end = kind;
   }
   return { tot, steps, end, allowed, sixOn, done: !!end || steps.length >= allowed, win: end === 'win', gain: tot - start };
 }
+const hkNext = t => t >= HK_LADDER.length - 1 ? 'the 50' : `a ${HK_LADDER[t]}`;
 const hkNow = (m, tot) => {
   const g = m.opts.game;
-  if (g === 'clock') return tot > 13 ? 'all the way round' : `needs the ${tot}`;
-  if (g === '50') return `on ${tot} · ${Math.max(0, 50 - tot)} to go`;
-  const need = 101 - tot; return `on ${tot} · needs ${need}${m.opts.irish === 'on' && need <= 13 ? ' exactly' : ''}`;
+  if (g === 'ladder') return tot >= HK_LADDER.length ? 'all the way round' : `needs ${hkNext(tot)}`;
+  if (g === 'kids') return `on ${tot} · ${Math.max(0, HK_KIDS - tot)} to go`;
+  return `on ${tot} · needs ${hkGoal(m) - tot}`;
 };
 const hkCap = s => s.charAt(0).toUpperCase() + s.slice(1);
 
 class HookeyTable extends SlideTable {
   init() {
-    this.BY = 1800; this.BZ = 1500; this.RB = 150; this.rOut = 34; this.rIn = 24; this.fixedX = 0; this.showReady = false; this.bg = COL.soft;
+    this.BY = 1800; this.BZ = 1500; this.RB = HK_R; this.rOut = 34; this.rIn = 24; this.fixedX = 0; this.showReady = false; this.bg = COL.soft;
     this.who = this.unit.who; this.side = this.who % 2; this.rings = []; this.fly = null; this.thrown = 0;
   }
   /* rings stay on the hooks if you leave partway through a turn */
   get keepBoard() { return 'The rings'; }
   saveBoard() {
     const done = this.rings.filter(r => r.done); if (!done.length || this.state === 'done') return;
-    store.set(BOARD_KEY(this.G.id), { id: this.bid, rings: done.map(r => ({ pts: r.pts, hook: r.hook ? r.hook.n : 0 })) });
+    store.set(BOARD_KEY(this.G.id), { id: this.bid, rings: done.map(r => ({ pts: r.pts, hook: r.hook ? r.hook.k + 1 : 0 })) });
   }
   loadBoard() {
     const s = store.get(BOARD_KEY(this.G.id), null); if (!s || s.id !== this.bid || !Array.isArray(s.rings) || !s.rings.length) return false;
-    this.rings = s.rings.map(o => o.hook && HK_AT[o.hook] ? { side: this.side, hook: HK_AT[o.hook], state: 'hang', ph: 0, pts: o.pts, done: true } : { side: this.side, state: 'gone', pts: 0, done: true });
+    this.rings = s.rings.map(o => o.hook && HK_HOOKS[o.hook - 1] ? { side: this.side, hook: HK_HOOKS[o.hook - 1], state: 'hang', ph: 0, pts: o.pts, done: true } : { side: this.side, state: 'gone', pts: 0, done: true });
     this.thrown = this.shots = this.rings.length; return true;
   }
   values() { return this.rings.filter(r => r.done).map(r => r.pts); }
@@ -2025,7 +2033,7 @@ class HookeyTable extends SlideTable {
   nextShooter() { if (this.run().done) return null; const p = this.m.players[this.who]; return { side: this.side, cpu: p.kind === 'cpu', name: p.name }; }
   status() {
     const p = this.m.players[this.who], R = this.run(), k = Math.min(R.allowed, this.thrown + (this.state === 'aim' || this.state === 'cpu' ? 1 : 0));
-    return [`${p.name} · ring ${Math.max(1, k)} of ${R.allowed}`, hkCap(hkNow(this.m, R.tot)) + (this.m.opts.game !== 'clock' && R.steps.length ? ` · this turn ${R.gain >= 0 ? '+' : '−'}${Math.abs(R.gain)}` : '')];
+    return [`${p.name} · ring ${Math.max(1, k)} of ${R.allowed}`, hkCap(hkNow(this.m, R.tot)) + (this.m.opts.game !== 'ladder' && R.steps.length ? ` · this turn ${R.gain >= 0 ? '+' : '−'}${Math.abs(R.gain)}` : '')];
   }
   tipText() { return 'Pull back to throw: further back goes higher'; }
   result() { return { rings: this.values() }; }
@@ -2060,19 +2068,33 @@ class HookeyTable extends SlideTable {
     path(); g.strokeStyle = COL.ink; g.lineWidth = 2.6 * s + 1.8; g.stroke();
     path(); g.strokeStyle = COL.gold; g.lineWidth = 2.6 * s; g.stroke(); g.restore();
   }
-  drawTable(g) {
-    const c = this.cam, R = this.RB;
-    gfill(g, c, this.circ(7, -8, R, 72, -2), 'rgba(59,59,59,.92)');
-    gfill(g, c, this.circ(0, 0, R, 72), COL.sand, COL.ink, 3);
-    for (const k of [38, 76, 112]) gfill(g, c, this.circ(0, 0, k, 56, 0.4), null, 'rgba(160,110,60,.14)', 1.2);
-    gfill(g, c, this.circ(0, 0, R - 12, 72, 0.4), null, COL.plum, 1.4);
-    for (const h of HK_HOOKS) {
-      const p = this.P(h.u, h.v + 21, 1);
-      g.save(); g.font = `700 ${Math.max(9, 14 * p[2]).toFixed(1)}px Lexend, system-ui, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = COL.plum; g.fillText(String(h.n), p[0], p[1]); g.restore();
-      this.hookBase(g, h);
+  drawTable(g) { // the board never moves, so it's painted once and copied each frame; rings and hook tips go on top
+    const key = [this.W, this.H, this.dpr].join('x');
+    if (this._bgKey !== key) {
+      this._bgKey = key; this._bg = document.createElement('canvas'); this._bg.width = this.cv.width; this._bg.height = this.cv.height;
+      const b = this._bg.getContext('2d'); b._dpr = this.dpr; b.setTransform(this.dpr, 0, 0, this.dpr, 0, 0); this.paintBoard(b);
     }
+    g.drawImage(this._bg, 0, 0, this.W, this.H);
     for (const r of this.rings) if (r.state === 'slide' || r.state === 'swing' || r.state === 'hang') this.drawRing(g, r);
     for (const h of HK_HOOKS) this.hookTip(g, h);
+  }
+  paintBoard(g) {
+    const c = this.cam, R = this.RB, s = this.P(0, 0)[2];
+    g.fillStyle = this.bg; g.fillRect(0, 0, this.W, this.H);
+    gfill(g, c, this.circ(7, -8, R, 90, -2), 'rgba(59,59,59,.92)');
+    gfill(g, c, this.circ(0, 0, R, 90), HK_WOOD);
+    g.save(); gpath(g, c, this.circ(0, 0, R, 90)); g.clip(); // wood grain, running up and down
+    g.strokeStyle = HK_GRAIN; for (let x = -R, k = 0; x <= R; x += 7, k++) { const a = this.P(x, -R), b = this.P(x + (k % 3 - 1) * 2, R); g.lineWidth = (k % 4 ? 0.8 : 1.6); g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); }
+    g.restore();
+    gfill(g, c, this.circ(0, 0, 0.88 * R, 90, 0.2), null, HK_RED, 0.1 * R * s);
+    gfill(g, c, this.circ(0, 0, 0.495 * R, 72, 0.2), null, HK_RED, 0.09 * R * s);
+    gfill(g, c, this.circ(0, 0, 0.11 * R, 48, 0.2), HK_RED);
+    gfill(g, c, this.circ(0, 0, R, 90), null, COL.ink, 2.5);
+    for (const h of HK_HOOKS) { // numbers sit a little in from their hooks, as on the board
+      const d = Math.hypot(h.u, h.v), k = d ? (d > 120 ? 0.73 : 0.66) : 0, p = this.P(h.u * k, h.v * k, 0.4);
+      g.save(); g.font = `700 ${Math.max(10, (h.n === 50 ? 20 : 18) * p[2]).toFixed(1)}px Lexend, system-ui, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#1d1a1d'; g.fillText(String(h.n), p[0], p[1]); g.restore();
+      this.hookBase(g, h);
+    }
   }
   drawExtra(g) {
     for (const r of this.rings) if (r.state === 'drop') this.drawRing(g, r, clamp(1 - (r.fade || 0), 0, 1));
@@ -2111,7 +2133,12 @@ class HookeyTable extends SlideTable {
     this.fly = { u: sh.u + gauss() * w, v: sh.v + gauss() * w * 1.15, t: 0, dur: 0.6 };
     this.refresh();
   }
-  target() { const g = this.m.opts.game, t = this.run().tot; return HK_AT[g === 'clock' ? clamp(t, 1, 13) : g === '50' ? 13 : clamp(101 - t, 1, 13)]; }
+  target() { // the computer goes for the 50, the value it needs to finish, or the next rung of the ladder
+    const g = this.m.opts.game, t = this.run().tot, pick = v => { const hs = HK_HOOKS.filter(h => h.n === v); return hs[Math.floor(Math.random() * hs.length)]; };
+    if (g === 'ladder') return pick(HK_LADDER[Math.min(t, HK_LADDER.length - 1)]);
+    if (g === 'kids') return pick(50);
+    const need = hkGoal(this.m) - t; return pick(need >= 50 ? 50 : [20, 15, 10, 5].find(v => v <= need) || 5);
+  }
   async cpuGo() {
     this.ui.status(this.status()[0], 'Lining it up…'); await sleep(320 / SPEED); if (this.dead) return;
     const h = this.target(), sig = HK_SIG[this.m.diff || 'med'], aim = { u: h.u, v: h.v + 1 };
@@ -2121,15 +2148,15 @@ class HookeyTable extends SlideTable {
   /* --- a ring meets the board --- */
   impact(r) {
     r.skip = {};
-    if (Math.hypot(r.u, r.v) > this.RB + this.rOut * 0.4) { r.state = 'drop'; r.vu = gauss() * 50; r.vv = -150; Sound.thud(0.15); return; } // hit the wall
-    Sound.clack(650, 1300);
     let h = null, d = 1e9; for (const k of HK_HOOKS) { const e = Math.hypot(r.u - k.u, r.v - k.v); if (e < d) { d = e; h = k; } }
     const lim = this.rIn - 3;
     if (d < lim) { // a hook went through the middle: it usually catches, less often the nearer the rubber it is
+      Sound.clack(650, 1300);
       const pc = d < 6 ? 0.92 : lerp(0.92, 0.3, (d - 6) / (lim - 6));
       if (Math.random() < pc) return this.hang(r, h, (r.u - h.u) / lim);
-      r.skip[h.n] = true; // bounced clear of it
-    } else if (d < this.rOut + 4) r.skip[h.n] = true; // the rubber hit the hook
+      r.skip[h.n + ':' + h.k] = true; // bounced clear of it
+    } else if (Math.hypot(r.u, r.v) > this.RB + this.rOut * 0.4) { r.state = 'drop'; r.vu = gauss() * 50; r.vv = -150; Sound.thud(0.15); return; } // hit the wall
+    else { Sound.clack(650, 1300); if (d < this.rOut + 4) r.skip[h.n + ':' + h.k] = true; } // the rubber hit the hook
     r.state = 'slide'; r.vu = gauss() * 100 + (d < this.rOut + 4 ? Math.sign(r.u - h.u || gauss()) * 150 : 0); r.vv = 60 + gauss() * 80;
   }
   hang(r, h, off) { r.hook = h; r.state = 'swing'; r.t = 0; r.a = clamp(off, -1, 1) * 0.6 + gauss() * 0.1; r.ph = r.a; r.pts = h.n; r.done = true; Sound.clack(1000, 1600); }
@@ -2139,9 +2166,9 @@ class HookeyTable extends SlideTable {
     r.vv -= (r.state === 'drop' ? 5200 : 3000) * dt; r.vu *= Math.pow(0.5, dt); r.u += r.vu * dt; r.v += r.vv * dt;
     if (r.state === 'drop') { r.fade = (r.fade || 0) + dt * 2; if (r.fade >= 1) { r.state = 'gone'; if (!r.done) { r.pts = 0; r.done = true; } } return; }
     for (const h of HK_HOOKS) { // sliding down the face: a hook below can catch it, or knock it aside
-      if (r.skip[h.n]) continue;
+      if (r.skip[h.n + ':' + h.k]) continue;
       const du = h.u - r.u, dv = h.v - r.v; if (du * du + dv * dv > (this.rOut + 3) * (this.rOut + 3)) continue;
-      r.skip[h.n] = true;
+      r.skip[h.n + ':' + h.k] = true;
       if (dv < 0 && Math.abs(du) < this.rIn * 0.6 && Math.random() < 0.2) return this.hang(r, h, -du / this.rIn);
       r.vu += (du > 0 ? -1 : du < 0 ? 1 : (Math.random() < 0.5 ? -1 : 1)) * (150 + Math.random() * 170); r.vv = Math.abs(r.vv) * 0.25; Sound.clack(420, 1900);
     }
@@ -2158,11 +2185,11 @@ class HookeyTable extends SlideTable {
     this.saveBoard(); this.refresh();
     if (st) {
       if (st.kind === 'miss') this.ui.flash('Missed', '0 points', true);
-      else if (st.kind === 'win') { Sound.chime(true); this.ui.flash(g === 'clock' ? 'All the way round!' : g === '50' ? `${st.after}!` : 'Spot on!', g === '101' ? 'Exactly 101' : 'That’s the game'); }
+      else if (st.kind === 'win') { Sound.chime(true); this.ui.flash(g === 'ladder' ? 'All the way round!' : g === 'kids' ? `${st.after}!` : 'Spot on!', g === 'kids' || g === 'ladder' ? 'That’s the game' : `Exactly ${hkGoal(this.m)}`); }
       else if (st.kind === 'over') { Sound.chime(false); this.ui.flash('Over!', `Take ${st.v} off · on ${st.after}`, true); }
-      else if (st.kind === 'wrong') this.ui.flash(`${st.v}, not ${st.before}`, 'Wrong number · turn over', true);
-      else if (st.kind === 'irish') this.ui.flash(`${st.v}, not ${101 - st.before}`, 'Not exact · turn over', true);
-      else if (st.kind === 'next') this.ui.flash(`${st.v} ✓`, `Next: the ${st.after}`);
+      else if (st.kind === 'wrong') this.ui.flash(`${st.v}, not ${HK_LADDER[st.before]}`, 'Wrong number · turn over', true);
+      else if (st.kind === 'bust') { Sound.chime(false); this.ui.flash('Bust!', `${st.v} is too many · stays on ${st.before}`, true); }
+      else if (st.kind === 'next') this.ui.flash(`${st.v} ✓`, st.after < HK_LADDER.length ? `Next: ${hkNext(st.after)}` : '');
       else this.ui.flash(`+${st.v}`, hkCap(hkNow(this.m, st.after)));
       if (bonus) setTimeout(() => !this.dead && this.ui.flash('All six on!', 'Throw one more ring'), 950 / SPEED);
     }
@@ -2171,61 +2198,62 @@ class HookeyTable extends SlideTable {
 }
 
 GAMES.hookey = {
-  id: 'hookey', name: 'Hookey', short: 'Hookey', tag: 'Ring the hooks. Count up. Hit 101 exactly.', icon: ICON.hookey,
-  blurb: 'Six rings at the hook board. Race to 101.', Table: HookeyTable, kind: 'turns',
+  id: 'hookey', name: 'Hookey', short: 'Hookey', tag: 'Ring the hooks. Count up. Hit 300 exactly.', icon: ICON.hookey,
+  blurb: 'Six rings at the hook board. Race to 300.', Table: HookeyTable, kind: 'turns',
   seat: { min: 2, max: 6, label: 'Players or teams' },
   options: [
-    { id: 'game', label: 'Game', sub: 'All three are on the card', choices: [['101', '101'], ['clock', 'Round the Clock'], ['50', 'Kids · 50']], def: '101' },
-    { id: 'irish', label: 'Irish finish', sub: 'In 101: need 13 or less? Hook that exact number', choices: [['off', 'Off'], ['on', 'On']], def: 'off' },
+    { id: 'game', label: 'Game', sub: 'All three are on the card', choices: [['race', 'Race'], ['ladder', 'Round the Board'], ['kids', 'Kids · 100']], def: 'race' },
+    { id: 'to', label: 'Race to', sub: 'Count up to exactly this', choices: [[300, '300'], [200, '200 · quick'], [500, '500 · long']], def: 300 },
+    { id: 'over', label: 'Going over', sub: 'Take that ring off and keep throwing, or bust: the turn ends and the ring doesn’t count', choices: [['off', 'Take it off'], ['bust', 'Bust']], def: 'off' },
     { id: 'first', label: 'Who throws first', sub: 'Or throw a ring each: highest hook starts', choices: [['toss', 'Random'], [0, '@0']], def: 'toss' }
   ],
   info: [['target', '1 hookey board', 'centre 1.5 m (5 ft) up'], ['ring', '6 rings each', 'throw from 1.8 m (6 ft)'], ['people', '2+ players', 'or two teams']],
-  init(m) { const n = m.players.length; m.s = { tot: Array(n).fill(m.opts.game === 'clock' ? 1 : 0), cur: m.opts.first === 'toss' ? Math.floor(Math.random() * n) : 0, log: [] }; },
+  init(m) { const n = m.players.length; m.s = { tot: Array(n).fill(0), cur: m.opts.first === 'toss' ? Math.floor(Math.random() * n) : 0, log: [] }; },
   unit(m) { const s = m.s; return { who: s.cur, title: `${rname(m, s.cur)}'s turn`, sub: `${hkCap(hkNow(m, s.tot[s.cur]))} · ${HK_RING[s.cur % 2].name} rings` }; },
   apply(m, res) {
     const s = m.s, who = s.cur, before = s.tot[who], R = hkRun(m, who, res.rings || []), g = m.opts.game;
     s.log.push({ who, rings: R.steps.map(x => x.v), before, after: R.tot, end: R.end, over: R.steps.some(x => x.kind === 'over'), where: res.where });
     s.tot[who] = R.tot;
-    if (R.win) { m.over = true; m.winner = [who]; return { t: g === 'clock' ? `${rname(m, who)} goes all the way round!` : g === '50' ? `${rname(m, who)} makes it to 50!` : `${rname(m, who)} hits 101 exactly!`, s: '' }; }
+    if (R.win) { m.over = true; m.winner = [who]; return { t: g === 'ladder' ? `${rname(m, who)} goes all the way round!` : g === 'kids' ? `${rname(m, who)} makes it to ${HK_KIDS}!` : `${rname(m, who)} hits ${hkGoal(m)} exactly!`, s: '' }; }
     s.cur = (who + 1) % m.players.length;
-    if (g === 'clock') {
+    if (g === 'ladder') {
       const k = R.tot - before;
-      return { t: k ? `${rname(m, who)} hooks ${k === 1 ? 'the ' + before : `${before} to ${R.tot - 1}`}` : `No luck for ${rname(m, who)}`, s: `${R.end === 'wrong' ? 'A wrong number ended the turn. ' : ''}Next: the ${R.tot}` };
+      return { t: k ? `${rname(m, who)} hooks ${HK_LADDER.slice(before, R.tot).join(', ')}` : `No luck for ${rname(m, who)}`, s: `${R.end === 'wrong' ? 'A wrong number ended the turn. ' : ''}Next: ${hkNext(R.tot)}` };
     }
     const gain = R.tot - before, last = R.steps[R.steps.length - 1];
     return {
       t: gain > 0 ? `${rname(m, who)} scores ${gain}` : gain < 0 ? `${rname(m, who)} drops ${-gain}` : `${rname(m, who)} scores nothing`,
-      s: `${R.end === 'irish' ? `Needed exactly ${101 - last.before}. ` : R.steps.some(x => x.kind === 'over') ? 'Went over, so that ring came off. ' : ''}${hkCap(hkNow(m, R.tot))}`
+      s: `${R.end === 'bust' ? `Bust! ${last.v} was too many. ` : R.steps.some(x => x.kind === 'over') ? 'Went over, so that ring came off. ' : ''}${hkCap(hkNow(m, R.tot))}`
     };
   },
   chips(m) {
     const g = m.opts.game;
     return m.players.map((p, i) => {
       const t = m.s.tot[i], on = !m.over && m.s.cur === i;
-      if (g === 'clock') return { name: p.name, v: t > 13 ? '✓' : t, small: '', sub: t > 13 ? 'all round' : 'next hook', on };
-      return { name: p.name, v: t, small: g === '50' ? '/50' : '/101', sub: g === '50' ? `${Math.max(0, 50 - t)} to go` : `needs ${101 - t}`, on };
+      if (g === 'ladder') return { name: p.name, v: t >= HK_LADDER.length ? '✓' : HK_LADDER[t], small: '', sub: t >= HK_LADDER.length ? 'all round' : 'next hook', on };
+      return { name: p.name, v: t, small: g === 'kids' ? '/' + HK_KIDS : '/' + hkGoal(m), sub: g === 'kids' ? `${Math.max(0, HK_KIDS - t)} to go` : `needs ${hkGoal(m) - t}`, on };
     });
   },
   board(m) {
-    const g = m.opts.game, clock = g === 'clock', shown = t => clock ? (t > 13 ? '✓' : t) : t;
-    const rows = m.s.log.slice().reverse().map(l => `<div class="tr"><div class="tx"><b>${pname(m, l.who)}${l.end === 'win' ? ' · wins' : l.end === 'wrong' ? ' · wrong number' : l.end === 'irish' ? ' · not exact' : l.over ? ' · went over' : ''}</b><span>${l.rings.length ? l.rings.map(v => v || '–').join(' · ') : 'no rings'}${l.where === 'real' ? ' · real board' : ''}</span></div><div class="v">${clock ? shown(l.after) : (l.after - l.before >= 0 ? '+' : '−') + Math.abs(l.after - l.before)}<small> ${clock ? 'next' : '→ ' + l.after}</small></div></div>`).join('');
+    const g = m.opts.game, clock = g === 'ladder', shown = t => clock ? (t >= HK_LADDER.length ? '✓' : HK_LADDER[t]) : t;
+    const rows = m.s.log.slice().reverse().map(l => `<div class="tr"><div class="tx"><b>${pname(m, l.who)}${l.end === 'win' ? ' · wins' : l.end === 'wrong' ? ' · wrong number' : l.end === 'bust' ? ' · bust' : l.over ? ' · went over' : ''}</b><span>${l.rings.length ? l.rings.map(v => v || '–').join(' · ') : 'no rings'}${l.where === 'real' ? ' · real board' : ''}</span></div><div class="v">${clock ? shown(l.after) : (l.after - l.before >= 0 ? '+' : '−') + Math.abs(l.after - l.before)}<small> ${clock ? 'next' : '→ ' + l.after}</small></div></div>`).join('');
     return `<table class="grid"><tr><th>Player</th><th>${clock ? 'Next hook' : 'Score'}</th><th>Turns</th></tr>${m.players.map((p, i) => `<tr><td class="nm">${pname(m, i)}</td><td class="tot">${shown(m.s.tot[i])}</td><td>${m.s.log.filter(l => l.who === i).length}</td></tr>`).join('')}</table>
     <div class="tbl" style="margin-top:12px"><div class="th"><span>Turn by turn · latest first</span><span>${clock ? 'Next' : 'Score'}</span></div>${rows || '<div class="tr"><div class="tx"><span>No turns yet</span></div></div>'}</div>
-    <p class="note">${clock ? 'Round the Clock: hook 1 to 13 in order.' : g === '50' ? 'Kids’ game: reach 50 or pass it to win.' : `First to exactly 101.${m.opts.irish === 'on' ? ' Irish finish: within 13, only the exact number counts.' : ' Go over and that ring comes off.'}`}</p>`;
+    <p class="note">${clock ? 'Round the Board: hook a 5, a 10, a 15, a 20, then the 50, in that order.' : g === 'kids' ? `Kids’ game: reach ${HK_KIDS} or pass it to win.` : `First to exactly ${hkGoal(m)}.${m.opts.over === 'bust' ? ' Go over and you’re bust: the turn ends.' : ' Go over and that ring comes off.'}`}</p>`;
   },
   entryInit() { return { rings: [] }; },
   entryHTML(m, st, u) {
     const R = hkRun(m, u.who, st.rings), g = m.opts.game, side = u.who % 2, last = R.steps[R.steps.length - 1], n = st.rings.length;
     const slots = [...Array(R.allowed)].map((_, i) => i < n ? `<button class="hkr ${side ? 'b' : ''} ${st.rings[i] ? '' : 'miss'}" data-tg="e:rm:${i}" aria-label="Ring ${i + 1}: ${st.rings[i] || 'missed'}. Tap to take it out">${st.rings[i] || '–'}</button>` : `<span class="hkr e">${i + 1}</span>`).join('');
     // laid out like the board, with the two rings of hooks spread a little so every button is easy to hit
-    const at = h => { const d = Math.hypot(h.u, h.v), k = d ? (d < 80 ? 20.5 : 41) / d : 0; return `left:${(50 + h.u * k).toFixed(1)}%;top:${(50 - h.v * k).toFixed(1)}%`; };
-    const pad = `<div class="hkpad ${side ? 'b' : ''}">${HK_HOOKS.map(h => `<button data-tg="e:ring:${h.n}" style="${at(h)}" ${R.done ? 'disabled' : ''} aria-label="A ring on ${h.n}">${h.n}</button>`).join('')}</div>`;
+    const at = h => { const d = Math.hypot(h.u, h.v), k = d ? (d < 120 ? 20.5 : 41) / d : 0; return `left:${(50 + h.u * k).toFixed(1)}%;top:${(50 - h.v * k).toFixed(1)}%`; };
+    const pad = `<div class="hkpad ${side ? 'b' : ''}">${HK_HOOKS.map(h => `<button data-tg="e:ring:${h.n}" style="${at(h)}" ${R.done ? 'disabled' : ''} aria-label="A ring on a ${h.n} hook">${h.n}</button>`).join('')}</div>`;
     let msg;
     if (!last) msg = `${hkCap(hkNow(m, R.tot))} · ${R.allowed} rings`;
-    else if (last.kind === 'win') msg = g === 'clock' ? 'All the way round! That’s the game' : g === '50' ? `${R.tot}! That’s the game` : 'Exactly 101! That’s the game';
+    else if (last.kind === 'win') msg = g === 'ladder' ? 'All the way round! That’s the game' : g === 'kids' ? `${R.tot}! That’s the game` : `Exactly ${hkGoal(m)}! That’s the game`;
     else if (last.kind === 'over') msg = `Over! Take ${last.v} off`;
-    else if (last.kind === 'wrong') msg = `Needed the ${last.before}. Turn over`;
-    else if (last.kind === 'irish') msg = `Needed exactly ${101 - last.before}. Turn over`;
+    else if (last.kind === 'wrong') msg = `Needed ${hkNext(last.before)}. Turn over`;
+    else if (last.kind === 'bust') msg = `Bust! ${last.v} is too many. Turn over`;
     else if (R.done) msg = 'All rings thrown';
     else if (R.sixOn && n === 6) msg = 'All six on! Throw one more ring';
     else if (last.kind === 'miss') msg = `Missed · ${hkNow(m, R.tot)}`;
@@ -2233,7 +2261,7 @@ GAMES.hookey = {
     return `<div class="panel lite"><h3>${pname(m, u.who)} throws the ${HK_RING[side].name} rings · ${esc(hkNow(m, m.s.tot[u.who]))}</h3><p class="note" style="margin:0">Tap the hook each ring lands on, one at a time. Bounced off or missed? Tap <b>Missed</b>. Tap a ring above to take it out.</p></div>
       <div class="hkrow">${slots}</div>${pad}
       <div class="btns" style="margin-top:4px;justify-content:center"><button class="btn" data-tg="e:miss" ${R.done ? 'disabled' : ''} style="flex:0 1 200px">Missed · 0</button></div>
-      <div class="big" style="margin-top:12px">${g === 'clock' ? (R.tot > 13 ? '✓' : R.tot) : R.tot}<small>${esc(msg)}</small></div>
+      <div class="big" style="margin-top:12px">${g === 'ladder' ? (R.tot >= HK_LADDER.length ? '✓' : HK_LADDER[R.tot]) : R.tot}<small>${esc(msg)}</small></div>
       <div class="btns"><button class="btn primary wide" data-tg="e:done">${R.done || !n ? 'Save turn' : `Save turn · ${R.allowed - n} more missed`}</button></div>`;
   },
   entryAct(m, st, a, v) {
@@ -2245,13 +2273,13 @@ GAMES.hookey = {
   rules: {
     pre: ['Before you start', '<b>Pick a colour,</b> red or black. <b>Who starts?</b> One ring each: highest hook goes first. <b>Kids?</b> Hang it 1.27 m up and throw from 1.4 m.'],
     s1: ['Your turn', [['Stand behind the line.', 'Throw your six rings at the board, one at a time.'], ['Call each ring as it hooks.', 'It scores the number by its hook.'], ['All six on the hooks?', 'Throw one more ring. Nice shooting!'], ['Add the turn to your total.', 'Take the rings down and pass them on.']]],
-    s2: ['Scoring', [[13, 'points', 'The best hook'], [1, 'point', 'The lowest number'], [0, 'points', 'Bounced off or missed']], ['13 + 9 + 5, three missed', '= 27 points'], 'Only a ring left hanging on a hook counts.'],
-    s3: ['Count up to 101', 'Ring by ring, near the end.', ['Ring by ring · near the end', 'Total'], [['On 90, hook a 7', 'Still under 101. Keep throwing.', 97, false], ['On 97, hook a 13', 'Over 101! Take 13 off instead.', 84, false], ['On 97, hook a 4', 'Exactly 101. You win!', 101, true]]],
-    s4: ['Other games', [['Round the Clock.', 'Hook 1 to 13 in order. A wrong number ends your turn.'], ['Kids?', 'Play to 50. Reach it or pass it to win.'], ['Irish finish.', 'Need 13 or less? Your next scoring ring must hook that exact number. Any other ends your turn.']]],
+    s2: ['Scoring', [[50, 'points', 'The middle hook'], [5, 'points', 'The lowest hooks'], [0, 'points', 'Bounced off or missed']], ['50 + 10 + 5, three missed', '= 65 points'], 'Middle 50, the four round it 10. Round the rim: 20 top and bottom, 15 at the sides, 5 in between. Only a ring left hanging counts.'],
+    s3: ['Count up to 300', 'Ring by ring, near the end.', ['Ring by ring · near the end', 'Total'], [['On 280, hook a 15', 'Still under 300. Keep throwing.', 295, false], ['On 295, hook a 10', 'Over 300! Take 10 off instead.', 285, false], ['On 295, hook a 5', 'Exactly 300. You win!', 300, true]]],
+    s4: ['Other games', [['Round the Board.', 'Hook a 5, a 10, a 15, a 20, then the 50, in that order. A wrong number ends your turn.'], ['Kids?', 'Play to 100. Reach it or pass it to win.'], ['Bust rule.', 'Going over 300 ends your turn instead, and that ring doesn’t count.']]],
     post: ['Where it’s from', 'Hookey is what Australians and Kiwis call <b>Rings</b>, an old Irish pub game. All-Ireland championships are still played.'],
-    banner: ['First to exactly <em>101</em> wins!', 'Go over? Take that ring off your score and keep throwing.']
+    banner: ['First to exactly <em>300</em> wins!', 'Go over? Take that ring off your score and keep throwing. Quick game? Play to 200.']
   },
-  appNotes: ['Pull back to throw: further back goes higher up the board, and sideways aims left or right. Every ring wobbles a little, can bounce off a hook, and sometimes drops onto one lower down.', 'Each ring is scored as it lands, so a ring that takes you over 101 comes off straight away.']
+  appNotes: ['Pull back to throw: further back goes higher up the board, and sideways aims left or right. Every ring wobbles a little, can bounce off a hook, and sometimes drops onto one lower down.', 'Each ring is scored as it lands, so a ring that takes you over comes off straight away (or ends your turn, with the bust rule).']
 };
 
 /* =========================================================
@@ -2546,7 +2574,7 @@ const App = {
   openSetup(gid) {
     this.stopTable(); this.m = null; this.closeOv(); const G = GAMES[gid]; this.G = G;
     const s = store.get('setup.' + gid, null); this.setup = s && s.players ? s : this.defaultSetup(G);
-    this.setup.gid = gid; G.options.forEach(o => { if (!(o.id in this.setup.opts)) this.setup.opts[o.id] = o.def; });
+    this.setup.gid = gid; G.options.forEach(o => { if (!o.choices.some(c => String(c[0]) === String(this.setup.opts[o.id]))) this.setup.opts[o.id] = o.def; });
     if (G.modes && !G.modes.includes(this.setup.mode)) this.setup.mode = G.modes[0];
     this.setHash(gid); this.renderSetup(); window.scrollTo(0, 0);
   },
