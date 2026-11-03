@@ -11,7 +11,7 @@ The dice, card, domino and table games from the pub games night rules cards, in 
 - **Dice:** Zanzibar, Ship Captain & Crew, Farkle, Midnight, Pass the Pigs, Shut the Box
 - **Cards:** Three-Card Brag, Cuckoo, Skat
 - **Dominoes:** Texas 42
-- **Table games:** Toad in the Hole, Hookey, Sjoelbak, Shuffleboard, Bank Shot Shuffleboard, Indoor Curling, Shove Ha'penny
+- **Table games:** Toad in the Hole, Hookey, Sjoelbak, Shuffleboard, Bank Shot Shuffleboard, Indoor Curling, Air Hockey, Shove Ha'penny
 
 Player 1 starts as "Jeanette" and the computer fills any empty seats. With two or more people on one phone, the card and domino games ask you to pass the phone before each person's go. Every game has a **Rules** button that opens its rules card.
 
@@ -25,9 +25,11 @@ The table games can be played three ways:
 
 - **In the app:** touch where to shoot from, pull back like a catapult, let go. The computer can take any seat.
 - **Keep score at the real table:** play the real board and tap in the scores. The app does the sums and the rules (busts at 31, sjoelbak sets, who's furthest, chalking up beds).
-- **Hybrid:** one match on one scoreboard. In Toad, Sjoelbak and Shove Ha'penny each player picks the real board or the app; in Shuffleboard, Bank Shot and Curling you pick before each round or end.
+- **Hybrid:** one match on one scoreboard. In Toad, Hookey, Sjoelbak and Shove Ha'penny each player picks the real board or the app; in Shuffleboard, Bank Shot and Curling you pick before each round or end.
 
-Bank Shot and Shove Ha'penny aren't on the printed cards yet, so their rules cards in the app were written to match the others.
+**Air Hockey** is played live rather than shot by shot. Lay the phone flat between two players, a finger each on your own half, or play the computer (Easy, Medium or Hard). At a real table, just tap whoever scores. First to 7 (or 5, or 11); whoever lets a goal in gets the puck. There's no hybrid for air hockey.
+
+Bank Shot, Shove Ha'penny and Air Hockey aren't on the printed cards yet, so their rules cards in the app were written to match the others.
 
 ## Install it on your phone
 
