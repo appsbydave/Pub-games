@@ -304,6 +304,37 @@ button.pc.ok:hover{transform:translateY(-4px)}
 .gamepick .btn .sub{font-size:11px}
 .gamepick .btn.short{border-style:dashed}
 
+/* Invisible 8s */
+.pc.glass{background:rgba(255,255,255,.5);border-style:dashed;box-shadow:none}
+.pc.glass .r,.pc.glass svg{opacity:.42}
+.i8seat .i8tab{margin-top:2px}
+.i8tab{display:flex;gap:5px;align-items:flex-start}
+.i8tab.mine{justify-content:center;gap:10px;margin:4px 0 2px}
+.i8slot{--sw:26px;position:relative;flex:0 0 auto;width:calc(var(--sw) + 5px);height:calc(var(--sw) * 1.42 + 5px)}
+.i8slot.sm{--sw:40px}
+.i8slot.md{--sw:58px;width:calc(var(--sw) + 9px);height:calc(var(--sw) * 1.42 + 9px)}
+.i8slot>.pc{position:absolute;top:0;left:0}
+.i8slot>.pc.onup{top:5px;left:5px}
+.i8slot.md>.pc.onup{top:9px;left:9px}
+.i8slot .gh{position:absolute;inset:0 5px 5px 0;border:1.5px dashed rgba(78,31,77,.3);border-radius:5px}
+.i8slot.md .gh{inset:0 9px 9px 0;border-radius:8px}
+.i8mid{display:grid;grid-template-columns:58px 1fr 58px;align-items:center;gap:6px}
+.i8side{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--plum);text-align:center;line-height:1.15}
+.i8side b{font-size:17px}
+.i8side .gh{width:40px;height:57px;border:1.5px dashed rgba(78,31,77,.3);border-radius:6px}
+.i8pile{display:flex;justify-content:center;align-items:center;min-height:104px}
+.i8pile .pc{margin-left:-46px}
+.i8pile .pc:first-child{margin-left:0}
+.i8pile .gh{width:70px;height:99px;border:2px dashed rgba(78,31,77,.3);border-radius:8px;display:grid;place-items:center;font-size:11px;font-weight:600;color:rgba(78,31,77,.55);text-align:center;padding:4px}
+.i8need{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;margin:8px 0 2px;font-size:14px;color:var(--plum);font-weight:600}
+.i8need .pc{vertical-align:middle}
+.i8need small{font-weight:500;color:var(--ink);font-size:12px;flex-basis:100%;text-align:center;margin-top:-2px}
+.i8hand{gap:5px;margin-top:6px}
+.i8me{margin-top:12px;border:2px solid var(--plum);border-radius:18px;padding:10px 8px 12px;background:#fff9ee}
+.i8me.on{box-shadow:0 0 0 3px var(--orange)}
+.i8me .kept-lbl{margin-top:2px}
+.pc.must{box-shadow:0 0 0 3px var(--orange),2px 3px 0 rgba(78,31,77,.18)}
+
 /* Pigs */
 .pigs{display:flex;justify-content:center;gap:16px;margin:12px 0 4px;min-height:96px;align-items:flex-end}
 .pig{width:118px;text-align:center}
@@ -2806,7 +2837,7 @@ if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded
 'use strict';
 /* ============ Basics ============ */
 const G = {};
-const ORDER = { dice: ['zanzibar', 'scc', 'farkle', 'midnight', 'pigs', 'stb'], cards: ['brag', 'cuckoo', 'skat'], dominoes: ['t42'] };
+const ORDER = { dice: ['zanzibar', 'scc', 'farkle', 'midnight', 'pigs', 'stb'], cards: ['brag', 'cuckoo', 'skat', 'i8s'], dominoes: ['t42'] };
 const PLUM = '#4e1f4d', ORANGE = '#dd7f27', SAND = '#f8dca8', PIG = '#f6b8c4', PIG2 = '#e98fa3';
 
 const rnd = n => { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; };
@@ -2989,7 +3020,7 @@ function homeView() {
   const tile = (id, k, arr) => { const g = G[id], wide = k === arr.length - 1 && arr.length % 2 === 1; return `<button class="tile ${wide ? 'wide' : ''}" data-act="open" data-arg="${id}"><span class="ic">${g.icon()}</span><span class="tx"><b>${g.name}</b><small>${g.tagline}</small><span class="pp">${I.people}${g.players}</span></span></button>`; };
   return `<div class="sheet">
     ${headHTML('Pub Games', 'Roll, deal, slide and throw. The games from the rules cards, in one place.', homeArt())}
-    ${infoHTML([['dice', '10 dice, card &amp; tile games', 'Zanzibar to Texas 42'], ['<svg viewBox="0 0 24 24" fill="none" stroke="#4e1f4d" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M8 3h8l4 18H4z" fill="#f8dca8"/><path d="M8.6 8h6.8"/><ellipse cx="12" cy="15.5" rx="3.2" ry="1.6" fill="#dd7f27"/></svg>', '8 table games', 'Toad to Shove Ha’penny'], ['people', 'Play your way', 'friends, computer or the real table']])}
+    ${infoHTML([['dice', '11 dice, card &amp; tile games', 'Zanzibar to Texas 42'], ['<svg viewBox="0 0 24 24" fill="none" stroke="#4e1f4d" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M8 3h8l4 18H4z" fill="#f8dca8"/><path d="M8.6 8h6.8"/><ellipse cx="12" cy="15.5" rx="3.2" ry="1.6" fill="#dd7f27"/></svg>', '8 table games', 'Toad to Shove Ha’penny'], ['people', 'Play your way', 'friends, computer or the real table']])}
     ${sec(1, 'Dice games')}<p class="note" style="margin:-4px 0 10px">Roll the app’s dice, roll your own and tap them in, or a bit of both.</p><div class="tiles">${ORDER.dice.map(tile).join('')}</div>
     ${sec(2, 'Card games')}<div class="tiles">${ORDER.cards.map(tile).join('')}</div>
     ${sec(3, 'Dominoes')}<div class="tiles">${ORDER.dominoes.map(tile).join('')}</div>
@@ -4848,6 +4879,388 @@ const seatTop = (st, i, extra = '') => `<div class="top">${who(st.players[i])}<s
     }
   };
   G.skat._t = { value, matadors, trickWinner, legal, gOf, BIDS, eSuit, power, evalHand, maxBidFor };
+})();
+
+/* ---------------- Invisible 8s ---------------- */
+(() => {
+  const VAL = { J: 11, Q: 12, K: 13, A: 14 };
+  const val = r => VAL[r] || +r;
+  const MAGIC = ['2', '8', '10'];
+  const isMagic = r => MAGIC.includes(r);
+  const NORMAL = ['3', '4', '5', '6', '7', '9', 'J', 'Q', 'K', 'A'];
+  const key = c => isMagic(c.r) ? 20 + MAGIC.indexOf(c.r) : val(c.r);
+  const sortHand = h => h.sort((a, b) => key(a) - key(b) || a.s.localeCompare(b.s));
+  const tableScore = c => ({ '10': 30, '2': 29, '8': 27 }[c.r] || val(c.r));
+  const left = p => p.hand.length + p.up.length + p.down.length;
+  const still = p => !p.done;
+  const src = p => p.hand.length ? 'hand' : p.up.length ? 'up' : p.down.length ? 'down' : null;
+  const actor = st => st.phase === 'swap' ? st.swapOrder[st.si] : st.phase === 'play' ? st.turn : -1;
+  const nextIn = (st, i) => nextAlive(st, i, still);
+  const ORD = ['', '1st', '2nd', '3rd', '4th', '5th'];
+  const cardsTxt = cards => cards.map(cardName).join(' ');
+
+  // The card the next player has to beat: look down through any 8s
+  function under(pile) { for (let k = pile.length - 1; k >= 0; k--) if (pile[k].r !== '8') return pile[k]; return null; }
+  function need(st) { const c = under(st.pile); return !c || c.r === '2' ? null : c; }
+  function canPlay(st, r) {
+    if (st.lead) return r === st.lead;
+    if (isMagic(r)) return true;
+    const c = need(st);
+    if (!c) return true;
+    if (st.sevens && c.r === '7') return val(r) <= 7;
+    return val(r) >= val(c.r);
+  }
+  function topRun(pile) {
+    if (!pile.length) return 0;
+    const r = pile[pile.length - 1].r; let n = 0;
+    for (let k = pile.length - 1; k >= 0 && pile[k].r === r; k--) n++;
+    return n;
+  }
+  const groups = cards => { const by = {}; cards.forEach(c => (by[c.r] = by[c.r] || []).push(c)); return by; };
+  const canAny = (st, p) => { const s = src(p); return s === 'down' || (s && p[s].some(c => canPlay(st, c.r))); };
+
+  function deal(st) {
+    const d = deck52();
+    st.players.forEach(p => { p.hand = []; p.up = []; p.down = []; p.done = 0; p.act = ''; });
+    const ord = rotation(st, (st.dealer + 1) % st.players.length);
+    for (const k of [0, 1, 2]) for (const i of ord) { const c = d.pop(); c.slot = k; st.players[i].down.push(c); }
+    for (const k of [0, 1, 2]) for (const i of ord) { const c = d.pop(); c.slot = k; st.players[i].up.push(c); }
+    for (const k of [0, 1, 2]) for (const i of ord) st.players[i].hand.push(d.pop());
+    st.players.forEach(p => { sortHand(p.hand); [...p.hand, ...p.up, ...p.down].forEach((c, k) => { c.deal = true; c.delay = k * 35; }); });
+    Object.assign(st, { stock: d, pile: [], burnt: 0, out: [], sel: [], pick: null, lead: null, res: null, last: '' });
+    st.gameNo++;
+    st.players.forEach(p => { if (p.cpu) aiSwap(p); });
+    st.swapOrder = ord.filter(i => !st.players[i].cpu);
+    st.si = 0;
+    log(st, `Game ${st.gameNo}${st.games > 1 ? ` of ${st.games}` : ''}. ${nm(st, st.dealer)} deals.`);
+    if (st.swapOrder.length) st.phase = 'swap'; else begin(st);
+  }
+  function begin(st) {
+    st.phase = 'play'; st.pick = null; st.sel = [];
+    const ord = rotation(st, (st.dealer + 1) % st.players.length);
+    for (const r of NORMAL) {
+      const i = ord.find(i => st.players[i].hand.some(c => c.r === r));
+      if (i !== undefined) { st.turn = i; st.lead = r; st.last = `${nm(st, i)} has a ${r}, so starts.`; log(st, st.last); return; }
+    }
+    st.turn = ord[0]; st.lead = null; st.last = `${nm(st, ord[0])} starts.`; log(st, st.last);
+  }
+  function aiSwap(p) {
+    const all = [...p.hand, ...p.up].sort((a, b) => tableScore(b) - tableScore(a));
+    p.up = all.slice(0, 3); p.up.forEach((c, k) => c.slot = k);
+    p.hand = sortHand(all.slice(3)); p.hand.forEach(c => delete c.slot);
+  }
+  function swapPick(st, i, from, id) {
+    const p = st.players[i], pk = st.pick;
+    if (pk && pk.from !== from) {
+      const h = p.hand.find(c => c.id === (from === 'hand' ? id : pk.id)), u = p.up.find(c => c.id === (from === 'up' ? id : pk.id));
+      if (h && u) {
+        p.hand[p.hand.indexOf(h)] = u; p.up[p.up.indexOf(u)] = h;
+        h.slot = u.slot; delete u.slot; sortHand(p.hand);
+      }
+      st.pick = null; return;
+    }
+    st.pick = pk && pk.id === id ? null : { from, id };
+  }
+  function ready(st) {
+    st.pick = null; st.si++;
+    if (st.si >= st.swapOrder.length) begin(st);
+  }
+
+  function draw(st, p) {
+    let n = 0;
+    while (p.hand.length < 3 && st.stock.length) { const c = st.stock.pop(); c.deal = true; c.delay = n * 90; p.hand.push(c); n++; }
+    if (n) sortHand(p.hand);
+    return n;
+  }
+  function play(st, i, ids) {
+    const p = st.players[i], s = src(p);
+    if (s !== 'hand' && s !== 'up') return false;
+    const cards = p[s].filter(c => ids.includes(c.id));
+    if (!cards.length || cards.some(c => c.r !== cards[0].r) || !canPlay(st, cards[0].r)) return false;
+    p[s] = p[s].filter(c => !ids.includes(c.id));
+    cards.forEach((c, k) => { c.deal = true; c.delay = k * 80; delete c.slot; });
+    st.pile.push(...cards); st.lead = null; st.sel = [];
+    if (s === 'hand') draw(st, p);
+    after(st, i, cards, s === 'up' ? 'plays from the table:' : 'plays');
+    return true;
+  }
+  function flip(st, i, id) {
+    const p = st.players[i];
+    if (src(p) !== 'down') return false;
+    const c = p.down.find(x => x.id === id); if (!c) return false;
+    p.down = p.down.filter(x => x !== c); delete c.slot; c.flip = true; c.deal = false;
+    if (canPlay(st, c.r)) { st.pile.push(c); after(st, i, [c], 'flips'); return true; }
+    const was = need(st);
+    st.pile.push(c);
+    const n = st.pile.length;
+    p.hand.push(...st.pile); st.pile = []; sortHand(p.hand);
+    p.hand.forEach(x => { x.flip = false; x.deal = false; });
+    p.act = `Flipped ${c.r} · picked up ${n}`;
+    st.last = `${nm(st, i)} flips ${cardName(c)}${was ? `, which won’t go on the ${was.r}` : ''}. Picks up ${plural(n, 'card')}.`;
+    log(st, st.last);
+    st.turn = nextIn(st, i);
+    return true;
+  }
+  function pickUp(st, i, takeId) {
+    const p = st.players[i], s = src(p);
+    if (!st.pile.length) return false;
+    let took = null;
+    if (s === 'up') {
+      if (canAny(st, p)) return false;
+      took = p.up.find(c => c.id === takeId); if (!took) return false;
+      p.up = p.up.filter(c => c !== took); delete took.slot; p.hand.push(took);
+    } else if (s !== 'hand') return false;
+    const n = st.pile.length;
+    st.pile.forEach(c => { c.deal = false; c.flip = false; });
+    p.hand.push(...st.pile); st.pile = []; sortHand(p.hand); st.sel = [];
+    p.act = `Picked up ${n}`;
+    st.last = `${nm(st, i)} picks up the pile${took ? `, and ${cardName(took)} from the table` : ''} (${plural(n + (took ? 1 : 0), 'card')}).`;
+    log(st, st.last);
+    st.turn = nextIn(st, i);
+    return true;
+  }
+  function after(st, i, cards, verb) {
+    const p = st.players[i], r = cards[0].r;
+    const burn = r === '10' ? 'ten' : topRun(st.pile) >= 4 ? 'four' : '';
+    let msg = `${nm(st, i)} ${verb} ${cardsTxt(cards)}`;
+    if (burn) {
+      st.burnt += st.pile.length; st.pile = [];
+      msg += burn === 'ten' ? '. Burn!' : '. Four of a kind, burn!';
+      p.act = 'Burn!';
+    } else {
+      if (r === '8') { const u = need(st); msg += u ? ` · invisible, so it’s still the ${u.r} to beat` : ' · invisible'; }
+      else if (r === '2') msg += ' · reset';
+      msg += '.';
+      p.act = `Played ${cards.length > 1 ? cards.length + ' × ' : ''}${r}`;
+    }
+    if (!left(p)) {
+      p.done = st.out.length + 1; st.out.push(i); p.act = 'Out · safe!';
+      msg += ` ${esc(p.name)} is out!`;
+      st.last = msg; log(st, msg);
+      const rest = st.players.map((q, k) => still(q) ? k : -1).filter(k => k >= 0);
+      if (rest.length <= 1) return endGame(st, rest[0]);
+      st.turn = nextIn(st, i);
+      return;
+    }
+    if (burn) msg += ` ${esc(p.name)} goes again.`;
+    st.last = msg; log(st, msg);
+    st.turn = burn ? i : nextIn(st, i);
+  }
+  function endGame(st, loser) {
+    st.phase = 'end'; st.sel = [];
+    const L = st.players[loser];
+    L.marks++; L.act = 'Left holding cards';
+    st.res = { loser, order: [...st.out] };
+    log(st, `${nm(st, loser)} is left holding cards!`);
+    if (st.gameNo < st.games) return;
+    const glass = `<svg viewBox="0 0 42 56" width="38"><rect x="4" y="4" width="34" height="48" rx="6" fill="rgba(255,255,255,.18)" stroke="#f2a91f" stroke-width="2.5" stroke-dasharray="6 4"/><text x="21" y="36" text-anchor="middle" font-family="Lexend" font-size="24" font-weight="700" fill="#f2a91f">8</text></svg>`;
+    if (st.games === 1) { st.over = { t: `${esc(L.name)} is left <em>holding cards!</em>`, s: 'Everyone else got out. The last one with cards deals the next game.', ic: glass }; return; }
+    const lo = Math.min(...st.players.map(p => p.marks));
+    const w = st.players.filter(p => p.marks === lo);
+    st.over = { t: w.length === 1 ? winsText(w[0].name) : `${w.map(p => esc(p.name)).join(' and ')} <em>share the win!</em>`, s: `Fewest games left holding cards (${lo}). ${esc(L.name)} was left holding them in the last game.`, ic: glass };
+  }
+  function nextGame(st) { st.dealer = st.res.loser; deal(st); }
+
+  function ai(st) {
+    const i = st.turn, p = st.players[i], s = src(p);
+    if (s === 'down') return flip(st, i, p.down[rnd(p.down.length)].id);
+    const by = groups(p[s]);
+    const opts = Object.keys(by).filter(r => canPlay(st, r)).map(r => ({ r, cards: by[r] }));
+    if (!opts.length) {
+      if (s === 'up') return pickUp(st, i, [...p.up].sort((a, b) => key(a) - key(b))[0].id);
+      return pickUp(st, i);
+    }
+    const top = st.pile.length ? st.pile[st.pile.length - 1].r : null, run = topRun(st.pile);
+    const four = opts.find(o => o.r === top && o.r !== '10' && run + o.cards.length >= 4);
+    if (four) return play(st, i, four.cards.map(c => c.id));
+    const normal = opts.filter(o => !isMagic(o.r)).sort((a, b) => val(a.r) - val(b.r));
+    if (normal.length) return play(st, i, normal[0].cards.map(c => c.id));
+    // Only magic cards will go. A one-card pile is cheap to pick up while the draw pile lasts.
+    if (s === 'hand' && st.pile.length === 1 && st.stock.length && chance(.6)) return pickUp(st, i);
+    const has = r => opts.find(o => o.r === r), u = need(st);
+    const pick = (st.pile.length >= 5 && has('10')) || (u && val(u.r) >= 11 && has('8')) || has('2') || has('8') || has('10');
+    return play(st, i, (s === 'up' ? pick.cards : pick.cards.slice(0, 1)).map(c => c.id));
+  }
+
+  /* ---- drawing ---- */
+  const cHTML = (c, o = {}) => cardHTML(c, { ...o, cls: `${o.cls || ''}${o.glass && c && !o.back && c.r === '8' ? ' glass' : ''}` });
+  function slotsHTML(st, p, size, o = {}) {
+    let h = `<div class="i8tab ${o.mine ? 'mine' : ''}">`;
+    for (const k of [0, 1, 2]) {
+      const d = p.down.find(c => c.slot === k), u = p.up.find(c => c.slot === k);
+      h += `<div class="i8slot ${size}">`;
+      if (!d && !u) h += `<span class="gh"></span>`;
+      if (d) h += cHTML(d, { size: size === 'md' ? '' : size, back: true, act: o.flip ? 'flip' : '', arg: d.id, cls: o.flip ? 'ok must' : '', deal: d.deal, delay: d.delay });
+      if (u) {
+        const act = o.upAct || '', ok = o.upOk ? o.upOk(u) : !!act;
+        h += cHTML(u, { size: size === 'md' ? '' : size, act: ok ? act : '', arg: o.upArg ? o.upArg(u) : u.id, cls: `onup ${ok && act ? 'ok' : o.upAct ? 'no' : ''}${act === 'take' ? ' must' : ''} ${o.isUp && o.isUp(u) ? 'up' : ''}`, deal: u.deal, delay: u.delay });
+      }
+      h += `</div>`;
+    }
+    return h + `</div>`;
+  }
+  function needHTML(st) {
+    if (st.lead) return `<div class="i8need">To start: play ${st.lead === '8' ? 'an' : st.lead === 'A' ? 'an' : 'a'} <b>${st.lead}</b><small>Add any other ${st.lead}s if you like.</small></div>`;
+    if (!st.pile.length) return `<div class="i8need">New pile · anything goes</div>`;
+    const c = need(st), top = st.pile[st.pile.length - 1];
+    const see = top.r === '8' ? ' (the 8 is invisible)' : '';
+    if (!c) return `<div class="i8need">Anything goes${under(st.pile) ? ' on the 2' : ''}${see}</div>`;
+    const low = st.sevens && c.r === '7';
+    return `<div class="i8need"><span>Play <b>${low ? '7 or lower' : c.r === 'A' ? 'an Ace' : `${c.r} or higher`}</b> on the</span> ${cardHTML(c, { size: 'xs' })}<small>or a 2, 8 or 10${see}</small></div>`;
+  }
+  function pileHTML(st) {
+    const show = st.pile.slice(-5);
+    return `<div class="i8mid">
+      <div class="i8side">${st.stock.length ? cardHTML(null, { size: 'sm', back: true }) : '<span class="gh"></span>'}<span>Draw pile<br><b>${st.stock.length}</b></span></div>
+      <div><div class="i8pile">${show.length ? show.map(c => cHTML(c, { size: 'lg', deal: c.deal, delay: c.delay, flip: c.flip, glass: true })).join('') : `<span class="gh">${st.burnt ? 'Burnt!' : 'Empty'}</span>`}</div><div class="kept-lbl" style="margin-top:4px">${st.pile.length ? `The pile · ${plural(st.pile.length, 'card')}` : 'The pile'}</div></div>
+      <div class="i8side"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path d="M12 3c1.5 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2.4 1.2-3.8 2.4-5 .1 1.6.8 2.7 1.8 3.2C11.5 8.6 11 5.8 12 3z" fill="${st.burnt ? ORANGE : 'none'}" stroke="${PLUM}" stroke-width="2" stroke-linejoin="round"/></svg><span>Burnt<br><b>${st.burnt}</b></span></div>
+    </div>`;
+  }
+  function seatHTML(st, i, a) {
+    const p = st.players[i];
+    const tags = (i === st.dealer ? '<span class="dealer">Dealer</span>' : '');
+    const meta = p.done ? `Out ${ORD[p.done] || ''} · safe` : st.phase === 'end' && st.res && st.res.loser === i ? 'Left holding cards' : `${plural(p.hand.length, 'card')} in hand`;
+    return `<div class="seat i8seat ${i === a ? 'on' : ''} ${p.done ? 'out' : ''}">${seatTop(st, i, tags)}
+      <div class="meta">${meta}${st.games > 1 ? ` · held ${p.marks}` : ''}</div>
+      ${slotsHTML(st, p, 'xs')}
+      <div class="act">${esc(p.act || '')}</div></div>`;
+  }
+
+  G.i8s = {
+    id: 'i8s', kind: 'cards', name: 'Invisible 8s', tagline: 'Go higher. Burn the pile. Hide behind an 8.', players: '2–5 players', min: 2, max: 5, defN: 4, priv: true,
+    art: () => `<svg viewBox="0 0 150 120">${cardG({ r: '9', s: 'H' }, 20, 26, -10, 50)}<g transform="translate(66 20) rotate(10 25 71)"><rect x="0" y="0" width="50" height="71" rx="7" fill="rgba(255,255,255,.45)" stroke="${PLUM}" stroke-width="2.5" stroke-dasharray="6 4"/><text x="6" y="18" font-family="Lexend" font-weight="700" font-size="16" fill="${PLUM}" opacity=".5">8</text><g transform="translate(21 35.5) scale(1.087)" fill="${PLUM}" opacity=".3">${SUIT_PATH.C}</g></g><path d="M128 14l2.6 6.7 6.7 2.6-6.7 2.6-2.6 6.7-2.6-6.7-6.7-2.6 6.7-2.6z" fill="${ORANGE}"/><path d="M140 44l1.6 4.2 4.2 1.6-4.2 1.6-1.6 4.2-1.6-4.2-4.2-1.6 4.2-1.6z" fill="${ORANGE}"/></svg>`,
+    icon: () => `<svg viewBox="0 0 120 60" height="44">${cardG({ r: '9', s: 'H' }, 30, 8, -12, 30)}<g transform="translate(58 6) rotate(12 15 42)"><rect x="0" y="0" width="30" height="42.6" rx="5" fill="rgba(255,255,255,.5)" stroke="${PLUM}" stroke-width="2.2" stroke-dasharray="4 3"/><text x="4" y="12" font-family="Lexend" font-weight="700" font-size="10" fill="${PLUM}" opacity=".5">8</text></g></svg>`,
+    info: [['cards', '1 pack of cards', '52 cards, aces high'], [sv('<rect x="2.5" y="7" width="5.5" height="9" rx="1.2"/><rect x="9.25" y="7" width="5.5" height="9" rx="1.2"/><rect x="16" y="7" width="5.5" height="9" rx="1.2"/><path d="M3.5 19.5h17" stroke-dasharray="2 2.5"/>'), '9 cards each', '3 down, 3 up, 3 in hand'], ['people', '2 to 5 players', 'best with 3 or 4']],
+    note: 'Hands stay hidden. Face-up cards on the table are on show to everyone.',
+    options: [
+      { key: 'games', label: 'Games', help: 'Whoever’s left holding cards gets a mark. Fewest marks wins.', def: 3, choices: [[1, '1'], [3, '3'], [5, '5']] },
+      { key: 'sevens', label: 'Sevens (the twist)', help: 'After a 7, the next player has to go 7 or lower.', def: 0, choices: [[0, 'Off'], [1, 'On']] }
+    ],
+    create(players, o) {
+      const st = { players: players.map(p => ({ ...p, hand: [], up: [], down: [], marks: 0, done: 0 })), dealer: players.length - 1, gameNo: 0, games: o.games, sevens: !!o.sevens };
+      deal(st); return st;
+    },
+    actor,
+    next(st) {
+      const a = actor(st);
+      if (st.phase === 'play' && st.players[a].cpu) return { ms: 950, run: () => ai(st) };
+      if (st.phase === 'end' && !st.over && !anyHuman(st)) return { ms: 3200, run: () => nextGame(st) };
+      return null;
+    },
+    act(st, a, arg) {
+      if (a === 'next' && st.phase === 'end' && !st.over) return nextGame(st);
+      const i = actor(st); if (i < 0 || st.players[i].cpu) return;
+      const p = st.players[i];
+      if (st.phase === 'swap') {
+        if (a === 'swp') { const [from, id] = arg.split(':'); swapPick(st, i, from, +id); }
+        if (a === 'ready') ready(st);
+        return;
+      }
+      if (st.phase !== 'play') return;
+      if (a === 'sel') {
+        const s = src(p), c = (s === 'hand' || s === 'up') && p[s].find(x => x.id === +arg);
+        if (!c || !canPlay(st, c.r)) return;
+        if (st.sel.includes(c.id)) st.sel = st.sel.filter(x => x !== c.id);
+        else { const cur = p[s].find(x => x.id === st.sel[0]); st.sel = cur && cur.r === c.r ? [...st.sel, c.id] : [c.id]; }
+        return;
+      }
+      if (a === 'play') return play(st, i, st.sel);
+      if (a === 'pickup') return pickUp(st, i);
+      if (a === 'take') return pickUp(st, i, +arg);
+      if (a === 'flip') return flip(st, i, +arg);
+    },
+    view(st, viewer) {
+      const a = actor(st), me = viewer >= 0 ? viewer : -1, hum = humanTurn(st, a) && me === a;
+      const others = st.players.map((_, i) => i).filter(i => i !== me);
+      let h = `<div class="hint" style="margin:0 0 8px;font-weight:600;color:var(--plum);font-size:14px">Game ${st.gameNo}${st.games > 1 ? ` of ${st.games}` : ''} · ${esc(st.players[st.dealer].name)} deals${st.sevens ? ' · Sevens on' : ''}</div>`;
+      h += `<div class="seats">${others.map(i => seatHTML(st, i, a)).join('')}</div>`;
+      h += `<div class="board" style="margin-top:12px">`;
+      if (st.phase === 'swap') {
+        h += pileHTML(st);
+        const p = st.players[a];
+        h += `<div class="status" style="margin-top:8px">${hum ? 'Swap before you start' : `${esc(p.name)} is swapping`}<small>${hum ? 'Tap a card in your hand, then one of your face-up cards, to swap them. Face-up cards are played late, so put strong ones there.' : 'Choosing which cards to leave face up.'}</small></div>`;
+        if (hum) h += `<div class="btns">${btn('Ready · start playing', 'ready', '', 'primary')}</div>`;
+      } else if (st.phase === 'play') {
+        const p = st.players[a], s = src(p);
+        h += pileHTML(st) + needHTML(st);
+        if (st.last) h += `<div class="hint">${st.last}</div>`;
+        let sub = '';
+        if (hum) {
+          const any = canAny(st, p);
+          if (s === 'down') sub = 'Your face-up cards are gone. Tap a face-down card to flip it onto the pile.';
+          else if (s === 'up' && !any) sub = 'None of your face-up cards will go. Tap one to take into your hand with the pile.';
+          else if (!any) sub = 'Nothing in your hand will go. Pick up the pile.';
+          else sub = s === 'up' ? 'Your hand’s empty, so play from your face-up cards. Same rank can go together.' : 'Tap a card, then Play. Same rank can go together.';
+        } else sub = s === 'down' ? 'Flipping a face-down card…' : s === 'up' ? 'Playing from the table…' : 'Thinking…';
+        h += `<div class="status" style="margin-top:8px">${hum ? 'Your go' : `${esc(p.name)}’s go`}<small>${sub}</small></div>`;
+        if (hum && (s === 'hand' || s === 'up')) {
+          const sel = p[s].filter(c => st.sel.includes(c.id)), any = canAny(st, p);
+          const b = [];
+          if (any) b.push(btn(sel.length ? `Play ${sel.length > 1 ? sel.length + ' × ' : ''}${sel[0].r}` : 'Play', 'play', '', 'primary', !sel.length));
+          if (s === 'hand' && st.pile.length) b.push(btn(`Pick up the pile (${st.pile.length})`, 'pickup', '', any ? '' : 'primary'));
+          if (b.length) h += `<div class="btns">${b.join('')}</div>`;
+        }
+      } else if (st.phase === 'end' && st.res) {
+        const r = st.res, L = st.players[r.loser];
+        h += `<div class="status pop">${me === r.loser ? 'You’re left holding cards!' : `${esc(L.name)} is left holding cards!`}<small>${st.over ? 'That’s the last game.' : `${esc(L.name)} deals the next game.`}</small></div>`;
+        const rows = r.order.map((k, n) => ({ t: `${ORD[n + 1]} out`, s: esc(st.players[k].name), v: st.games > 1 ? st.players[k].marks : '', hi: n === 0 }));
+        rows.push({ t: 'Left holding cards', s: esc(L.name), v: st.games > 1 ? L.marks : '', lo: 1 });
+        h += `<div class="mt">${tableHTML([`Game ${st.gameNo}`, st.games > 1 ? 'Games held' : ''], rows)}</div>`;
+        if (!st.over && anyHuman(st)) h += `<div class="btns">${btn(`Deal game ${st.gameNo + 1} of ${st.games}`, 'next', '', 'primary')}</div>`;
+      }
+      h += `</div>`;
+      if (me >= 0) {
+        const p = st.players[me], mine = me === a && hum, s = src(p);
+        const playing = mine && st.phase === 'play', swapping = mine && st.phase === 'swap';
+        const upTurn = playing && s === 'up', stuckUp = upTurn && !canAny(st, p);
+        const tab = slotsHTML(st, p, 'md', {
+          mine: true,
+          flip: playing && s === 'down',
+          upAct: swapping ? 'swp' : stuckUp ? 'take' : upTurn ? 'sel' : '',
+          upOk: u => swapping || stuckUp || (upTurn && canPlay(st, u.r)),
+          upArg: u => swapping ? `up:${u.id}` : u.id,
+          isUp: u => (swapping && st.pick && st.pick.id === u.id) || (upTurn && st.sel.includes(u.id))
+        });
+        const n = p.hand.length, size = n > 10 ? 'sm' : '';
+        const hand = p.hand.map(c => {
+          let act = '', cls = '';
+          if (swapping) { act = 'swp'; cls = 'ok' + (st.pick && st.pick.id === c.id ? ' up' : ''); }
+          else if (playing && s === 'hand') { if (canPlay(st, c.r)) { act = 'sel'; cls = 'ok' + (st.sel.includes(c.id) ? ' up' : ''); } else cls = 'no'; }
+          return cHTML(c, { act, arg: swapping ? `hand:${c.id}` : c.id, cls, size, deal: c.deal, delay: c.delay });
+        }).join('');
+        h += `<div class="i8me ${mine ? 'on' : ''}">
+          <div class="kept-lbl">${esc(p.name)}’s table · ${p.done ? `out ${ORD[p.done]}, safe` : `${plural(p.up.length, 'card')} up, ${p.down.length} down`}${st.games > 1 ? ` · held ${p.marks}` : ''}</div>
+          ${tab}
+          <div class="kept-lbl" style="margin-top:10px">${n ? `Hand · ${plural(n, 'card')}` : p.done ? 'Out of cards' : 'Hand empty'}</div>
+          ${n ? `<div class="cards-row i8hand">${hand}</div>` : ''}
+        </div>`;
+      } else h += `<div class="kept-lbl" style="margin-top:10px">Watching the computer play</div>`;
+      return h;
+    },
+    rules: {
+      pre: ['Before you start', '<b>Deal 3 face down</b> to each player, <b>3 face up</b> on top of them, then <b>3 to each hand.</b> The rest is the draw pile. <b>Swap</b> any hand cards with your face-up cards before play.'],
+      s1: 'Play a turn',
+      steps: [['Who has a 3 in hand?', 'The first to show one starts by playing it. No 3s? Try 4s, and so on.'], ['Play equal or higher', 'than the top card. One card, or several of the same rank.'], ['Draw back up to 3', 'from the draw pile, as long as it lasts.'], ['Can’t go?', 'Pick up the whole pile. The next player starts a new one.']],
+      s2: 'Magic cards',
+      score: `<div style="font-size:13px;margin-bottom:6px">These three go on anything.</div>` +
+        scoreRow(cardHTML({ r: '2', s: 'D' }, { size: 'xs' }), '', '2 resets <span style="font-weight:400">Anything can go on it.</span>') +
+        scoreRow(cardHTML({ r: '8', s: 'C' }, { size: 'xs', cls: 'glass' }), '', '8 is invisible <span style="font-weight:400">Next player beats the card under it.</span>') +
+        scoreRow(cardHTML({ r: '10', s: 'S' }, { size: 'xs' }), '', '10 burns the pile <span style="font-weight:400">It’s out of the game. Go again.</span>') +
+        exampleHTML(xs('QS QH QD QC'), 'Four of a kind on top', '= burns too!'),
+      s3: 'What do I beat?', head: ['The pile · top card on the right', 'You need'],
+      rows: [
+        { ic: `<span class="cards-row" style="gap:3px;flex-wrap:nowrap">${cardHTML({ r: '6', s: 'C' }, { size: 'xs' })}${cardHTML({ r: '9', s: 'H' }, { size: 'xs' })}${cardHTML({ r: '8', s: 'S' }, { size: 'xs', cls: 'glass' })}</span>`, t: 'Look straight through the 8', s: 'It’s the 9 you have to beat.', v: '9+', hi: 1 },
+        { ic: `<span class="cards-row" style="gap:3px;flex-wrap:nowrap">${cardHTML({ r: '9', s: 'H' }, { size: 'xs' })}${cardHTML({ r: '8', s: 'S' }, { size: 'xs', cls: 'glass' })}${cardHTML({ r: '8', s: 'D' }, { size: 'xs', cls: 'glass' })}</span>`, t: 'Two 8s, still invisible', s: 'Look through them both to the 9.', v: '9+' },
+        { ic: `<span class="cards-row" style="gap:3px;flex-wrap:nowrap">${cardHTML({ r: 'K', s: 'S' }, { size: 'xs' })}${cardHTML({ r: '2', s: 'H' }, { size: 'xs' })}${cardHTML({ r: '8', s: 'C' }, { size: 'xs', cls: 'glass' })}</span>`, t: 'A 2 under the 8', s: 'The 2 reset it, so anything goes.', v: 'Any' }
+      ],
+      s4: 'The endgame', pills: ['Face up', 'Face down'],
+      notes: [['No hand and no draw pile?', 'Play your face-up cards.'], ['Can’t play one?', 'Take the pile, plus one face-up card, into your hand.'], ['Then flip a face-down card', 'each turn, blind. Won’t go? Pick it up with the pile.'], ['Out of cards?', 'You’re safe.']],
+      post: ['Try a twist', '<b>Sevens:</b> after a 7, the next player has to go 7 or lower, unless they play a 2, 8 or 10.'],
+      foot: 'Don’t be left <em>holding cards!</em>', footSub: 'The last one with cards deals the next game.',
+      footIc: `<svg viewBox="0 0 42 56" width="38"><rect x="4" y="4" width="34" height="48" rx="6" fill="rgba(255,255,255,.18)" stroke="#f2a91f" stroke-width="2.5" stroke-dasharray="6 4"/><text x="21" y="36" text-anchor="middle" font-family="Lexend" font-size="24" font-weight="700" fill="#f2a91f">8</text></svg>`
+    }
+  };
+  G.i8s._t = { canPlay, need, under, topRun, deal, begin, play, pickUp, flip, ai, src, left, swapPick, ready };
 })();
 
 /* ================= Dominoes: Texas 42 ================= */

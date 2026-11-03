@@ -9,7 +9,7 @@ The dice, card, domino and table games from the pub games night rules cards, in 
 ## Games
 
 - **Dice:** Zanzibar, Ship Captain & Crew, Farkle, Midnight, Pass the Pigs, Shut the Box
-- **Cards:** Three-Card Brag, Cuckoo, Skat
+- **Cards:** Three-Card Brag, Cuckoo, Skat, Invisible 8s
 - **Dominoes:** Texas 42
 - **Table games:** Toad in the Hole, Hookey, Sjoelbak, Shuffleboard, Bank Shot Shuffleboard, Indoor Curling, Air Hockey, Shove Ha'penny
 
