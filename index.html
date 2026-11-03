@@ -571,12 +571,47 @@ button.dom.ok:hover{transform:translateY(-4px)}
 .tg .bar .nm{font-size:15.5px}
 .tile .tgresume{position:absolute;top:-9px;right:8px;background:var(--orange);color:#fff;font-size:10.5px;font-weight:700;border-radius:999px;padding:2px 8px}
 
+/* Notes on the cards: "Before you start", "Try a twist", "Where it's from" */
+.cardnote{display:flex;gap:10px;align-items:flex-start;background:var(--plum-soft);border-radius:12px;padding:9px 12px;margin:-4px 0 6px;font-size:13.5px;line-height:1.4;color:var(--ink)}
+.cardnote .cn{flex:0 0 auto;font-weight:700;font-size:11.5px;padding:2px 8px;border-radius:999px;background:var(--plum);color:#fff;white-space:nowrap;margin-top:1px}
+.cardnote p{margin:0}
+.cardnote b{color:var(--plum)}
+.cardnote.dash{background:#fff;border:2px dashed var(--plum);margin:14px 0 0}
+.cardnote.dash .cn{background:#fff;color:var(--plum);border:1.5px solid var(--plum)}
+
+/* Shut the Box: the box of tiles */
+.stb{margin:12px 0 2px}
+.stb-box{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:4px;align-items:end;height:84px;background:var(--plum);border:2.5px solid var(--ink);border-radius:14px;padding:8px 7px 9px;box-shadow:4px 5px 0 var(--ink)}
+.stbt{height:62px;min-width:0;border:2px solid var(--ink);border-radius:7px;background:#fff;color:var(--plum);font-weight:700;font-size:clamp(15px,4.6vw,21px);display:flex;align-items:flex-start;justify-content:center;padding:8px 0 0;transition:transform .12s}
+.stbt.up:not([disabled]):active{transform:scale(.94)}
+.stbt.sel{background:var(--orange);color:#fff;transform:translateY(-4px);box-shadow:0 0 0 2px #fff}
+.stbt.dim{opacity:.38}
+.stbt.down{height:14px;background:var(--line);border-width:1.5px;border-radius:4px;padding:0}
+.stbt.down span{display:none}
+.stbt[disabled]{cursor:default}
+.stb .stbt.down.flipping{animation:stbshut .45s ease both}
+@keyframes stbshut{0%{height:62px;background:var(--orange)}70%{background:var(--orange)}100%{height:14px}}
+.stb.flip .stbt.down{height:28px;background:var(--sand);cursor:pointer}
+
+/* Hookey: tapping in rings at the real board */
+.tg .hkrow{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:12px 0 4px}
+.tg .hkr{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;color:var(--plum);background:#fff;border:6px solid #d0452b;box-shadow:0 0 0 1.5px var(--ink),inset 0 0 0 1.5px var(--ink);padding:0;font-family:inherit}
+.tg .hkr.b{border-color:#363236}
+.tg .hkr.miss{border-color:#d9c6d8;color:var(--muted)}
+.tg .hkr.e{border:2px dashed rgba(78,31,77,.35);box-shadow:none;color:var(--muted);font-weight:600;font-size:12px}
+.tg .hkpad{position:relative;width:min(300px,86vw);aspect-ratio:1;margin:12px auto 8px;border-radius:50%;background:var(--sand);border:3px solid var(--ink);box-shadow:5px 6px 0 var(--ink)}
+.tg .hkpad::before{content:'';position:absolute;inset:7%;border-radius:50%;border:1.5px solid var(--plum);pointer-events:none}
+.tg .hkpad button{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;border:2px solid var(--plum);background:#fff;color:var(--plum);font-weight:700;font-size:16px;display:grid;place-items:center;padding:0;font-family:inherit}
+.tg .hkpad button::after{content:'';position:absolute;left:50%;bottom:-5px;width:9px;height:9px;margin-left:-4.5px;border-radius:50%;background:var(--gold);border:1.5px solid var(--ink)}
+.tg .hkpad button:active{background:#d0452b;color:#fff;border-color:#d0452b}
+.tg .hkpad.b button:active{background:#363236;border-color:#363236}
+.tg .hkpad button[disabled]{opacity:.4}
 </style>
 </head>
 <body>
 <main id="app"></main>
 <script>
-/* ===== Table games (Toad, Sjoelbak, Shuffleboard, Bank Shot, Curling, Shove Ha'penny) ===== */
+/* ===== Table games (Toad, Hookey, Sjoelbak, Shuffleboard, Bank Shot, Curling, Shove Ha'penny) ===== */
 (function () {
 'use strict';
 
@@ -1921,6 +1956,298 @@ GAMES.shove = {
 };
 
 /* =========================================================
+   Hookey: a round ring board on the wall, 13 brass hooks, rings thrown from 1.8 m.
+   Board coordinates: u across and v up from the centre of the board, in millimetres.
+   ========================================================= */
+const HK_HOOKS = [[13, 0, 0], [12, 44, 44], [11, 44, -44], [10, -44, -44], [9, -44, 44], [1, 0, 105], [5, 74, 74], [7, 105, 0], [3, 74, -74], [6, 0, -105], [4, -74, -74], [8, -105, 0], [2, -74, 74]].map(([n, u, v]) => ({ n, u, v }));
+const HK_AT = Object.fromEntries(HK_HOOKS.map(h => [h.n, h]));
+const HK_RING = [{ c: '#d0452b', hi: '#f39a7e', name: 'red' }, { c: '#363236', hi: '#8a828b', name: 'black' }];
+const HK_SIG = { easy: 34, med: 22, hard: 14 }; // how far the computer's rings stray from where it aims (mm)
+const HK_WOBBLE = 16; // and a person's, on top of their own aim
+ICON.hookey = `<svg viewBox="0 0 64 48"><circle cx="36" cy="26" r="20" fill="#3b3b3b"/><circle cx="33" cy="23" r="20" fill="#f8dca8" ${S}/><circle cx="33" cy="23" r="16.4" fill="none" stroke="#4e1f4d" stroke-width="1"/>${[[33, 23], [39, 17], [39, 29], [27, 29], [27, 17], [33, 9.5], [42.5, 13.5], [46.5, 23], [42.5, 32.5], [33, 36.5], [23.5, 32.5], [19.5, 23], [23.5, 13.5]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.7" fill="#f2a91f" stroke="#3b3b3b" stroke-width=".9"/>`).join('')}<ellipse cx="33" cy="27.5" rx="4.3" ry="4.9" fill="none" stroke="#d0452b" stroke-width="2.8"/><ellipse cx="46.5" cy="27.5" rx="4.3" ry="4.9" fill="none" stroke="#363236" stroke-width="2.8"/><ellipse cx="8" cy="9" rx="6" ry="2.6" transform="rotate(-25 8 9)" fill="none" stroke="#d0452b" stroke-width="2.8"/></svg>`;
+ICON.ring = `<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="7.4" stroke="#4e1f4d" stroke-width="6.2"/><circle cx="12" cy="12" r="7.4" stroke="#d0452b" stroke-width="3.6"/></svg>`;
+
+// Plays a turn's rings in order. Every way of playing Hookey is scored here: the app, the real-board
+// score entry and the scoreboard all use it, so they can never disagree.
+function hkRun(m, who, rings) {
+  const g = m.opts.game, irish = g === '101' && m.opts.irish === 'on', start = m.s.tot[who];
+  const sixOn = rings.length >= 6 && rings.slice(0, 6).every(v => v > 0), allowed = sixOn ? 7 : 6;
+  let tot = start, end = null; const steps = [];
+  for (let i = 0; i < rings.length && i < allowed && !end; i++) {
+    const v = rings[i], before = tot; let kind;
+    if (!v) kind = 'miss';
+    else if (g === 'clock') { if (v === tot) { tot++; kind = tot > 13 ? 'win' : 'next'; } else kind = 'wrong'; }
+    else if (g === '50') { tot += v; kind = tot >= 50 ? 'win' : 'add'; }
+    else {
+      const need = 101 - tot;
+      if (irish && need <= 13 && v !== need) kind = 'irish';
+      else if (v > need) { tot -= v; kind = 'over'; }
+      else { tot += v; kind = tot === 101 ? 'win' : 'add'; }
+    }
+    steps.push({ v, kind, before, after: tot });
+    if (kind === 'win' || kind === 'wrong' || kind === 'irish') end = kind;
+  }
+  return { tot, steps, end, allowed, sixOn, done: !!end || steps.length >= allowed, win: end === 'win', gain: tot - start };
+}
+const hkNow = (m, tot) => {
+  const g = m.opts.game;
+  if (g === 'clock') return tot > 13 ? 'all the way round' : `needs the ${tot}`;
+  if (g === '50') return `on ${tot} · ${Math.max(0, 50 - tot)} to go`;
+  const need = 101 - tot; return `on ${tot} · needs ${need}${m.opts.irish === 'on' && need <= 13 ? ' exactly' : ''}`;
+};
+const hkCap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+class HookeyTable extends SlideTable {
+  init() {
+    this.BY = 1800; this.BZ = 1500; this.RB = 150; this.rOut = 34; this.rIn = 24; this.fixedX = 0; this.showReady = false; this.bg = COL.soft;
+    this.who = this.unit.who; this.side = this.who % 2; this.rings = []; this.fly = null; this.thrown = 0;
+  }
+  /* rings stay on the hooks if you leave partway through a turn */
+  get keepBoard() { return 'The rings'; }
+  saveBoard() {
+    const done = this.rings.filter(r => r.done); if (!done.length || this.state === 'done') return;
+    store.set(BOARD_KEY(this.G.id), { id: this.bid, rings: done.map(r => ({ pts: r.pts, hook: r.hook ? r.hook.n : 0 })) });
+  }
+  loadBoard() {
+    const s = store.get(BOARD_KEY(this.G.id), null); if (!s || s.id !== this.bid || !Array.isArray(s.rings) || !s.rings.length) return false;
+    this.rings = s.rings.map(o => o.hook && HK_AT[o.hook] ? { side: this.side, hook: HK_AT[o.hook], state: 'hang', ph: 0, pts: o.pts, done: true } : { side: this.side, state: 'gone', pts: 0, done: true });
+    this.thrown = this.shots = this.rings.length; return true;
+  }
+  values() { return this.rings.filter(r => r.done).map(r => r.pts); }
+  run() { return hkRun(this.m, this.who, this.values()); }
+  nextShooter() { if (this.run().done) return null; const p = this.m.players[this.who]; return { side: this.side, cpu: p.kind === 'cpu', name: p.name }; }
+  status() {
+    const p = this.m.players[this.who], R = this.run(), k = Math.min(R.allowed, this.thrown + (this.state === 'aim' || this.state === 'cpu' ? 1 : 0));
+    return [`${p.name} · ring ${Math.max(1, k)} of ${R.allowed}`, hkCap(hkNow(this.m, R.tot)) + (this.m.opts.game !== 'clock' && R.steps.length ? ` · this turn ${R.gain >= 0 ? '+' : '−'}${Math.abs(R.gain)}` : '')];
+  }
+  tipText() { return 'Pull back to throw: further back goes higher'; }
+  result() { return { rings: this.values() }; }
+  /* --- camera and drawing: the board is upright, facing the thrower --- */
+  camPresets(W, H) {
+    const B = this.BY, Z = this.BZ, R = this.RB;
+    const pts = [[-R - 26, B, Z - R - 52], [R + 26, B, Z - R - 52], [-R - 26, B, Z + R + 26], [R + 26, B, Z + R + 26]];
+    const p = fitCam([0, 300, 1590], [0, B, Z - 10], pts, { x: 6, y: 6, w: W - 12, h: Math.max(80, H - 96) });
+    return { aim: p, watch: p };
+  }
+  P(u, v, d = 0) { return this.cam.p(u, this.BY - d, this.BZ + v); }
+  arcH() { return Math.min(this.H * 0.1, 60); }
+  circ(u, v, r, n = 48, d = 0) { const a = []; for (let i = 0; i < n; i++) { const t = i / n * Math.PI * 2; a.push([u + r * Math.cos(t), this.BY - d, this.BZ + v + r * Math.sin(t)]); } return a; }
+  ringPos(r) { if (!r.hook) return [r.u, r.v]; const L = this.rIn - 1.5, h = r.hook, ph = r.ph || 0; return [h.u + Math.sin(ph) * L, h.v + 3 - Math.cos(ph) * L]; }
+  ringAt(g, x, y, rx, ry, th, side, alpha = 1, shadow = false) {
+    const col = HK_RING[side]; g.save(); g.globalAlpha = alpha; ry = Math.max(0.6, ry);
+    if (shadow) { g.strokeStyle = 'rgba(46,16,45,.25)'; g.lineWidth = th; g.beginPath(); g.ellipse(x + th * 0.35, y + th * 0.55, rx, ry, 0, 0, 7); g.stroke(); }
+    g.strokeStyle = COL.ink; g.lineWidth = th + 2.6; g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, 7); g.stroke();
+    g.strokeStyle = col.c; g.lineWidth = th; g.stroke();
+    g.strokeStyle = col.hi; g.lineWidth = Math.max(1, th * 0.28); g.beginPath(); g.ellipse(x, y, rx, ry, 0, Math.PI * 1.08, Math.PI * 1.6); g.stroke();
+    g.restore();
+  }
+  drawRing(g, r, alpha = 1) {
+    const [u, v] = this.ringPos(r), p = this.P(u, v, r.hook ? 7 : 9), s = p[2], rm = (this.rOut + this.rIn) / 2 * s;
+    this.ringAt(g, p[0], p[1], rm, rm, (this.rOut - this.rIn) * s, r.side, alpha, alpha === 1);
+  }
+  hookBase(g, h) { const p = this.P(h.u, h.v, 0.5), s = p[2]; g.save(); g.fillStyle = '#e0a640'; g.strokeStyle = COL.ink; g.lineWidth = 1.2; g.beginPath(); g.arc(p[0], p[1], 3.8 * s, 0, 7); g.fill(); g.stroke(); g.restore(); }
+  hookTip(g, h) { // a brass cup hook: out from the board, then turned up
+    const a = this.P(h.u, h.v, 4), m = this.P(h.u, h.v + 5, 9), b = this.P(h.u + 2.4, h.v + 9, 10), s = a[2];
+    const path = () => { g.beginPath(); g.moveTo(a[0], a[1]); g.quadraticCurveTo(m[0], m[1], b[0], b[1]); };
+    g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
+    path(); g.strokeStyle = COL.ink; g.lineWidth = 2.6 * s + 1.8; g.stroke();
+    path(); g.strokeStyle = COL.gold; g.lineWidth = 2.6 * s; g.stroke(); g.restore();
+  }
+  drawTable(g) {
+    const c = this.cam, R = this.RB;
+    gfill(g, c, this.circ(7, -8, R, 72, -2), 'rgba(59,59,59,.92)');
+    gfill(g, c, this.circ(0, 0, R, 72), COL.sand, COL.ink, 3);
+    for (const k of [38, 76, 112]) gfill(g, c, this.circ(0, 0, k, 56, 0.4), null, 'rgba(160,110,60,.14)', 1.2);
+    gfill(g, c, this.circ(0, 0, R - 12, 72, 0.4), null, COL.plum, 1.4);
+    for (const h of HK_HOOKS) {
+      const p = this.P(h.u, h.v + 21, 1);
+      g.save(); g.font = `700 ${Math.max(9, 14 * p[2]).toFixed(1)}px Lexend, system-ui, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = COL.plum; g.fillText(String(h.n), p[0], p[1]); g.restore();
+      this.hookBase(g, h);
+    }
+    for (const r of this.rings) if (r.state === 'slide' || r.state === 'swing' || r.state === 'hang') this.drawRing(g, r);
+    for (const h of HK_HOOKS) this.hookTip(g, h);
+  }
+  drawExtra(g) {
+    for (const r of this.rings) if (r.state === 'drop') this.drawRing(g, r, clamp(1 - (r.fade || 0), 0, 1));
+    const f = this.fly, hx = this.W / 2, hy = this.H - 58;
+    if (f) {
+      const t = clamp(f.t, 0, 1), A = this.P(f.u, f.v, 9);
+      const x = lerp(hx, A[0], t), y = lerp(hy, A[1], t) - 4 * t * (1 - t) * this.arcH();
+      const s = lerp(A[2] * 1.8, A[2], t), rm = (this.rOut + this.rIn) / 2 * s, flat = 0.2 + 0.8 * Math.abs(Math.cos((1 - t) * Math.PI * 2.5));
+      this.ringAt(g, x, y, rm, rm * flat, (this.rOut - this.rIn) * s, this.side);
+    }
+    const R = this.run(), left = R.done || this.state === 'done' ? 0 : Math.max(0, R.allowed - this.thrown);
+    for (let i = 0; i < left; i++) this.ringAt(g, hx + (i - (left - 1) / 2) * 30, hy, 11, 5.5, 4.5, this.side);
+  }
+  drawAim(g, sh) {
+    const p = this.P(sh.u, sh.v, 9), s = p[2], rm = (this.rOut + this.rIn) / 2 * s, hx = this.W / 2, hy = this.H - 58;
+    g.save(); g.strokeStyle = COL.orange; g.lineWidth = 3; g.setLineDash([7, 7]); g.lineCap = 'round';
+    g.beginPath(); g.moveTo(hx, hy); g.quadraticCurveTo((hx + p[0]) / 2, (hy + p[1]) / 2 - 2 * this.arcH(), p[0], p[1]); g.stroke(); // the same lob the ring flies
+    g.setLineDash([5, 5]); g.lineWidth = 2.6; g.beginPath(); g.arc(p[0], p[1], rm, 0, 7); g.stroke(); g.setLineDash([]);
+    g.beginPath(); g.moveTo(p[0] - 6, p[1]); g.lineTo(p[0] + 6, p[1]); g.moveTo(p[0], p[1] - 6); g.lineTo(p[0], p[1] + 6); g.stroke();
+    let h = null, d = 1e9; for (const k of HK_HOOKS) { const e = Math.hypot(sh.u - k.u, sh.v - k.v); if (e < d) { d = e; h = k; } }
+    if (h && d < this.rIn) {
+      const tx = p[0] + rm + 6, ty = p[1] - rm - 4; g.fillStyle = COL.orange; rr(g, tx - 2, ty - 11, 30, 22, 11); g.fill();
+      g.fillStyle = '#fff'; g.font = '700 13px Lexend, system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(h.n), tx + 13, ty);
+    }
+    g.restore();
+  }
+  /* --- input: pull back like a catapult. Down sets the height, sideways aims --- */
+  dragShot() {
+    if (!this.drag) return null; const dx = this.drag.sx - this.drag.x, dy = this.drag.y - this.drag.sy, L = Math.hypot(dx, dy); if (L < 6) return null;
+    const span = this.RB + 80, k = 2 * span / this.pullMax;
+    return { u: clamp(dx * k * 0.75, -span, span), v: clamp(-span + Math.max(0, dy) * k, -span, span), pow: clamp(L / this.pullMax, 0, 1) };
+  }
+  shoot(sh) {
+    Sound.init(); Sound.slide(); this.state = 'moving'; this.ui.tip(null); this.thrown++; this.shots++;
+    const w = this.human() ? HK_WOBBLE : 0;
+    this.fly = { u: sh.u + gauss() * w, v: sh.v + gauss() * w * 1.15, t: 0, dur: 0.6 };
+    this.refresh();
+  }
+  target() { const g = this.m.opts.game, t = this.run().tot; return HK_AT[g === 'clock' ? clamp(t, 1, 13) : g === '50' ? 13 : clamp(101 - t, 1, 13)]; }
+  async cpuGo() {
+    this.ui.status(this.status()[0], 'Lining it up…'); await sleep(320 / SPEED); if (this.dead) return;
+    const h = this.target(), sig = HK_SIG[this.m.diff || 'med'], aim = { u: h.u, v: h.v + 1 };
+    this.ui.status(...this.status()); this.aimShow = { shot: aim, t: 0 }; await sleep(560 / SPEED); if (this.dead) return; this.aimShow = null;
+    this.shoot({ u: aim.u + gauss() * sig, v: aim.v + gauss() * sig * 1.15 });
+  }
+  /* --- a ring meets the board --- */
+  impact(r) {
+    r.skip = {};
+    if (Math.hypot(r.u, r.v) > this.RB + this.rOut * 0.4) { r.state = 'drop'; r.vu = gauss() * 50; r.vv = -150; Sound.thud(0.15); return; } // hit the wall
+    Sound.clack(650, 1300);
+    let h = null, d = 1e9; for (const k of HK_HOOKS) { const e = Math.hypot(r.u - k.u, r.v - k.v); if (e < d) { d = e; h = k; } }
+    const lim = this.rIn - 3;
+    if (d < lim) { // a hook went through the middle: it usually catches, less often the nearer the rubber it is
+      const pc = d < 6 ? 0.92 : lerp(0.92, 0.3, (d - 6) / (lim - 6));
+      if (Math.random() < pc) return this.hang(r, h, (r.u - h.u) / lim);
+      r.skip[h.n] = true; // bounced clear of it
+    } else if (d < this.rOut + 4) r.skip[h.n] = true; // the rubber hit the hook
+    r.state = 'slide'; r.vu = gauss() * 100 + (d < this.rOut + 4 ? Math.sign(r.u - h.u || gauss()) * 150 : 0); r.vv = 60 + gauss() * 80;
+  }
+  hang(r, h, off) { r.hook = h; r.state = 'swing'; r.t = 0; r.a = clamp(off, -1, 1) * 0.6 + gauss() * 0.1; r.ph = r.a; r.pts = h.n; r.done = true; Sound.clack(1000, 1600); }
+  stepRing(r, dt) {
+    if (r.state === 'swing') { r.t += dt; r.ph = r.a * Math.exp(-r.t * 2.4) * Math.cos(r.t * 8); if (r.t > 1.6) { r.state = 'hang'; r.ph = 0; } return; }
+    if (r.state !== 'slide' && r.state !== 'drop') return;
+    r.vv -= (r.state === 'drop' ? 5200 : 3000) * dt; r.vu *= Math.pow(0.5, dt); r.u += r.vu * dt; r.v += r.vv * dt;
+    if (r.state === 'drop') { r.fade = (r.fade || 0) + dt * 2; if (r.fade >= 1) { r.state = 'gone'; if (!r.done) { r.pts = 0; r.done = true; } } return; }
+    for (const h of HK_HOOKS) { // sliding down the face: a hook below can catch it, or knock it aside
+      if (r.skip[h.n]) continue;
+      const du = h.u - r.u, dv = h.v - r.v; if (du * du + dv * dv > (this.rOut + 3) * (this.rOut + 3)) continue;
+      r.skip[h.n] = true;
+      if (dv < 0 && Math.abs(du) < this.rIn * 0.6 && Math.random() < 0.2) return this.hang(r, h, -du / this.rIn);
+      r.vu += (du > 0 ? -1 : du < 0 ? 1 : (Math.random() < 0.5 ? -1 : 1)) * (150 + Math.random() * 170); r.vv = Math.abs(r.vv) * 0.25; Sound.clack(420, 1900);
+    }
+    if (r.v < -this.RB - this.rOut * 0.6 || Math.abs(r.u) > this.RB + this.rOut * 0.6) { r.state = 'drop'; Sound.thud(0.22); }
+  }
+  update(dt) {
+    const f = this.fly;
+    if (f) { f.t += dt / f.dur; if (f.t >= 1) { this.fly = null; const r = { u: f.u, v: f.v, side: this.side, state: 'new' }; this.rings.push(r); this.impact(r); } }
+    for (const r of this.rings) this.stepRing(r, dt);
+    if (this.state === 'moving' && !this.fly && this.rings.every(r => r.done)) { this.state = 'rest'; this.afterRing(); }
+  }
+  afterRing() {
+    const R = this.run(), st = R.steps[R.steps.length - 1], g = this.m.opts.game, bonus = !R.done && R.sixOn && R.steps.length === 6;
+    this.saveBoard(); this.refresh();
+    if (st) {
+      if (st.kind === 'miss') this.ui.flash('Missed', '0 points', true);
+      else if (st.kind === 'win') { Sound.chime(true); this.ui.flash(g === 'clock' ? 'All the way round!' : g === '50' ? `${st.after}!` : 'Spot on!', g === '101' ? 'Exactly 101' : 'That’s the game'); }
+      else if (st.kind === 'over') { Sound.chime(false); this.ui.flash('Over!', `Take ${st.v} off · on ${st.after}`, true); }
+      else if (st.kind === 'wrong') this.ui.flash(`${st.v}, not ${st.before}`, 'Wrong number · turn over', true);
+      else if (st.kind === 'irish') this.ui.flash(`${st.v}, not ${101 - st.before}`, 'Not exact · turn over', true);
+      else if (st.kind === 'next') this.ui.flash(`${st.v} ✓`, `Next: the ${st.after}`);
+      else this.ui.flash(`+${st.v}`, hkCap(hkNow(this.m, st.after)));
+      if (bonus) setTimeout(() => !this.dead && this.ui.flash('All six on!', 'Throw one more ring'), 950 / SPEED);
+    }
+    setTimeout(() => !this.dead && this.next(), (R.done ? 1300 : bonus ? 2000 : 700) / SPEED);
+  }
+}
+
+GAMES.hookey = {
+  id: 'hookey', name: 'Hookey', short: 'Hookey', tag: 'Ring the hooks. Count up. Hit 101 exactly.', icon: ICON.hookey,
+  blurb: 'Six rings at the hook board. Race to 101.', Table: HookeyTable, kind: 'turns',
+  seat: { min: 2, max: 6, label: 'Players or teams' },
+  options: [
+    { id: 'game', label: 'Game', sub: 'All three are on the card', choices: [['101', '101'], ['clock', 'Round the Clock'], ['50', 'Kids · 50']], def: '101' },
+    { id: 'irish', label: 'Irish finish', sub: 'In 101: need 13 or less? Hook that exact number', choices: [['off', 'Off'], ['on', 'On']], def: 'off' },
+    { id: 'first', label: 'Who throws first', sub: 'Or throw a ring each: highest hook starts', choices: [['toss', 'Random'], [0, '@0']], def: 'toss' }
+  ],
+  info: [['target', '1 hookey board', 'centre 1.5 m (5 ft) up'], ['ring', '6 rings each', 'throw from 1.8 m (6 ft)'], ['people', '2+ players', 'or two teams']],
+  init(m) { const n = m.players.length; m.s = { tot: Array(n).fill(m.opts.game === 'clock' ? 1 : 0), cur: m.opts.first === 'toss' ? Math.floor(Math.random() * n) : 0, log: [] }; },
+  unit(m) { const s = m.s; return { who: s.cur, title: `${rname(m, s.cur)}'s turn`, sub: `${hkCap(hkNow(m, s.tot[s.cur]))} · ${HK_RING[s.cur % 2].name} rings` }; },
+  apply(m, res) {
+    const s = m.s, who = s.cur, before = s.tot[who], R = hkRun(m, who, res.rings || []), g = m.opts.game;
+    s.log.push({ who, rings: R.steps.map(x => x.v), before, after: R.tot, end: R.end, over: R.steps.some(x => x.kind === 'over'), where: res.where });
+    s.tot[who] = R.tot;
+    if (R.win) { m.over = true; m.winner = [who]; return { t: g === 'clock' ? `${rname(m, who)} goes all the way round!` : g === '50' ? `${rname(m, who)} makes it to 50!` : `${rname(m, who)} hits 101 exactly!`, s: '' }; }
+    s.cur = (who + 1) % m.players.length;
+    if (g === 'clock') {
+      const k = R.tot - before;
+      return { t: k ? `${rname(m, who)} hooks ${k === 1 ? 'the ' + before : `${before} to ${R.tot - 1}`}` : `No luck for ${rname(m, who)}`, s: `${R.end === 'wrong' ? 'A wrong number ended the turn. ' : ''}Next: the ${R.tot}` };
+    }
+    const gain = R.tot - before, last = R.steps[R.steps.length - 1];
+    return {
+      t: gain > 0 ? `${rname(m, who)} scores ${gain}` : gain < 0 ? `${rname(m, who)} drops ${-gain}` : `${rname(m, who)} scores nothing`,
+      s: `${R.end === 'irish' ? `Needed exactly ${101 - last.before}. ` : R.steps.some(x => x.kind === 'over') ? 'Went over, so that ring came off. ' : ''}${hkCap(hkNow(m, R.tot))}`
+    };
+  },
+  chips(m) {
+    const g = m.opts.game;
+    return m.players.map((p, i) => {
+      const t = m.s.tot[i], on = !m.over && m.s.cur === i;
+      if (g === 'clock') return { name: p.name, v: t > 13 ? '✓' : t, small: '', sub: t > 13 ? 'all round' : 'next hook', on };
+      return { name: p.name, v: t, small: g === '50' ? '/50' : '/101', sub: g === '50' ? `${Math.max(0, 50 - t)} to go` : `needs ${101 - t}`, on };
+    });
+  },
+  board(m) {
+    const g = m.opts.game, clock = g === 'clock', shown = t => clock ? (t > 13 ? '✓' : t) : t;
+    const rows = m.s.log.slice().reverse().map(l => `<div class="tr"><div class="tx"><b>${pname(m, l.who)}${l.end === 'win' ? ' · wins' : l.end === 'wrong' ? ' · wrong number' : l.end === 'irish' ? ' · not exact' : l.over ? ' · went over' : ''}</b><span>${l.rings.length ? l.rings.map(v => v || '–').join(' · ') : 'no rings'}${l.where === 'real' ? ' · real board' : ''}</span></div><div class="v">${clock ? shown(l.after) : (l.after - l.before >= 0 ? '+' : '−') + Math.abs(l.after - l.before)}<small> ${clock ? 'next' : '→ ' + l.after}</small></div></div>`).join('');
+    return `<table class="grid"><tr><th>Player</th><th>${clock ? 'Next hook' : 'Score'}</th><th>Turns</th></tr>${m.players.map((p, i) => `<tr><td class="nm">${pname(m, i)}</td><td class="tot">${shown(m.s.tot[i])}</td><td>${m.s.log.filter(l => l.who === i).length}</td></tr>`).join('')}</table>
+    <div class="tbl" style="margin-top:12px"><div class="th"><span>Turn by turn · latest first</span><span>${clock ? 'Next' : 'Score'}</span></div>${rows || '<div class="tr"><div class="tx"><span>No turns yet</span></div></div>'}</div>
+    <p class="note">${clock ? 'Round the Clock: hook 1 to 13 in order.' : g === '50' ? 'Kids’ game: reach 50 or pass it to win.' : `First to exactly 101.${m.opts.irish === 'on' ? ' Irish finish: within 13, only the exact number counts.' : ' Go over and that ring comes off.'}`}</p>`;
+  },
+  entryInit() { return { rings: [] }; },
+  entryHTML(m, st, u) {
+    const R = hkRun(m, u.who, st.rings), g = m.opts.game, side = u.who % 2, last = R.steps[R.steps.length - 1], n = st.rings.length;
+    const slots = [...Array(R.allowed)].map((_, i) => i < n ? `<button class="hkr ${side ? 'b' : ''} ${st.rings[i] ? '' : 'miss'}" data-tg="e:rm:${i}" aria-label="Ring ${i + 1}: ${st.rings[i] || 'missed'}. Tap to take it out">${st.rings[i] || '–'}</button>` : `<span class="hkr e">${i + 1}</span>`).join('');
+    // laid out like the board, with the two rings of hooks spread a little so every button is easy to hit
+    const at = h => { const d = Math.hypot(h.u, h.v), k = d ? (d < 80 ? 20.5 : 41) / d : 0; return `left:${(50 + h.u * k).toFixed(1)}%;top:${(50 - h.v * k).toFixed(1)}%`; };
+    const pad = `<div class="hkpad ${side ? 'b' : ''}">${HK_HOOKS.map(h => `<button data-tg="e:ring:${h.n}" style="${at(h)}" ${R.done ? 'disabled' : ''} aria-label="A ring on ${h.n}">${h.n}</button>`).join('')}</div>`;
+    let msg;
+    if (!last) msg = `${hkCap(hkNow(m, R.tot))} · ${R.allowed} rings`;
+    else if (last.kind === 'win') msg = g === 'clock' ? 'All the way round! That’s the game' : g === '50' ? `${R.tot}! That’s the game` : 'Exactly 101! That’s the game';
+    else if (last.kind === 'over') msg = `Over! Take ${last.v} off`;
+    else if (last.kind === 'wrong') msg = `Needed the ${last.before}. Turn over`;
+    else if (last.kind === 'irish') msg = `Needed exactly ${101 - last.before}. Turn over`;
+    else if (R.done) msg = 'All rings thrown';
+    else if (R.sixOn && n === 6) msg = 'All six on! Throw one more ring';
+    else if (last.kind === 'miss') msg = `Missed · ${hkNow(m, R.tot)}`;
+    else msg = hkCap(hkNow(m, R.tot));
+    return `<div class="panel lite"><h3>${pname(m, u.who)} throws the ${HK_RING[side].name} rings · ${esc(hkNow(m, m.s.tot[u.who]))}</h3><p class="note" style="margin:0">Tap the hook each ring lands on, one at a time. Bounced off or missed? Tap <b>Missed</b>. Tap a ring above to take it out.</p></div>
+      <div class="hkrow">${slots}</div>${pad}
+      <div class="btns" style="margin-top:4px;justify-content:center"><button class="btn" data-tg="e:miss" ${R.done ? 'disabled' : ''} style="flex:0 1 200px">Missed · 0</button></div>
+      <div class="big" style="margin-top:12px">${g === 'clock' ? (R.tot > 13 ? '✓' : R.tot) : R.tot}<small>${esc(msg)}</small></div>
+      <div class="btns"><button class="btn primary wide" data-tg="e:done">${R.done || !n ? 'Save turn' : `Save turn · ${R.allowed - n} more missed`}</button></div>`;
+  },
+  entryAct(m, st, a, v) {
+    const R = hkRun(m, m.s.cur, st.rings);
+    if ((a === 'ring' || a === 'miss') && !R.done) st.rings.push(a === 'miss' ? 0 : +v);
+    else if (a === 'rm') st.rings.splice(+v, 1);
+    else if (a === 'done') return { done: { rings: st.rings.slice() } };
+  },
+  rules: {
+    pre: ['Before you start', '<b>Pick a colour,</b> red or black. <b>Who starts?</b> One ring each: highest hook goes first. <b>Kids?</b> Hang it 1.27 m up and throw from 1.4 m.'],
+    s1: ['Your turn', [['Stand behind the line.', 'Throw your six rings at the board, one at a time.'], ['Call each ring as it hooks.', 'It scores the number by its hook.'], ['All six on the hooks?', 'Throw one more ring. Nice shooting!'], ['Add the turn to your total.', 'Take the rings down and pass them on.']]],
+    s2: ['Scoring', [[13, 'points', 'The best hook'], [1, 'point', 'The lowest number'], [0, 'points', 'Bounced off or missed']], ['13 + 9 + 5, three missed', '= 27 points'], 'Only a ring left hanging on a hook counts.'],
+    s3: ['Count up to 101', 'Ring by ring, near the end.', ['Ring by ring · near the end', 'Total'], [['On 90, hook a 7', 'Still under 101. Keep throwing.', 97, false], ['On 97, hook a 13', 'Over 101! Take 13 off instead.', 84, false], ['On 97, hook a 4', 'Exactly 101. You win!', 101, true]]],
+    s4: ['Other games', [['Round the Clock.', 'Hook 1 to 13 in order. A wrong number ends your turn.'], ['Kids?', 'Play to 50. Reach it or pass it to win.'], ['Irish finish.', 'Need 13 or less? Your next scoring ring must hook that exact number. Any other ends your turn.']]],
+    post: ['Where it’s from', 'Hookey is what Australians and Kiwis call <b>Rings</b>, an old Irish pub game. All-Ireland championships are still played.'],
+    banner: ['First to exactly <em>101</em> wins!', 'Go over? Take that ring off your score and keep throwing.']
+  },
+  appNotes: ['Pull back to throw: further back goes higher up the board, and sideways aims left or right. Every ring wobbles a little, can bounce off a hook, and sometimes drops onto one lower down.', 'Each ring is scored as it lands, so a ring that takes you over 101 comes off straight away.']
+};
+
+/* =========================================================
    App shell: home, setup, play loop, score entry, overlays
    ========================================================= */
 const CPU_NAMES = ['Hamish', 'Fiona', 'Angus', 'Isla', 'Rab', 'Kirsty'];
@@ -1931,7 +2258,7 @@ function humanName(i) {
   if (i === 0) { try { const f = JSON.parse(localStorage.getItem('pubgames.firstName')); if (f) return f; } catch (e) { } if (window.PubHome) return 'Jeanette'; }
   return `Player ${i + 1}`;
 }
-const ORDER = ['toad', 'sjoel', 'shuffle', 'bank', 'curling', 'shove'];
+const ORDER = ['toad', 'hookey', 'sjoel', 'shuffle', 'bank', 'curling', 'shove'];
 const MODES = {
   app: { n: 'Play in the app', d: 'Slide, throw and shove on the phone. Add the computer if you’re short of players.', ic: 'phone' },
   real: { n: 'Keep score at the real table', d: 'Play the real board. The app keeps the score and the rules.', ic: 'pencil' },
@@ -1982,7 +2309,7 @@ const App = {
       <ol class="steps"><li><span class="L">A</span><span><b>Touch the table</b> where you want to shoot from.</span></li><li><span class="L">B</span><span><b>Pull back</b> like a catapult. Further back means more power.</span></li><li><span class="L">C</span><span><b>Let go</b> to shoot. Every shot wobbles a little, just like the real thing.</span></li></ol>
       <div class="sec"><span class="n">2</span>Three ways to play</div>
       <div class="modes">${['app', 'real', 'hybrid'].map(k => `<div class="mode"><span class="mi">${ICON[MODES[k].ic]}</span><span><b>${MODES[k].n}</b><span>${k === 'hybrid' ? 'Mix the real board and the phone in one match. Great when there’s only one table, or someone fancies a go on the app.' : MODES[k].d}</span></span></div>`).join('')}</div>
-      <div class="banner"><div><div class="t">Six games. <em>One</em> scoreboard.</div><div class="s">Every game has its rules card inside.</div></div><div class="ic">${ICON.crown}</div></div>
+      <div class="banner"><div><div class="t">Seven games. <em>One</em> scoreboard.</div><div class="s">Every game has its rules card inside.</div></div><div class="ic">${ICON.crown}</div></div>
       <p class="foot">Pub games night · table games</p></div>`;
     window.scrollTo(0, 0);
   },
@@ -2201,13 +2528,15 @@ function rulesHTML(G) {
   const s2 = R.s2, s3 = R.s3, s4 = R.s4;
   return `<div class="head"><div><p class="label">Pub games night</p><h2 class="title sm">${G.name}</h2><p class="tagline">${G.tag}</p></div><div class="art">${G.icon}</div></div>
   <div class="info">${G.info.map(([ic, b, s]) => `<div>${ICON[ic]}<p style="margin:0"><b>${b}</b><span>${s}</span></p></div>`).join('')}</div>
+  ${R.pre ? `<div class="cardnote"><span class="cn">${R.pre[0]}</span><p>${R.pre[1]}</p></div>` : ''}
   <div class="sec"><span class="n">1</span>${R.s1[0]}</div><ol class="steps">${R.s1[1].map((s, i) => `<li><span class="L">${L[i]}</span><span><b>${s[0]}</b> ${s[1]}</span></li>`).join('')}</ol>
   <div class="sec"><span class="n">2</span>${s2[0]}</div>${s2[3] ? `<p class="note" style="margin:-4px 0 8px;color:var(--ink)">${s2[3]}</p>` : ''}
   <div class="scorecards" style="grid-template-columns:repeat(${s2[1].length},1fr)">${s2[1].map(c => `<div class="sc"><div class="v">${c[0]}</div><b>${c[1]}</b><span>${c[2]}</span></div>`).join('')}</div>
   <div class="ex"><span>Example: ${s2[2][0]}</span><b>${s2[2][1]}</b></div>
   <div class="sec"><span class="n">3</span>${s3[0]}</div><p class="note" style="margin:-4px 0 8px;color:var(--ink)">${s3[1]}</p>
-  <div class="tbl"><div class="th"><span>${s3[2][0]}</span><span>${s3[2][1]}</span></div>${s3[3].map((r, i) => `<div class="tr ${i === 0 ? 'hi' : ''}"><div class="tx"><b>${r[0]}</b><span>${r[1]}</span></div><div class="v">${r[2]}</div></div>`).join('')}</div>
+  <div class="tbl"><div class="th"><span>${s3[2][0]}</span><span>${s3[2][1]}</span></div>${s3[3].map((r, i) => `<div class="tr ${(r[3] != null ? r[3] : i === 0) ? 'hi' : ''}"><div class="tx"><b>${r[0]}</b><span>${r[1]}</span></div><div class="v">${r[2]}</div></div>`).join('')}</div>
   <div class="sec"><span class="n">4</span>${s4[0]}</div><div class="goods">${s4[1].map((g, i) => `<div class="good ${i === 0 ? 'k' : ''}"><b>${g[0]}</b>${g[1]}</div>`).join('')}</div>
+  ${R.post ? `<div class="cardnote dash"><span class="cn">${R.post[0]}</span><p>${R.post[1]}</p></div>` : ''}
   <div class="banner"><div><div class="t">${R.banner[0]}</div><div class="s">${R.banner[1]}</div></div><div class="ic">${G.icon}</div></div>
   <div class="panel lite" style="margin-top:14px"><h3>In the app</h3><p class="note" style="margin:0;color:var(--ink)">${G.appNotes.join(' ')}</p></div>`;
 }
@@ -2226,7 +2555,7 @@ if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded
 'use strict';
 /* ============ Basics ============ */
 const G = {};
-const ORDER = { dice: ['zanzibar', 'scc', 'farkle', 'midnight', 'pigs'], cards: ['brag', 'cuckoo', 'skat'], dominoes: ['t42'] };
+const ORDER = { dice: ['zanzibar', 'scc', 'farkle', 'midnight', 'pigs', 'stb'], cards: ['brag', 'cuckoo', 'skat'], dominoes: ['t42'] };
 const PLUM = '#4e1f4d', ORANGE = '#dd7f27', SAND = '#f8dca8', PIG = '#f6b8c4', PIG2 = '#e98fa3';
 
 const rnd = n => { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; };
@@ -2369,6 +2698,7 @@ function rulesHTML(g) {
     <div class="bar"><span style="flex:1"></span><button class="iconbtn" data-act="close" aria-label="Close rules">Close ✕</button></div>
     ${headHTML(g.title || g.name, g.tagline, g.art(), g.small)}
     ${infoHTML(g.info)}
+    ${r.pre ? `<div class="cardnote"><span class="cn">${r.pre[0]}</span><p>${r.pre[1]}</p></div>` : ''}
     ${sec(1, r.s1 || 'Play a turn')}
     <ol class="steps">${r.steps.map((s, i) => `<li><span class="L">${'ABCDE'[i]}</span><span><b>${s[0]}</b> ${s[1] || ''}</span></li>`).join('')}</ol>
     ${sec(2, r.s2)}<div class="panel">${r.score}</div>
@@ -2376,6 +2706,7 @@ function rulesHTML(g) {
     ${sec(4, r.s4)}
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px"><span class="vpill">${r.pills[0]}</span><svg width="34" height="14" viewBox="0 0 34 14"><path d="M2 7h26M23 2l6 5-6 5" fill="none" stroke="${ORANGE}" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="7" r="4" fill="#fff" stroke="${ORANGE}" stroke-width="2.4"/></svg><span class="vpill o">${r.pills[1]}</span></div>
     ${r.notes.map(n => `<p style="margin:0 0 9px"><b style="color:var(--plum)">${n[0]}</b> ${n[1]}</p>`).join('')}
+    ${r.post ? `<div class="cardnote dash"><span class="cn">${r.post[0]}</span><p>${r.post[1]}</p></div>` : ''}
     ${banner(r.foot, r.footSub, r.footIc || '')}
   </div>`;
 }
@@ -2407,11 +2738,11 @@ function homeView() {
   const tile = (id, k, arr) => { const g = G[id], wide = k === arr.length - 1 && arr.length % 2 === 1; return `<button class="tile ${wide ? 'wide' : ''}" data-act="open" data-arg="${id}"><span class="ic">${g.icon()}</span><span class="tx"><b>${g.name}</b><small>${g.tagline}</small><span class="pp">${I.people}${g.players}</span></span></button>`; };
   return `<div class="sheet">
     ${headHTML('Pub Games', 'Roll, deal, slide and throw. The games from the rules cards, in one place.', homeArt())}
-    ${infoHTML([['dice', '9 dice, card &amp; tile games', 'Zanzibar to Texas 42'], ['<svg viewBox="0 0 24 24" fill="none" stroke="#4e1f4d" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M8 3h8l4 18H4z" fill="#f8dca8"/><path d="M8.6 8h6.8"/><ellipse cx="12" cy="15.5" rx="3.2" ry="1.6" fill="#dd7f27"/></svg>', '6 table games', 'Toad to Shove Ha’penny'], ['people', 'Play your way', 'friends, computer or the real table']])}
+    ${infoHTML([['dice', '10 dice, card &amp; tile games', 'Zanzibar to Texas 42'], ['<svg viewBox="0 0 24 24" fill="none" stroke="#4e1f4d" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M8 3h8l4 18H4z" fill="#f8dca8"/><path d="M8.6 8h6.8"/><ellipse cx="12" cy="15.5" rx="3.2" ry="1.6" fill="#dd7f27"/></svg>', '7 table games', 'Toad to Shove Ha’penny'], ['people', 'Play your way', 'friends, computer or the real table']])}
     ${sec(1, 'Dice games')}<p class="note" style="margin:-4px 0 10px">Roll the app’s dice, roll your own and tap them in, or a bit of both.</p><div class="tiles">${ORDER.dice.map(tile).join('')}</div>
     ${sec(2, 'Card games')}<div class="tiles">${ORDER.cards.map(tile).join('')}</div>
     ${sec(3, 'Dominoes')}<div class="tiles">${ORDER.dominoes.map(tile).join('')}</div>
-    ${window.TableGames ? `${sec(4, 'Table games')}<p class="note" style="margin:-4px 0 10px">Play them on the phone, keep score at the real table, or a bit of both.</p><div class="tiles">${TableGames.list().map(t => `<button class="tile" data-act="table" data-arg="${t.id}">${TableGames.live(t.id) ? '<span class="tgresume">Game on</span>' : ''}<span class="ic">${t.icon}</span><span class="tx"><b>${t.name}</b><small>${t.tag}</small><span class="pp">${I.people}${t.players}</span></span></button>`).join('')}</div>` : ''}
+    ${window.TableGames ? `${sec(4, 'Table games')}<p class="note" style="margin:-4px 0 10px">Play them on the phone, keep score at the real table, or a bit of both.</p><div class="tiles">${TableGames.list().map((t, k, arr) => `<button class="tile ${k === arr.length - 1 && arr.length % 2 ? 'wide' : ''}" data-act="table" data-arg="${t.id}">${TableGames.live(t.id) ? '<span class="tgresume">Game on</span>' : ''}<span class="ic">${t.icon}</span><span class="tx"><b>${t.name}</b><small>${t.tag}</small><span class="pp">${I.people}${t.players}</span></span></button>`).join('')}</div>` : ''}
     ${banner('Pick a game and play to <em>win!</em>', 'One phone is enough. Pass it round, or let the computer fill the empty seats.', `<svg viewBox="0 0 48 48">${coinStack()}</svg>`)}
   </div>`;
 }
@@ -3356,6 +3687,267 @@ const coinV = n => `${coinIc}${n}`;
     }
   };
   G.pigs._score = score;
+})();
+
+/* ---------------- Shut the Box ---------------- */
+(() => {
+  const NUMS = [1, 2, 3, 4, 5, 6, 7, 8, 9], HIGH = (1 << 6) | (1 << 7) | (1 << 8); // tiles 7, 8 and 9
+  const bit = n => 1 << (n - 1);
+  const bitsOf = mask => NUMS.filter(n => mask & bit(n));
+  const SUM = new Int16Array(512); for (let m = 1; m < 512; m++) SUM[m] = sum(bitsOf(m));
+  const maskOf = st => st.tiles.reduce((m, t) => t.up ? m | bit(t.n) : m, 0);
+  const selMask = st => st.sel.reduce((m, n) => m | bit(n), 0);
+  const value = (mask, dig) => dig ? (mask ? +bitsOf(mask).join('') : 0) : SUM[mask];
+  const oneDieOK = mask => !(mask & HIGH);
+  const total = st => sum(st.dice.map(d => d.v));
+  const canMake = (mask, t) => { for (let s = mask; s; s = (s - 1) & mask) if (SUM[s] === t) return true; return false; };
+  // tiles that can still help make the total, given the ones already picked
+  const reachable = (mask, sel, t) => { let u = 0; for (let s = mask; s; s = (s - 1) & mask) if (SUM[s] === t && (s & sel) === sel) u |= s; return u; };
+
+  // Best play for every position: the expected score left at the end, playing to keep it as low as possible.
+  // Shutting tiles only ever removes bits, so working up from the smallest mask means every position after a move is already known.
+  const SOLVED = {};
+  function solver(dig) {
+    if (SOLVED[dig]) return SOLVED[dig];
+    const E = new Float64Array(512), TWO = new Float64Array(512), ONE = new Float64Array(512);
+    const after = (m, t) => { let b = Infinity; for (let s = m; s; s = (s - 1) & m) if (SUM[s] === t && E[m ^ s] < b) b = E[m ^ s]; return b === Infinity ? value(m, dig) : b; };
+    for (let m = 1; m < 512; m++) {
+      let two = 0; for (let t = 2; t <= 12; t++) two += (6 - Math.abs(7 - t)) / 36 * after(m, t);
+      let one = Infinity; if (oneDieOK(m)) { one = 0; for (let t = 1; t <= 6; t++) one += after(m, t) / 6; }
+      TWO[m] = two; ONE[m] = one; E[m] = Math.min(two, one);
+    }
+    return (SOLVED[dig] = { E, TWO, ONE });
+  }
+  function bestMove(mask, t, dig) {
+    const { E } = solver(dig); let best = 0, bv = Infinity;
+    for (let s = mask; s; s = (s - 1) & mask) if (SUM[s] === t && (E[mask ^ s] < bv || (E[mask ^ s] === bv && SUM[s] && bitsOf(s).length < bitsOf(best).length))) { bv = E[mask ^ s]; best = s; }
+    return best;
+  }
+
+  /* little pictures, drawn like the card */
+  const tilesMini = (up, w = 70) => `<svg width="${w}" height="${Math.round(w * 19 / 70)}" viewBox="0 0 106 28" role="img" aria-label="${up.length ? up.join(', ') + ' up' : 'All shut'}" style="flex:none">${NUMS.map((n, i) => { const x = (1 + i * 11.75).toFixed(2); return up.includes(n) ? `<rect x="${x}" y="1" width="10" height="26" rx="2" fill="#fff" stroke="${PLUM}" stroke-width="1.4"/>` : `<rect x="${x}" y="21" width="10" height="6" rx="1.5" fill="${ORANGE}" stroke="${PLUM}" stroke-width="1.4"/>`; }).join('')}</svg>`;
+  const numBoxes = ns => `<svg width="${ns.length * 27}" height="24" viewBox="0 0 ${ns.length * 27} 24" style="flex:none">${ns.map((n, i) => `<rect x="${i * 27 + 0.75}" y="0.75" width="22.5" height="22.5" rx="5" fill="#fff" stroke="${PLUM}" stroke-width="1.5"/><text x="${i * 27 + 12}" y="16.5" text-anchor="middle" font-family="Lexend, Arial, sans-serif" font-size="12" font-weight="700" fill="${PLUM}">${n}</text>`).join('')}</svg>`;
+  const boxArt = () => {
+    const up = [1, 2, 3, 5, 6, 9];
+    return `<svg viewBox="0 0 240 170"><rect x="14" y="50" width="220" height="112" rx="14" fill="#3b3b3b"/><rect x="8" y="43" width="220" height="112" rx="14" fill="${PLUM}" stroke="#3b3b3b" stroke-width="3.5"/>
+      <g stroke="#3b3b3b" stroke-width="1.5">${NUMS.map((n, i) => up.includes(n) ? `<rect x="${20 + i * 22}" y="54" width="20" height="34" rx="3" fill="#fff"/>` : `<rect x="${20 + i * 22}" y="80" width="20" height="8" rx="2" fill="#e8d1e6"/>`).join('')}</g>
+      <g font-family="Lexend, Arial, sans-serif" font-size="15" font-weight="700" fill="${PLUM}" text-anchor="middle">${NUMS.filter(n => up.includes(n)).map(n => `<text x="${30 + (n - 1) * 22}" y="77">${n}</text>`).join('')}</g>
+      <rect x="20" y="96" width="196" height="50" rx="8" fill="${SAND}" stroke="#3b3b3b" stroke-width="2"/>
+      <g transform="translate(70 99) rotate(-10 25 25) scale(.46)">${dieInner(3, true)}</g><g transform="translate(126 100) rotate(8 25 25) scale(.46)">${dieInner(4, false)}</g></svg>`;
+  };
+  const boxIcon = () => `<svg viewBox="0 0 64 48" height="44"><rect x="5" y="12" width="56" height="32" rx="6" fill="#3b3b3b"/><rect x="2" y="9" width="56" height="32" rx="6" fill="${PLUM}" stroke="#3b3b3b" stroke-width="2.2"/>
+    <g stroke="#3b3b3b" stroke-width="1.3">${[0, 1, 2, 3, 4].map(i => [0, 3].includes(i) ? `<rect x="${7 + i * 9.6}" y="26" width="8" height="4" rx="1" fill="${ORANGE}"/>` : `<rect x="${7 + i * 9.6}" y="14" width="8" height="16" rx="1.5" fill="#fff"/>`).join('')}</g>
+    <rect x="7" y="32" width="46" height="5" rx="2" fill="${SAND}"/></svg>`;
+  const infoIc = `<svg viewBox="0 0 28 28" fill="none" stroke="${PLUM}" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="22" height="18" rx="3"/><path d="M7 9v5M10.5 9v5M14 12.5v1.5M17.5 9v5M21 9v5"/><path d="M3 17.5h22"/></svg>`;
+
+  /* ---------- play ---------- */
+  const actor = st => st.phase === 'turn' ? st.order[st.ti] : -1;
+  function round(st, only) { st.order = only || rotation(st, st.starter); st.ti = 0; st.scores = {}; st.finals = {}; st.phase = 'turn'; st.res = null; st.tiebreak = !!only; turn(st); }
+  function turn(st) { st.tiles = NUMS.map(n => ({ n, up: true })); st.dice = []; st.rolled = false; st.sel = []; st.stuck = false; st.rin = []; st.rnd = 2; st.rbox = false; st.rolls = 0; st.shut = 0; }
+  const nDice = st => oneDieOK(maskOf(st)) ? st.rnd : 2;
+  function afterRoll(st) { st.rolled = true; st.rolls++; st.sel = []; st.stuck = !canMake(maskOf(st), total(st)); }
+  function roll(st, n) { st.dice = Array.from({ length: n }, () => ({ v: d6(), spin: true })); afterRoll(st); }
+  function shut(st) {
+    st.tiles.forEach(t => { if (st.sel.includes(t.n)) { t.up = false; t.flip = true; } });
+    st.shut += st.sel.length; st.sel = []; st.rolled = false; st.rin = [];
+    if (!maskOf(st)) finish(st);
+  }
+  function finish(st, onBox) {
+    const a = actor(st), mask = maskOf(st), s = value(mask, st.digital), left = bitsOf(mask), solo = st.players.length === 1;
+    st.scores[a] = s; st.finals[a] = left;
+    if (!mask) {
+      log(st, `${nm(st, a)} shuts the box!${solo ? '' : ' Wins the round on the spot.'}`);
+      st.phase = 'result'; st.res = { winner: a, low: 0, shut: true };
+      if (solo) return soloOver(st, s);
+      return won(st, a);
+    }
+    log(st, onBox ? `${nm(st, a)} finishes on the real box with ${left.join(', ')} up: ${fmt(s)}.` : `${nm(st, a)} can’t make ${total(st)}. ${left.join(', ')} left up: ${fmt(s)}.`);
+    if (solo) { st.phase = 'result'; st.res = { winner: a, low: s, solo: true }; return soloOver(st, s); }
+    st.ti++;
+    if (st.ti < st.order.length) return turn(st);
+    const low = Math.min(...st.order.map(i => st.scores[i])), tied = st.order.filter(i => st.scores[i] === low);
+    st.phase = 'result';
+    if (tied.length > 1) { st.res = { tie: tied, low }; log(st, `Tie on ${fmt(low)}! ${listNames(st, tied)} go again.`); return; }
+    st.res = { winner: tied[0], low }; won(st, tied[0]);
+  }
+  const listNames = (st, ids) => { const n = ids.map(i => nm(st, i)); return n.length < 2 ? n.join('') : n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1]; };
+  function won(st, w) {
+    st.players[w].wins++; st.starter = (st.starter + 1) % st.players.length;
+    if (!st.res.shut) log(st, `${nm(st, w)} takes the round with ${fmt(st.res.low)}.`);
+    if (st.players[w].wins >= st.target) st.over = { t: winsText(st.players[w].name), s: st.target > 1 ? `First to ${plural(st.target, 'round')}. Lowest score wins, and shutting the box wins on the spot.` : 'Lowest score wins. Playing for a pot? The winner takes the lot.', ic: boxIcon().replace('height="44"', 'width="48"') };
+  }
+  function soloOver(st, s) {
+    const key = 'stb.best.' + (st.digital ? 'digital' : 'add'), prev = store.get(key, null), better = prev == null || s < prev;
+    if (better) store.set(key, s);
+    st.best = better ? s : prev;
+    st.over = { t: s === 0 ? 'Box <em>shut!</em>' : `You scored <em>${fmt(s)}</em>`, s: better ? (prev == null ? 'Your best on this phone so far. Can you beat it?' : `A new best on this phone! Your last best was ${fmt(prev)}.`) : `Your best on this phone: ${fmt(prev)}.`, ic: boxIcon().replace('height="44"', 'width="48"') };
+  }
+  function nextRound(st) { if (st.res && st.res.tie) round(st, st.res.tie); else round(st); }
+  function whoStarts(st) {
+    let group = st.players.map((_, i) => i), notes = [], guard = 0;
+    while (group.length > 1 && guard++ < 20) {
+      const r = group.map(i => ({ i, v: d6() })), top = Math.max(...r.map(x => x.v));
+      notes.push(r.map(x => `${esc(st.players[x.i].name)} ${mini(String(x.v))}`).join(' · '));
+      group = r.filter(x => x.v === top).map(x => x.i);
+    }
+    st.starter = group[0];
+    if (st.players.length > 1) log(st, `Who starts? ${notes.join(' · then ')}. ${nm(st, st.starter)} starts${st.players.some(p => p.real) ? ' (rolled by the app)' : ''}.`);
+  }
+  function ai(st) {
+    const mask = maskOf(st), dig = st.digital;
+    if (!st.rolled) { const S = solver(dig); return roll(st, oneDieOK(mask) && S.ONE[mask] < S.TWO[mask] ? 1 : 2); }
+    if (st.stuck) return finish(st);
+    const t = total(st);
+    if (sum(st.sel) !== t) { st.sel = bitsOf(bestMove(mask, t, dig)); return; }
+    shut(st);
+  }
+
+  /* ---------- the box on screen ---------- */
+  function tilesHTML(st, act) {
+    const mask = maskOf(st), live = act === 'tile' && st.rolled && !st.stuck, t = live ? total(st) : 0;
+    const ok = live ? reachable(mask, selMask(st), t) : 0;
+    return `<div class="stb ${act === 'rflip' ? 'flip' : ''}"><div class="stb-box" role="group" aria-label="Tiles">${st.tiles.map(x => {
+      const picked = st.sel.includes(x.n), can = act === 'rflip' || (live && x.up && (picked || (ok & bit(x.n))));
+      const cls = ['stbt', x.up ? 'up' : 'down', picked ? 'sel' : '', x.flip ? 'flipping' : '', live && x.up && !can ? 'dim' : ''].join(' ');
+      return `<button class="${cls}" ${can ? `data-act="${act}" data-arg="${x.n}"` : 'disabled'} aria-label="Tile ${x.n}${x.up ? '' : ', shut'}${picked ? ', picked' : ''}"><span>${x.n}</span></button>`;
+    }).join('')}</div></div>`;
+  }
+  const shutLabel = (st, t) => {
+    const s = sum(st.sel);
+    if (!st.sel.length) return 'Pick tiles to shut';
+    if (s < t) return `Pick ${t - s} more`;
+    const left = maskOf(st) & ~selMask(st);
+    return left ? `Shut ${listAnd([...st.sel].sort((x, y) => y - x))}` : 'Shut the box!';
+  };
+  const listAnd = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+
+  G.stb = {
+    id: 'stb', kind: 'dice', name: 'Shut the Box', tagline: 'Roll two dice. Shut the tiles. Leave the least.', players: '1–8 players', min: 1, max: 8, defN: 2,
+    realHow: 'roll your own dice at the table and tap in each roll, then shut the tiles in the app. Playing on a real box? Tap in what’s left at the end instead.',
+    art: boxArt, icon: boxIcon,
+    info: [[infoIc, '1 box', 'with tiles 1 to 9'], ['dice', '2 dice', 'standard six-sided'], ['people', '2+ players', 'or play solo']],
+    note: 'Playing on your own? Remove the other players for a solo game. Your best score is kept on this phone.',
+    options: [
+      { key: 'target', label: 'Play to', help: 'Round wins to take the match. Ties go again.', def: 3, choices: [[1, '1 round'], [3, '3 wins'], [5, '5 wins']] },
+      { key: 'score', label: 'Scoring', help: 'The twist from the card: read what’s left as one number, so 2, 5 and 9 scores 259.', def: 'add', choices: [['add', 'Add up'], ['digital', 'Digital']] }
+    ],
+    create(players, o) {
+      const st = { players: players.map(p => ({ ...p, wins: 0 })), starter: 0, target: o.target, digital: o.score === 'digital', log: [] };
+      whoStarts(st); round(st); return st;
+    },
+    actor,
+    next(st) {
+      if (st.phase === 'turn') {
+        const a = actor(st); if (!st.players[a].cpu) return null;
+        const ms = !st.rolled ? (st.rolls ? 700 : 650) : st.stuck ? 1500 : sum(st.sel) !== total(st) ? 950 : 650;
+        return { ms, run: () => ai(st) };
+      }
+      if (st.phase === 'result' && !st.over && !anyHuman(st)) return { ms: 2600, run: () => nextRound(st) };
+      return null;
+    },
+    act(st, a, arg) {
+      if (a === 'next' && st.phase === 'result' && !st.over) return nextRound(st);
+      const p = actor(st); if (p < 0 || st.players[p].cpu) return;
+      const P = st.players[p], mask = maskOf(st);
+      if (P.real && !st.rolled) {
+        if (a === 'rbox') { st.rbox = !st.rbox; return; }
+        if (st.rbox) {
+          if (a === 'rflip') { const t = st.tiles[+arg - 1]; if (t) t.up = !t.up; }
+          else if (a === 'rboxdone') finish(st, true);
+          return;
+        }
+        if (a === 'rnd' && oneDieOK(mask)) { st.rnd = +arg === 1 ? 1 : 2; st.rin = st.rin.slice(0, st.rnd); return; }
+        if (rPadAct(st, a, arg, nDice(st))) return;
+        if (a === 'rdone' && st.rin.length === nDice(st)) { st.dice = st.rin.map(v => ({ v })); st.rin = []; afterRoll(st); }
+        return;
+      }
+      if (a === 'roll' && !st.rolled && !P.real) roll(st, +arg === 1 && oneDieOK(mask) ? 1 : 2);
+      else if (a === 'tile' && st.rolled && !st.stuck) {
+        const n = +arg, i = st.sel.indexOf(n);
+        if (i >= 0) st.sel.splice(i, 1);
+        else if (reachable(mask, selMask(st), total(st)) & bit(n)) st.sel.push(n);
+      }
+      else if (a === 'auto' && st.rolled && !st.stuck) st.sel = bitsOf(bestMove(mask, total(st), st.digital));
+      else if (a === 'shut' && st.rolled && !st.stuck && sum(st.sel) === total(st)) shut(st);
+      else if (a === 'end' && st.rolled && st.stuck) finish(st);
+    },
+    view(st) {
+      const a = actor(st), hum = humanTurn(st, a), solo = st.players.length === 1;
+      let h = solo
+        ? chipsHTML(st, p => ({ v: st.best != null ? fmt(st.best) : (store.get('stb.best.' + (st.digital ? 'digital' : 'add'), null) ?? '–'), sub: 'best on this phone', on: st.phase === 'turn' }))
+        : chipsHTML(st, (p, i) => ({ v: `${p.wins}<small> / ${st.target}</small>`, sub: i in st.scores ? `scored ${fmt(st.scores[i])}` : 'rounds won', on: i === a, out: st.tiebreak && !st.order.includes(i), tag: st.phase === 'turn' && i === st.order[0] && !st.tiebreak && st.ti === 0 ? 'First' : '' }));
+      h += `<div class="board">`;
+      if (st.phase === 'turn') {
+        const P = st.players[a], mask = maskOf(st), real = realTurn(st, a), t = st.rolled ? total(st) : 0, one = oneDieOK(mask);
+        const left = value(mask, st.digital);
+        let sub;
+        if (real && st.rbox) sub = 'Tap the tiles to match your box: up or shut.';
+        else if (!st.rolled) sub = st.rolls === 0 ? (st.tiebreak ? 'Tie-break! All nine tiles up.' : 'All nine tiles up. Roll both dice.') : `${plural(st.shut, 'tile')} shut. ${one ? '7, 8 and 9 are down, so one die is allowed.' : 'Roll again.'}`;
+        else if (st.stuck) sub = `Rolled ${t}. No tiles make ${t}, so the turn’s over.`;
+        else sub = `Rolled ${t}. Shut tiles that add up to ${t}.`;
+        h += `<div class="status">${esc(P.name)}’s turn<small>${sub}</small></div>${real ? rTag() : ''}`;
+        h += tilesHTML(st, real && st.rbox ? 'rflip' : hum ? 'tile' : '');
+        if (real && !st.rolled && hum) {
+          if (st.rbox) {
+            h += `<div class="verdict"><span class="vpill ${mask ? 'or' : ''}">${mask ? `${fmt(left)} left up` : 'Box shut!'}</span></div>`;
+            h += `<div class="btns">${btn(mask ? `That’s what’s left · ${fmt(left)}` : 'I shut the box!', 'rboxdone', '', 'primary')}</div><div class="btns">${btn('Back to tapping in rolls', 'rbox', '', 'small')}</div>`;
+          } else {
+            const n = nDice(st);
+            if (one) h += `<div style="display:flex;justify-content:center;margin-top:8px"><div class="seg" role="group" aria-label="How many dice">${[[2, 'Two dice'], [1, 'One die']].map(([k, l]) => `<button class="${n === k ? 'on' : ''}" data-act="rnd" data-arg="${k}">${l}</button>`).join('')}</div></div>`;
+            h += rSlots(st.rin, n) + rPad(st.rin, n, n === 1 ? 'Tap in your die' : 'Tap in both dice');
+            h += `<div class="btns">${btn(rMore(n - st.rin.length, `That’s my roll · ${sum(st.rin)}`), 'rdone', '', 'primary', st.rin.length < n)}</div>`;
+            h += `<div class="btns">${btn('On a real box? Tap in what’s left', 'rbox', '', 'small')}</div>`;
+          }
+        } else {
+          const dice = st.dice.length ? st.dice : blankDice(2);
+          h += `<div class="dice">${dice.map((d, i) => dieBtn(d, i, { dim: !st.rolled })).join('')}</div>`;
+          if (st.rolled) {
+            const s = sum(st.sel);
+            h += `<div class="verdict"><span class="vpill">Rolled ${t}</span>${st.stuck ? `<span class="vpill or shake">Can’t make ${t}</span>` : st.sel.length ? `<span class="vpill ${s === t ? 'or' : 'o'}">${s === t ? `${[...st.sel].sort((x, y) => y - x).join(' + ')} = ${t}` : `Picked ${s} of ${t}`}</span>` : ''}</div>`;
+          }
+          if (hum) {
+            if (!st.rolled) h += `<div class="btns">${btn('Roll two dice', 'roll', '2', 'primary')}${one ? btn('Roll one die', 'roll', '1', '') : ''}</div>`;
+            else if (st.stuck) {
+              const last = solo || st.ti === st.order.length - 1;
+              h += `<div class="btns">${btn(last ? `Score ${fmt(left)} · ${solo ? 'see how you did' : 'see who wins'}` : `Score ${fmt(left)} · pass the box`, 'end', '', 'primary')}</div>`;
+            } else {
+              h += `<div class="btns">${btn(shutLabel(st, t), 'shut', '', 'primary', sum(st.sel) !== t)}</div>`;
+              h += `<div class="hint">Tap the tiles to shut. <button class="btn small ghost" data-act="auto" style="text-decoration:underline;min-height:28px;padding:2px 6px">Pick the best for me</button></div>`;
+            }
+          }
+        }
+        if (!st.rbox) h += `<div class="hint">${st.digital ? `Left up now reads <b>${fmt(left)}</b>` : `Left up now: <b>${left}</b>`}</div>`;
+      } else {
+        const r = st.res;
+        if (r.solo || (solo && r.shut)) h += `<div class="status pop">${r.shut ? 'Box shut!' : `${fmt(r.low)} points`}<small>${r.shut ? 'Every tile down. That’s the best there is.' : `Left up: ${st.finals[r.winner].join(', ')}.`}</small></div>`;
+        else h += `<div class="status pop">${r.tie ? `Tie on ${fmt(r.low)}` : r.shut ? `${esc(st.players[r.winner].name)} shuts the box!` : `${esc(st.players[r.winner].name)} takes the round`}<small>${r.tie ? `${r.tie.map(i => esc(st.players[i].name)).join(' and ')} go again.` : r.shut ? 'A win on the spot.' : `Lowest score: ${fmt(r.low)}.`}</small></div>`;
+        if (!st.over && anyHuman(st)) h += `<div class="btns">${btn(r.tie ? 'Play the tie-break' : 'Next round', 'next', '', 'primary')}</div>`;
+      }
+      h += `</div>`;
+      const done = Object.keys(st.scores).map(Number).sort((x, y) => st.scores[x] - st.scores[y]);
+      if (done.length && !solo) {
+        h += sec(3, st.tiebreak ? 'Tie-break scores' : 'Scores this round') + tableHTML(['Tiles left up · lowest at the top', st.digital ? 'Reads' : 'Score'], done.map(i => ({
+          ic: tilesMini(st.finals[i], 64), t: esc(st.players[i].name), s: st.finals[i].length ? st.finals[i].join(', ') + ' up' : 'Shut the box!', v: fmt(st.scores[i]),
+          hi: st.phase === 'result' && st.res && !st.res.tie && st.res.winner === i
+        })));
+      }
+      return h;
+    },
+    rules: {
+      pre: ['Before you start', '<b>All nine tiles up.</b> <b>Roll a die each:</b> highest starts. Play passes left.'],
+      s1: 'Your turn',
+      steps: [['Roll both dice', 'and add them up.'], ['Shut tiles that make that total.', 'Roll 8? Shut the 8, or 7 and 1, or 5, 2 and 1.'], ['Keep rolling', 'until you roll a total you can’t make. That ends your turn.'], ['Score the tiles still up,', 'then flip them all back and pass the box left.']],
+      s2: 'Scoring',
+      score: `<div style="font-size:13px;margin-bottom:4px">Add up the tiles left up. Low is good.</div>` + scoreRow(tilesMini([]), '0', 'Shut the box! <span style="font-weight:400">you win outright</span>') + scoreRow(tilesMini([2, 5, 9]), '1–44', 'points <span style="font-weight:400">add up what’s left</span>') + scoreRow(tilesMini(NUMS), '45', 'points <span style="font-weight:400">nothing shut at all</span>') + exampleHTML(numBoxes([2, 5, 9]), '2 + 5 + 9 left up', '= 16 points'),
+      s3: 'Which tiles?', head: ['Your roll · what to do', 'Shut'],
+      rows: [{ ic: mini('34'), t: 'Roll 7 · all tiles up', s: 'Big tiles first. Shut the 7.', v: '7' }, { ic: mini('56'), t: 'Roll 11 · 2, 3 and 6 up', s: '2 + 3 + 6 = 11. Shut all three.', v: '2 3 6' }, { ic: mini('46'), t: 'Roll 10 · only 1 and 5 up', s: 'Can’t make 10. Turn over: score 6.', v: '<span style="color:var(--muted)">none</span>' }, { ic: mini('3'), t: 'One die · only 1 and 2 up', s: 'Roll a 3: 1 + 2 = 3. Box shut!', v: '1 2', hi: 1 }],
+      s4: 'Good to know', pills: ['7 · 8 · 9 shut', 'One die'],
+      notes: [['One die', 'is allowed once 7, 8 and 9 are all shut.'], ['Lowest score wins', 'when everyone has had a go.'], ['Shut the box?', 'You win on the spot.'], ['Tie?', 'The tied players go again.']],
+      post: ['Try a twist', 'Read what’s left up as one number: 2, 5 and 9 scores 259.'],
+      foot: 'Lowest score <em>wins!</em>', footSub: 'Playing for a pot? The winner takes the lot.', footIc: `<svg viewBox="0 0 64 52" width="52"><rect x="6" y="8" width="15" height="34" rx="3" fill="${SAND}" stroke="#fff" stroke-width="2"/><rect x="24.5" y="8" width="15" height="34" rx="3" fill="#f2a91f" stroke="#fff" stroke-width="2"/><rect x="43" y="34" width="15" height="8" rx="2" fill="${ORANGE}" stroke="#fff" stroke-width="2"/><path d="M4 47h56" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>`
+    }
+  };
+  G.stb._t = { solver, bestMove, canMake, reachable, value, maskOf, SUM };
 })();
 
 /* ================= Card games ================= */

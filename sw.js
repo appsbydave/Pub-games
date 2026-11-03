@@ -2,9 +2,11 @@
 //
 // How updates reach phones: the app always opens from the saved copy (instant, and
 // works with no signal). Whenever there is signal, it quietly checks for a newer copy
-// in the background and saves it, so a change you push shows up the next time the
-// app is opened. Bump VERSION only if you want to wipe the saved copy and start clean.
-const VERSION = 'pubgames-v1';
+// in the background and saves it. If the game page has changed, the open app is told,
+// and it offers a "Reload" bar so the new version can be used straight away.
+// Bump VERSION to make every phone fetch a fresh copy of all the files.
+const VERSION = 'pubgames-v2';
+const UPDATED = '__updated'; // a note in the saved files: when a new game page was last saved
 const FILES = [
   './',
   'index.html',
@@ -51,19 +53,29 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== location.origin) return;
 
   // Opening the app (any page address in scope) always gets the saved app page.
-  const isPage = req.mode === 'navigate';
-  const key = isPage ? new URL('./', self.registration.scope).href : req;
+  // The app also asks for the page itself now and then, to check for updates.
+  const home = new URL('./', self.registration.scope).href;
+  const isPage = req.mode === 'navigate' || url.href.split(/[?#]/)[0] === home || url.pathname.endsWith('/index.html');
+  const key = isPage ? home : req;
 
   event.respondWith((async () => {
     const cache = await caches.open(VERSION);
     const saved = (await cache.match(key, { ignoreSearch: true })) ||
                   (isPage ? await cache.match('index.html') : undefined);
+    const before = isPage && saved ? saved.clone() : null;
 
     // Check for a newer copy in the background (or wait for it if nothing is saved yet).
     const fresh = fetch(isPage ? key : req, { cache: 'no-cache' })
       .then(clean)
-      .then((res) => {
-        if (res && res.ok && res.type !== 'opaque') cache.put(key, res.clone());
+      .then(async (res) => {
+        if (!res || !res.ok || res.type === 'opaque') return res;
+        const changed = before ? (await before.text()) !== (await res.clone().text()) : false;
+        await cache.put(key, res.clone());
+        if (changed) {
+          await cache.put(new URL(UPDATED, self.registration.scope).href, new Response(String(Date.now())));
+          const open = await self.clients.matchAll({ type: 'window' });
+          open.forEach((c) => c.postMessage({ type: 'pubgames-updated' }));
+        }
         return res;
       })
       .catch(() => undefined);

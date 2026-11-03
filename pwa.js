@@ -39,6 +39,7 @@
     const firstTime = !navigator.serviceWorker.controller;
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js').then((reg) => {
+        watchForUpdates(reg);
         if (!firstTime) return;
         const w = reg.installing || reg.waiting;
         if (!w) return;
@@ -46,6 +47,44 @@
           if (w.state === 'activated') toast('✓ Saved — works offline now');
         });
       }).catch(() => { /* offline saving not available here; the app still works online */ });
+    });
+  }
+
+  // ---- A newer version has been saved: offer to reload ----
+  // The service worker checks for a new game page in the background. When one has been saved
+  // after this page was opened, show a bar so it can be used straight away instead of next time.
+  function watchForUpdates(reg) {
+    const opened = performance.timeOrigin || Date.now();
+    const hadController = !!navigator.serviceWorker.controller;
+    let shown = false, lastCheck = Date.now();
+    const offer = () => {
+      if (shown) return; shown = true;
+      const bar = document.createElement('div');
+      bar.className = 'pwa-bar';
+      bar.setAttribute('role', 'status');
+      bar.innerHTML = '<div class="pwa-tx"><b>Update ready</b>Reload to get the latest games.</div><button class="pwa-go">Reload</button><button class="pwa-x" aria-label="Not now">✕</button>';
+      bar.querySelector('.pwa-go').addEventListener('click', () => location.reload());
+      bar.querySelector('.pwa-x').addEventListener('click', () => bar.remove());
+      document.querySelectorAll('.pwa-bar').forEach((b) => b.remove());
+      document.body.appendChild(bar);
+    };
+    const check = async () => {
+      try {
+        const r = await caches.match(new URL('__updated', reg.scope).href);
+        if (r && Number(await r.text()) > opened) offer();
+      } catch (e) { /* no saved files to look at */ }
+    };
+    navigator.serviceWorker.addEventListener('message', (e) => { if (e.data && e.data.type === 'pubgames-updated') check(); });
+    // a new version of the whole app took over (all files fetched fresh)
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController) offer(); });
+    setTimeout(check, 6000);
+    // back from the background (installed apps are often resumed, not reopened): look again
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible' || !navigator.onLine || Date.now() - lastCheck < 10 * 60 * 1000) return;
+      lastCheck = Date.now();
+      reg.update().catch(() => {});
+      fetch(new URL('./', reg.scope).href, { cache: 'no-cache' }).catch(() => {});
+      setTimeout(check, 6000);
     });
   }
 
