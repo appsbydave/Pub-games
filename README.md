@@ -11,7 +11,7 @@ The dice, card, domino and table games from the pub games night rules cards, in 
 - **Dice:** Zanzibar, Ship Captain & Crew, Farkle, Midnight, Pass the Pigs, Shut the Box
 - **Cards:** Three-Card Brag, Cuckoo, Skat, Invisible 8s
 - **Dominoes:** Texas 42
-- **Table games:** Toad in the Hole, Hookey, Sjoelbak, Shuffleboard, Bank Shot Shuffleboard, Indoor Curling, Air Hockey, Shove Ha'penny
+- **Table games:** Toad in the Hole, Hookey, Table Skittles, Sjoelbak, Shuffleboard, Bank Shot Shuffleboard, Indoor Curling, Air Hockey, Shove Ha'penny
 
 Player 1 starts as "Jeanette" and the computer fills any empty seats. With two or more people on one phone, the card and domino games ask you to pass the phone before each person's go. Every game has a **Rules** button that opens its rules card.
 
@@ -21,11 +21,13 @@ The dice games can mix real dice and the app. Set each player to **App dice**, *
 
 **Hookey** is laid out like our board: 50 in the middle, four 10s round it, and round the rim 20 top and bottom, 15 at the sides and 5 on the diagonals. It has all three games from its card: race to exactly 300 (or 200, or 500; go over and that ring comes off, or play the bust rule), Round the Board (hook a 5, 10, 15, 20, then the 50, in order), and the kids' game to 100. In the app you pull back to throw rings at the board; at the real board you tap the hook each ring lands on, on a picture of the board.
 
+**Table Skittles** (bar skittles, or Devil among the Tailors) has the ball on a chain from a pole on the left of the table. In the app you pull right for power and down to hold the ball further out in front of the pole, then let go: it swings out to the left, round behind the pole and back through the nine pins. Three balls a turn; all nine down and they go up again. Games: race to exactly 101 (go over and you're back to 92, a floorer short), 61 for a cribbage board (back to 52), or lives (5 or 3 each: the lowest turn every round loses one, and a tie makes the next round worth two). At the real table, tap how many pins went down after each ball.
+
 The table games can be played three ways:
 
 - **In the app:** touch where to shoot from, pull back like a catapult, let go. The computer can take any seat.
 - **Keep score at the real table:** play the real board and tap in the scores. The app does the sums and the rules (busts at 31, sjoelbak sets, who's furthest, chalking up beds).
-- **Hybrid:** one match on one scoreboard. In Toad, Hookey, Sjoelbak and Shove Ha'penny each player picks the real board or the app; in Shuffleboard, Bank Shot and Curling you pick before each round or end.
+- **Hybrid:** one match on one scoreboard. In Toad, Hookey, Table Skittles, Sjoelbak and Shove Ha'penny each player picks the real board or the app; in Shuffleboard, Bank Shot and Curling you pick before each round or end.
 
 **Air Hockey** is played live rather than shot by shot. Lay the phone flat between two players, a finger each on your own half, or play the computer (Easy, Medium or Hard). At a real table, just tap whoever scores. First to 7 (or 5, or 11); whoever lets a goal in gets the puck. There's no hybrid for air hockey.
 

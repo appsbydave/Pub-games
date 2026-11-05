@@ -643,12 +643,27 @@ button.dom.ok:hover{transform:translateY(-4px)}
 .tg .ahgoals .btn .n{font-size:46px;font-weight:700;line-height:1;margin-top:4px}
 .tg .ahgoals .dotx{width:18px;height:18px;border-radius:50%;border:2px solid var(--plum)}
 .tg .ahgoals .btn:active{background:var(--sand)}
+/* Table skittles: tapping in pins at the real table */
+.tg .skrow{display:flex;gap:10px;justify-content:center;margin:12px 0 4px}
+.tg .skb{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:17px;color:#fff;background:radial-gradient(circle at 35% 30%,#f2bd7f,#d0873f 55%,#985420);border:2px solid var(--plum);padding:0;font-family:inherit}
+.tg .skb.miss{background:#efe3ef;color:var(--muted)}
+.tg .skb.fl{box-shadow:0 0 0 3px var(--gold)}
+.tg .skb.e{background:none;border:2px dashed rgba(78,31,77,.35);color:var(--muted);font-weight:600;font-size:12px}
+.tg .skup{display:flex;justify-content:center;align-items:center;gap:6px;margin:6px 0 0;font-weight:600;color:var(--plum);font-size:14px}
+.tg .skup svg{width:20px;height:20px}
+.tg .skpad{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:10px 0 4px}
+.tg .skpad button{min-height:56px;border-radius:14px;border:2px solid var(--plum);background:#fff;color:var(--plum);font-weight:700;font-size:21px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 2px;font-family:inherit;line-height:1.05}
+.tg .skpad button small{font-weight:500;font-size:10.5px;color:var(--muted)}
+.tg .skpad button:active{background:var(--sand)}
+.tg .skpad button.nine{background:var(--orange);border-color:var(--orange);color:#fff}
+.tg .skpad button.nine small{color:#fff}
+.tg .skpad button[disabled]{opacity:.4}
 </style>
 </head>
 <body>
 <main id="app"></main>
 <script>
-/* ===== Table games (Toad, Hookey, Sjoelbak, Shuffleboard, Bank Shot, Curling, Air Hockey, Shove Ha'penny) ===== */
+/* ===== Table games (Toad, Hookey, Table Skittles, Sjoelbak, Shuffleboard, Bank Shot, Curling, Air Hockey, Shove Ha'penny) ===== */
 (function () {
 'use strict';
 
@@ -2529,6 +2544,510 @@ GAMES.airhockey = {
 };
 
 /* =========================================================
+   Table skittles (bar skittles, Devil among the Tailors): nine pins in a diamond on a raised plinth,
+   and a ball on a chain from the top of a pole at the middle of the left side. Swing the ball out to the left,
+   round behind the pole and back through the pins. Three balls a turn; all nine down and they go up again.
+   Plan view in millimetres: the pole at (0,0), x to the right, y away from the player, z up from the plinth top.
+   ========================================================= */
+/* The physics: the ball is a pendulum from the top of the pole, the pins topple when hit hard enough
+   (a falling pin sweeps across the plinth and can take its neighbours with it). Nothing in here is random,
+   so the computer can try swings on a copy of the pins and see what happens. */
+const SK = {
+  G: 9810, PIV: 1000, L: 990, POLE: 22, BR: 25, BM: 1.6, PME: 0.4, PR: 15, PH: 105, PC: 17,
+  CX: 300, D: 53, PLINTH: 170, BOX: { x0: 25, x1: 585, y0: -280, y1: 280 },
+  DAMP: 0.12, E_BALL: 0.7, E_PIN: 0.6, V_TOP: 230, FR_UP: 3200, FR_FALL: 600, FR_DOWN: 950,
+  spots() { const s = []; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) s.push([this.CX + (i - j) * this.D, (i + j - 2) * this.D]); return s; },
+  rack(keep) { // keep: standing pins to carry on with ([{x,y,k}]), else all nine on their spots
+    const sp = this.spots();
+    const pins = keep ? keep.map(p => ({ x: p.x, y: p.y, k: p.k })) : sp.map(([x, y], k) => ({ x, y, k }));
+    return { t: 0, ball: null, pins: pins.map(p => Object.assign({ vx: 0, vy: 0, st: 'up', dx: 0, dy: -1, ph: 0, phv: 0, wob: 0, wobv: 0, wx: 0, wy: 1, z: 0, spin: 0 }, p)) };
+  },
+  clone(s) { return { t: s.t, ball: s.ball ? Object.assign({}, s.ball) : null, pins: s.pins.map(p => Object.assign({}, p)), quiet: true }; },
+  bz(r2) { return this.PIV - Math.sqrt(Math.max(1, this.L * this.L - r2)); }, // ball height above the plinth top
+  launch(s, sh) { // sh: { a: how far out it swings (mm), b: how far in front of the pole you hold it, ang: radians off straight left }
+    const b = sh.b, w = Math.sqrt(this.G / Math.sqrt(this.L * this.L - b * b)), v = sh.a * w;
+    s.ball = { x: 0, y: -b, vx: -v * Math.cos(sh.ang || 0), vy: v * Math.sin(sh.ang || 0), sweep: 0, ang: Math.atan2(-b, 0), t: 0, caught: false, hits: 0 };
+    s.t = 0;
+  },
+  onPlinth(x, y) { return Math.abs(x - this.CX) + Math.abs(y) < this.PLINTH; },
+  topple(p, dx, dy, phv) { const l = Math.hypot(dx, dy) || 1; p.st = 'fall'; p.dx = dx / l; p.dy = dy / l; p.ph = Math.max(p.ph, 0.02); p.phv = Math.max(p.phv, phv); p.wob = 0; p.wobv = 0; },
+  kickUp(p, nx, ny, dv, thr) { // a standing pin is knocked: it wobbles, slides, or goes over
+    p.vx += nx * dv; p.vy += ny * dv;
+    const s = Math.hypot(p.vx, p.vy);
+    if (s > thr) { this.topple(p, p.vx, p.vy, Math.min(26, 1.9 * s / this.PH)); p.vx *= 0.85; p.vy *= 0.85; return true; }
+    p.wx = nx; p.wy = ny; p.wobv += dv / 700; return false;
+  },
+  step(s, h, ev) {
+    const B = s.ball, P = s.pins; s.t += h;
+    if (B && !B.caught) {
+      B.t += h;
+      const r2 = B.x * B.x + B.y * B.y, zc = Math.sqrt(Math.max(1, this.L * this.L - r2));
+      B.vx += -this.G * B.x / zc * h; B.vy += -this.G * B.y / zc * h;
+      const d = 1 - this.DAMP * h; B.vx *= d; B.vy *= d;
+      B.x += B.vx * h; B.y += B.vy * h;
+      const r = Math.hypot(B.x, B.y), rm = this.POLE + this.BR;
+      if (r < rm) { const nx = B.x / r, ny = B.y / r, vn = B.vx * nx + B.vy * ny; B.x = nx * rm; B.y = ny * rm; if (vn < 0) { B.vx -= 1.4 * vn * nx; B.vy -= 1.4 * vn * ny; if (ev) ev('pole', -vn); } }
+      const a = Math.atan2(B.y, B.x); let da = a - B.ang; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI; B.sweep -= da; B.ang = a;
+      // the ball against standing pins (and ones only just starting to go)
+      const bz = this.bz(B.x * B.x + B.y * B.y);
+      if (bz - this.BR < this.PH) for (const p of P) {
+        if (p.st === 'down' || (p.st === 'fall' && p.ph > 0.5) || p.z < 0) continue;
+        const px = p.st === 'fall' ? p.x + p.dx * this.PH * 0.45 * Math.sin(p.ph) : p.x, py = p.st === 'fall' ? p.y + p.dy * this.PH * 0.45 * Math.sin(p.ph) : p.y;
+        const dx = px - B.x, dy = py - B.y, rr = this.BR + this.PR, d2 = dx * dx + dy * dy; if (d2 >= rr * rr || d2 === 0) continue;
+        const dd = Math.sqrt(d2), nx = dx / dd, ny = dy / dd, vn = (B.vx - p.vx) * nx + (B.vy - p.vy) * ny;
+        B.x -= nx * (rr - dd) * 0.4; B.y -= ny * (rr - dd) * 0.4; p.x += nx * (rr - dd) * 0.6; p.y += ny * (rr - dd) * 0.6;
+        if (vn <= 0) continue;
+        const J = (1 + this.E_BALL) * vn / (1 / this.BM + 1 / this.PME); // a pin struck partway up gives less than its whole weight
+        B.vx -= J / this.BM * nx; B.vy -= J / this.BM * ny; B.hits++;
+        if (p.st === 'up') this.kickUp(p, nx, ny, J / this.PME * 0.8, this.V_TOP); else { p.phv += J / this.PH; p.vx += nx * J * 0.4; p.vy += ny * J * 0.4; }
+        if (ev) ev('hit', vn);
+      }
+      if (B.sweep > 1.8 * Math.PI || B.sweep < -0.7 * Math.PI || B.t > 5.5) { B.caught = true; if (ev) ev('catch'); }
+    }
+    // pins move
+    for (const p of P) {
+      const sp = Math.hypot(p.vx, p.vy);
+      if (sp > 0) { const fr = (p.st === 'up' ? this.FR_UP : p.st === 'fall' ? this.FR_FALL : this.FR_DOWN) * h; if (sp <= fr) { p.vx = 0; p.vy = 0; } else { const f = (sp - fr) / sp; p.vx *= f; p.vy *= f; } p.x += p.vx * h; p.y += p.vy * h; }
+      if (p.st === 'up') {
+        p.wobv += (-260 * p.wob - 9 * p.wobv) * h; p.wob += p.wobv * h; if (Math.abs(p.wob) < 1e-4 && Math.abs(p.wobv) < 1e-3) { p.wob = 0; p.wobv = 0; }
+        if (p.wob > 0.32) this.topple(p, p.wx, p.wy, 3); // rocked too far
+        if (!this.onPlinth(p.x, p.y)) { this.topple(p, p.x - this.CX, p.y, 4); }
+      } else if (p.st === 'fall') {
+        p.phv += 140 * Math.sin(p.ph) * h; p.ph += p.phv * h;
+        if (p.ph >= Math.PI / 2) { p.ph = Math.PI / 2; p.st = 'down'; const k = p.phv * this.PH * 0.12; p.vx += p.dx * k; p.vy += p.dy * k; p.spin = (p.vx * p.dy - p.vy * p.dx) / 900; p.phv = 0; if (ev) ev('land', k); }
+      } else {
+        if (p.spin) { const c = Math.cos(p.spin * h), si = Math.sin(p.spin * h), dx = p.dx * c - p.dy * si, dy = p.dx * si + p.dy * c; p.dx = dx; p.dy = dy; p.spin *= Math.pow(0.05, h); if (Math.abs(p.spin) < 0.05) p.spin = 0; }
+        const bx = this.BOX; // lying pins bounce off the box walls
+        for (const [ex, ey] of [[p.x, p.y], [p.x + p.dx * this.PH, p.y + p.dy * this.PH]]) {
+          if (ex < bx.x0 + this.PC && p.vx < 0) { p.vx = -p.vx * 0.4; p.x += bx.x0 + this.PC - ex; }
+          if (ex > bx.x1 - this.PC && p.vx > 0) { p.vx = -p.vx * 0.4; p.x -= ex - (bx.x1 - this.PC); }
+          if (ey < bx.y0 + this.PC && p.vy < 0) { p.vy = -p.vy * 0.4; p.y += bx.y0 + this.PC - ey; }
+          if (ey > bx.y1 - this.PC && p.vy > 0) { p.vy = -p.vy * 0.4; p.y -= ey - (bx.y1 - this.PC); }
+        }
+      }
+      if (p.st !== 'up' && p.z === 0) { const mx = p.x + p.dx * this.PH * 0.5 * Math.sin(p.ph), my = p.y + p.dy * this.PH * 0.5 * Math.sin(p.ph); if (!this.onPlinth(mx, my)) p.z = -1; } // fell off the plinth
+    }
+    // pins against pins
+    for (let i = 0; i < P.length; i++) {
+      const a = P[i];
+      for (let j = 0; j < P.length; j++) {
+        if (i === j) continue; const c = P[j]; if (c.st !== 'up') continue;
+        if (a.st === 'up') {
+          if (j < i) continue;
+          const dx = c.x - a.x, dy = c.y - a.y, rr = 2 * this.PR, d2 = dx * dx + dy * dy; if (d2 >= rr * rr || d2 === 0) continue;
+          const d = Math.sqrt(d2), nx = dx / d, ny = dy / d, ov = rr - d; a.x -= nx * ov / 2; a.y -= ny * ov / 2; c.x += nx * ov / 2; c.y += ny * ov / 2;
+          const vn = (a.vx - c.vx) * nx + (a.vy - c.vy) * ny; if (vn <= 0) continue;
+          const J = (1 + this.E_PIN) * vn / 2; a.vx -= J * nx; a.vy -= J * ny;
+          this.kickUp(c, nx, ny, J, this.V_TOP * 0.9); if (ev) ev('pin', vn);
+          continue;
+        }
+        // a falling or lying pin (a capsule from its base to its top, seen from above) against a standing one
+        if (a.z < 0) continue;
+        const L = this.PH * Math.sin(a.ph), sx = a.dx * L, sy = a.dy * L;
+        let u = L > 1e-6 ? ((c.x - a.x) * sx + (c.y - a.y) * sy) / (L * L) : 0; u = u < 0 ? 0 : u > 1 ? 1 : u;
+        const qx = a.x + sx * u, qy = a.y + sy * u, dx = c.x - qx, dy = c.y - qy, rr = this.PC + this.PR, d2 = dx * dx + dy * dy;
+        if (d2 >= rr * rr) continue;
+        const d = Math.sqrt(d2) || 1e-6, nx = dx / d, ny = dy / d, ell = u * this.PH, hc = ell * Math.cos(a.ph);
+        const vqx = a.vx + a.dx * ell * Math.cos(a.ph) * a.phv, vqy = a.vy + a.dy * ell * Math.cos(a.ph) * a.phv;
+        const vn = (vqx - c.vx) * nx + (vqy - c.vy) * ny;
+        c.x += nx * (rr - d) * 0.8; c.y += ny * (rr - d) * 0.8;
+        if (vn <= 0) continue;
+        const thr = 200 + (100 - 200) * Math.min(1, Math.max(0, (hc - 20) / 45));
+        this.kickUp(c, nx, ny, vn * 0.95, thr);
+        a.phv *= 0.8; a.vx -= nx * vn * 0.25; a.vy -= ny * vn * 0.25;
+        if (ev) ev('pin', vn);
+      }
+    }
+  },
+  atRest(s) {
+    if (s.ball && !s.ball.caught) return false;
+    for (const p of s.pins) { if (p.st === 'fall') return false; if (Math.abs(p.vx) + Math.abs(p.vy) > 3 || Math.abs(p.wob) > 0.004 || Math.abs(p.wobv) > 0.05 || p.spin) return false; }
+    return true;
+  },
+  down(s) { return s.pins.filter(p => p.st !== 'up').length; },
+  // the step size: fine while anything near the pins is moving, coarse while the ball is swinging round on its own
+  dt(s) {
+    const B = s.ball; if (!B || B.caught) return 1 / 240;
+    if (Math.abs(B.x - this.CX) + Math.abs(B.y) < this.PLINTH + 2 * this.BR + 60) return 1 / 240;
+    for (const p of s.pins) if (p.st === 'fall' || p.vx || p.vy || p.wobv || p.spin) return 1 / 240;
+    return 1 / 80;
+  },
+  done(s) {
+    if (!s.ball || !s.ball.caught) return false;
+    if (!s.quiet) return this.atRest(s);
+    for (const p of s.pins) { if (p.st === 'fall') return false; if (Math.abs(p.vx) + Math.abs(p.vy) > 120 || (p.st === 'up' && (Math.abs(p.wob) > 0.2 || Math.abs(p.wobv) > 2))) return false; }
+    return true; // a quick look for the computer: nothing left moving fast enough to knock another pin
+  },
+  run(s, maxT = 9, ev) { let t = 0; while (t < maxT && !this.done(s)) { const h = this.dt(s); this.step(s, h, ev); t += h; } return s; }
+};
+
+const SK_AMIN = 160, SK_AMAX = 470, SK_BMIN = 80, SK_BMAX = 330; // a swing: how far out it goes (power), and how far in front of the pole it's held
+const SK_HOLD = 200; // where the ball waits in your hand
+const SK_WOBBLE = { a: 0.035, b: 9, g: 0.028 }; // a person's swing wobbles this much on top of their own aim
+const SK_AI = { easy: { sa: 0.08, sb: 22, sg: 0.07, refine: 0 }, med: { sa: 0.045, sb: 12, sg: 0.04, refine: 10 }, hard: { sa: 0.022, sb: 6, sg: 0.02, refine: 24 } };
+const SK_RACE = { 101: { goal: 101, back: 92 }, 61: { goal: 61, back: 52 } }; // bust and you go back to 9 short: a floorer away
+const skRace = m => SK_RACE[m.opts.game] || null;
+const skLivesN = m => (m.opts.game === 'lives3' ? 3 : 5);
+const SK_FLOOR = -55, SK_WALL = 20, SK_OUT = { x0: 0, x1: 610, y0: -305, y1: 305 }; // the box: floor and wall tops (z), outside edge
+const SK_PIN = '#f4e5c6', SK_PIN2 = '#dcc59c', SK_BAIZE = '#5d2a5b';
+ICON.skittles = `<svg viewBox="0 0 64 48"><path d="M23 42h39v4H23z" fill="#3b3b3b"/><path d="M20 40h40l-5-15H25z" fill="#f8dca8" ${S}/><path d="M20 40h40v4H20z" fill="#4e1f4d" ${S}/><path d="M40 27.6l8 4.9-8 4.9-8-4.9z" fill="#d9b78e" stroke="#4e1f4d" stroke-width="1.3" stroke-linejoin="round"/><path d="M9 28A15.5 5.6 0 0 1 37 30.4" fill="none" stroke="#dd7f27" stroke-width="1.8" stroke-dasharray="2 3" stroke-linecap="round"/>${[[40, 29.5], [37.4, 31], [42.6, 31], [34.8, 32.5], [40, 32.5], [45.2, 32.5], [37.4, 34], [42.6, 34], [40, 35.5]].map(([x, y]) => `<rect x="${x - 1.25}" y="${y - 5.6}" width="2.5" height="5.6" rx="1.25" fill="#fff" stroke="#3b3b3b" stroke-width=".7"/>`).join('')}<rect x="21.2" y="5" width="3" height="28" rx="1" fill="#4e1f4d"/><circle cx="22.7" cy="5" r="2.2" fill="#f2a91f" stroke="#4e1f4d" stroke-width="1.2"/><path d="M22.5 7L10.2 25" stroke="#3b3b3b" stroke-width="1.2" stroke-dasharray="1.6 1.2"/><circle cx="9" cy="28" r="3.7" fill="#dd7f27" stroke="#4e1f4d" stroke-width="1.6"/></svg>`;
+ICON.skpin = `<svg viewBox="0 0 24 24" fill="none" ${S}><path d="M9.1 21.5 L8.3 19.2 L7.8 13.5 L9.4 8.6 L9.8 7.1 L9.4 5.2 L10.1 3.3 L12.0 2.5 L12.0 2.5 L13.9 3.3 L14.6 5.2 L14.2 7.1 L14.6 8.6 L16.3 13.5 L15.7 19.2 L14.9 21.5Z" fill="#fff"/><path d="M9.7 7.9h4.6" stroke="#dd7f27"/></svg>`;
+ICON.sktable = `<svg viewBox="0 0 24 24" fill="none" ${S}><path d="M3 20.5h18l-2.5-8h-13z" fill="#f8dca8"/><path d="M7.5 17V3.5"/><circle cx="7.5" cy="3.2" r="1.2" fill="#4e1f4d"/><path d="M7.4 4.6L3.8 9.4" stroke-dasharray="1.4 1.4"/><circle cx="3.4" cy="10.6" r="1.7" fill="#dd7f27"/></svg>`;
+
+// Plays a turn's balls in order. The app, the real-table score entry and the scoreboard all score with this.
+function skRun(m, who, balls) {
+  const race = skRace(m), start = race ? m.s.tot[who] : 0;
+  let tot = start, stand = 9, end = null; const steps = [];
+  for (let i = 0; i < balls.length && i < 3 && !end; i++) {
+    const v = Math.max(0, Math.min(+balls[i] || 0, stand)), before = tot, sb = stand; let kind = v ? 'add' : 'miss';
+    if (race && tot + v === race.goal) { tot += v; kind = 'win'; }
+    else if (race && tot + v > race.goal) { tot = race.back; kind = 'bust'; }
+    else tot += v;
+    stand -= v; const reset = stand === 0; if (reset) stand = 9;
+    steps.push({ v, kind, before, after: tot, stand: sb, floorer: sb === 9 && v === 9, reset });
+    if (kind === 'win' || kind === 'bust') end = kind;
+  }
+  return { tot, steps, end, stand, done: !!end || steps.length >= 3, win: end === 'win', gain: tot - start, first: steps.length ? steps[0].v : 0 };
+}
+const skSigned = n => (n >= 0 ? '+' : '−') + Math.abs(n);
+// lives: who plays this round, in seat order from whoever started
+function skRoundOrder(m) { const n = m.players.length, out = []; for (let k = 0; k < n; k++) { const i = (m.s.first + k) % n; if (m.s.lives[i] > 0) out.push(i); } return out; }
+function skAlive(m) { return m.players.map((_, i) => i).filter(i => m.s.lives[i] > 0); }
+// lives: everyone still in has had a turn. The lowest turn loses a life; in a round worth two, the lowest first ball loses one too.
+// A tie for lowest makes the next round worth two. If that would put everyone out at once, those lives don't count and play goes on.
+function skSettle(m) {
+  const s = m.s, rd = s.round, order = rd.order, ties = [];
+  let lose = {};
+  const low = k => { const lo = Math.min(...order.map(i => rd.sc[i][k])); return order.filter(i => rd.sc[i][k] === lo); };
+  const parts = rd.worth === 2 ? [['first', 'first ball'], ['tot', 'turn']] : [['tot', 'turn']];
+  const res = parts.map(([k, label]) => { const w = low(k), v = rd.sc[w[0]][k]; if (w.length === 1) { lose[w[0]] = (lose[w[0]] || 0) + 1; return { label, who: w[0], v }; } ties.push(label); return { label, tie: w, v }; });
+  const voided = Object.keys(lose).length > 0 && order.every(i => s.lives[i] - (lose[i] || 0) <= 0);
+  if (voided) lose = {};
+  for (const i of order) s.lives[i] = Math.max(0, s.lives[i] - (lose[i] || 0));
+  s.rounds.push({ n: rd.n, worth: rd.worth, sc: rd.sc, order, res, voided, lose });
+  const alive = skAlive(m);
+  if (alive.length <= 1) { m.over = true; m.winner = alive.length ? alive : order.slice(); }
+  else { s.round = { n: rd.n + 1, worth: ties.length ? 2 : 1, order: skRoundOrder(m), idx: 0, sc: {} }; s.cur = s.round.order[0]; }
+  return { res, voided, lose, ties };
+}
+function skSettleText(m, out) {
+  if (out.voided) return 'Everyone would be out at once, so those lives don’t count. Play on!';
+  const bits = out.res.map(r => r.tie ? `A tie for the lowest ${r.label} (${r.v})` : `${rname(m, r.who)} loses a life (lowest ${r.label}, ${r.v})`);
+  if (!m.over && out.ties.length) bits.push('Next round is worth two lives');
+  return bits.join(' · ');
+}
+// the computer looks ahead: tries swings on a copy of the pins, smooths out the lucky ones, then fine-tunes around the best
+async function skPlan(tbl, rack, value, lvl) {
+  const L = SK_AI[lvl] || SK_AI.med, AS = [], BS = [], GS = [-0.04, 0, 0.04];
+  for (let a = 250; a <= 430; a += 15) AS.push(a); for (let b = 130; b <= 330; b += 20) BS.push(b);
+  let n = 0;
+  const sim = async sh => { const s = SK.clone(rack); SK.launch(s, sh); SK.run(s); if (++n % 20 === 0) { await sleep(0); if (tbl.dead) throw new Error('gone'); } return value(SK.down(s)); };
+  const V = [];
+  for (const a of AS) { const row = []; for (const b of BS) { const c = []; for (const ang of GS) c.push(await sim({ a, b, ang })); row.push(c); } V.push(row); }
+  let best = null, bv = -1e9;
+  for (let i = 0; i < AS.length; i++) for (let j = 0; j < BS.length; j++) for (let k = 0; k < GS.length; k++) {
+    let sum = 0, w = 0;
+    for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) { const r = V[i + di] && V[i + di][j + dj]; if (r) { const q = di || dj ? 1 : 3; sum += r[k] * q; w += q; } }
+    const v = sum / w + V[i][j][k] * 0.15; if (v > bv) { bv = v; best = { a: AS[i], b: BS[j], ang: GS[k] }; }
+  }
+  if (L.refine) {
+    const robust = async sh => (2 * await sim(sh) + await sim(Object.assign({}, sh, { a: sh.a * (1 + L.sa) })) + await sim(Object.assign({}, sh, { a: sh.a * (1 - L.sa) })) + await sim(Object.assign({}, sh, { b: sh.b + L.sb })) + await sim(Object.assign({}, sh, { b: sh.b - L.sb }))) / 6;
+    let rb = await robust(best);
+    for (let i = 0; i < L.refine; i++) {
+      const c = { a: best.a + (Math.random() - 0.5) * 24, b: clamp(best.b + (Math.random() - 0.5) * 32, 70, 330), ang: best.ang + (Math.random() - 0.5) * 0.06 };
+      const v = await robust(c); if (v > rb) { rb = v; best = c; }
+    }
+  }
+  return best;
+}
+
+class SkittlesTable extends SlideTable {
+  init() {
+    this.fixedX = 0; this.showReady = false; this.bg = COL.soft; this.who = this.unit.who;
+    this.balls = []; this.st = SK.rack(); this.acc = 0; this.thrown = 0; this.upBefore = 9; this.snapUp = null; this.paths = {};
+    this.ev = (k, v) => { if (this.dead) return; if (k === 'hit') Sound.clack(v * 1.5, 2300); else if (k === 'pin') Sound.clack(v * 0.8, 3200); else if (k === 'pole') Sound.clack(v * 1.2, 900); else if (k === 'land') Sound.clack(v * 2, 1600); };
+  }
+  /* --- the pins stay where they are if you leave partway through a turn --- */
+  get keepBoard() { return 'The pins'; }
+  saveBoard() { if (!this.balls.length || this.state === 'done' || this.run().done) return; store.set(BOARD_KEY(this.G.id), { id: this.bid, balls: this.balls.slice(), pins: this.snapUp }); }
+  loadBoard() {
+    const s = store.get(BOARD_KEY(this.G.id), null); if (!s || s.id !== this.bid || !Array.isArray(s.balls) || !s.balls.length) return false;
+    this.balls = s.balls.slice(); this.snapUp = Array.isArray(s.pins) && s.pins.length ? s.pins : null;
+    this.st = SK.rack(this.snapUp); this.upBefore = this.st.pins.length; this.thrown = this.shots = this.balls.length; return true;
+  }
+  run() { return skRun(this.m, this.who, this.balls); }
+  nextShooter() { if (this.run().done) return null; const p = this.m.players[this.who]; return { side: 0, cpu: p.kind === 'cpu', name: p.name }; }
+  status() {
+    const p = this.m.players[this.who], R = this.run(), race = skRace(this.m), k = Math.min(3, this.balls.length + (R.done ? 0 : 1));
+    const now = race ? `On ${R.tot} · needs ${race.goal - R.tot}${R.steps.length ? ` · this turn ${skSigned(R.gain)}` : ''}` : `This turn ${R.tot} · ${plural(this.m.s.lives[this.who], 'life', 'lives')} left`;
+    return [`${p.name} · ball ${Math.max(1, k)} of 3`, `${now} · ${plural(this.upBefore, 'pin')} up`];
+  }
+  tipText() { return 'Pull right for power, down to hold it out'; }
+  result() { return { balls: this.balls.slice() }; }
+  /* --- camera: from in front of the table, looking down on it; closer in as the ball comes round to the pins --- */
+  camPresets(W, H) {
+    const rect = { x: 8, y: 8, w: W - 16, h: Math.max(80, H - 52) };
+    const wide = [[-400, -40, 80], [-300, 280, 80], [0, 0, SK.PIV + 20], [610, 305, SK_WALL], [610, -305, SK_FLOOR - 40], [0, -305, SK_FLOOR - 40], [0, -340, 60]];
+    const near = [[10, -280, SK_FLOOR - 30], [600, -280, SK_FLOOR - 30], [600, 290, 120], [10, 290, 120]];
+    return { aim: fitCam([110, -2050, 3500], [170, 0, 150], wide, rect), watch: fitCam([270, -1650, 2900], [310, -10, 20], near, rect) };
+  }
+  P(x, y, z) { return this.cam.p(x, y, z); }
+  drawTable(g) {
+    const c = this.cam, F = SK_FLOOR, W = SK_WALL, O = SK_OUT, B = SK.BOX, cx = SK.CX, pl = SK.PLINTH;
+    gfill(g, c, rectPts(O.x0 + 26, O.y0 - 22, O.x1 + 26, O.y1 - 22, F - 40), 'rgba(46,16,45,.16)');
+    gfill(g, c, rectPts(B.x0, B.y0, B.x1, B.y1, F), SK_BAIZE);
+    gfill(g, c, [[B.x0, B.y1, F], [B.x1, B.y1, F], [B.x1, B.y1, W], [B.x0, B.y1, W]], '#a87246', COL.plum, 1.2);
+    gfill(g, c, [[B.x0, B.y0, F], [B.x0, B.y1, F], [B.x0, B.y1, W], [B.x0, B.y0, W]], '#b98250', COL.plum, 1.2);
+    gfill(g, c, [[B.x1, B.y0, F], [B.x1, B.y1, F], [B.x1, B.y1, W], [B.x1, B.y0, W]], '#9c673d', COL.plum, 1.2);
+    for (const r of [[O.x0, B.y1, O.x1, O.y1], [O.x0, O.y0, B.x0, O.y1], [B.x1, O.y0, O.x1, O.y1]]) gfill(g, c, rectPts(r[0], r[1], r[2], r[3], W), '#d7a46c', COL.plum, 1.4);
+    // the raised plinth, set as a diamond, with a spot for each pin
+    gfill(g, c, [[cx - pl, 0, 0], [cx, -pl, 0], [cx, -pl, F], [cx - pl, 0, F]], '#b98e5e', COL.plum, 1.2);
+    gfill(g, c, [[cx, -pl, 0], [cx + pl, 0, 0], [cx + pl, 0, F], [cx, -pl, F]], '#a47a4c', COL.plum, 1.2);
+    gfill(g, c, [[cx, pl, 0], [cx + pl, 0, 0], [cx, -pl, 0], [cx - pl, 0, 0]], COL.sand, COL.plum, 1.8);
+    for (const [x, y] of SK.spots()) gfill(g, c, circPts(x, y, 17, 24, 0.3), 'rgba(78,31,77,.07)', 'rgba(78,31,77,.3)', 1);
+  }
+  frontWall(g) { const c = this.cam, O = SK_OUT, B = SK.BOX; gfill(g, c, [[O.x0, O.y0, SK_WALL], [O.x1, O.y0, SK_WALL], [O.x1, O.y0, SK_FLOOR - 40], [O.x0, O.y0, SK_FLOOR - 40]], COL.plum, COL.ink, 1.6); gfill(g, c, rectPts(O.x0, O.y0, O.x1, B.y0, SK_WALL), '#d7a46c', COL.plum, 1.4); }
+  pinAxis(p) {
+    const zb = p.zv == null ? (p.z < 0 ? SK_FLOOR : 0) : p.zv;
+    let dx, dy, t; if (p.st === 'up') { const s = p.wob < 0 ? -1 : 1; dx = p.wx * s; dy = p.wy * s; t = Math.abs(p.wob); } else { dx = p.dx; dy = p.dy; t = p.ph; }
+    const lift = 12 * Math.sin(t), L = SK.PH;
+    return { b: [p.x, p.y, zb + lift * 0.9], e: [p.x + dx * L * Math.sin(t), p.y + dy * L * Math.sin(t), zb + lift * 0.9 + L * Math.cos(t)], t };
+  }
+  drawPin(g, p) {
+    const A = this.pinAxis(p), alpha = (p.fade != null ? 1 - p.fade : 1) * (p.fadeIn != null ? p.fadeIn : 1); if (alpha <= 0.01) return;
+    const prof = [[0, 10.5], [0.1, 13.5], [0.4, 15], [0.66, 9.5], [0.74, 8.5], [0.84, 10], [0.95, 7.5], [1, 2]];
+    const at = t => this.P(A.b[0] + (A.e[0] - A.b[0]) * t, A.b[1] + (A.e[1] - A.b[1]) * t, A.b[2] + (A.e[2] - A.b[2]) * t);
+    const q0 = at(0), q1 = at(1); let ax = q1[0] - q0[0], ay = q1[1] - q0[1]; const al = Math.hypot(ax, ay) || 1; ax /= al; ay /= al; const nx = -ay, ny = ax;
+    g.save(); g.globalAlpha = alpha;
+    if (p.st === 'up' && !(p.zv < -1)) { const sh = this.P(p.x + 7, p.y + 5, (p.zv || 0) + 0.2); g.fillStyle = 'rgba(46,16,45,.22)'; g.beginPath(); g.ellipse(sh[0], sh[1], 16 * sh[2], 9 * sh[2], 0, 0, 7); g.fill(); }
+    const L = [], R = []; for (const [t, r] of prof) { const q = at(t), w = r * q[2]; L.push([q[0] + nx * w, q[1] + ny * w]); R.push([q[0] - nx * w, q[1] - ny * w]); }
+    g.beginPath(); L.forEach((q, i) => i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1])); for (let i = R.length - 1; i >= 0; i--) g.lineTo(R[i][0], R[i][1]); g.closePath();
+    g.fillStyle = SK_PIN; g.fill(); g.lineWidth = 1.3; g.strokeStyle = COL.plum; g.lineJoin = 'round'; g.stroke();
+    const bq = at(0.7), bw = 9 * bq[2]; g.strokeStyle = COL.plum; g.lineWidth = Math.max(1.2, 3.2 * bq[2]); g.beginPath(); g.moveTo(bq[0] + nx * bw, bq[1] + ny * bw); g.lineTo(bq[0] - nx * bw, bq[1] - ny * bw); g.stroke();
+    const h0 = at(0.12), h1 = at(0.5), hw = 7 * h0[2]; g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = Math.max(1, 2.6 * h0[2]); g.lineCap = 'round'; g.beginPath(); g.moveTo(h0[0] + nx * hw, h0[1] + ny * hw); g.lineTo(h1[0] + nx * hw, h1[1] + ny * hw); g.stroke();
+    g.restore();
+  }
+  ballZ(x, y) { return SK.bz(x * x + y * y); }
+  drawBall(g, x, y, alpha = 1, glow = false) {
+    const z = this.ballZ(x, y), c = this.P(x, y, z), r = SK.BR * c[2], pv = this.P(0, 0, SK.PIV);
+    g.save(); g.globalAlpha = alpha;
+    const inBox = x > SK.BOX.x0 && x < SK.BOX.x1 && y > SK.BOX.y0 && y < SK.BOX.y1, surf = SK.onPlinth(x, y) ? 0 : inBox ? SK_FLOOR : null;
+    if (surf != null) { const s = this.P(x + 8, y + 6, surf + 0.3); g.fillStyle = 'rgba(46,16,45,.22)'; g.beginPath(); g.ellipse(s[0], s[1], SK.BR * s[2], SK.BR * s[2] * 0.6, 0, 0, 7); g.fill(); }
+    g.lineCap = 'round'; g.strokeStyle = '#4b444b'; g.lineWidth = 2.2; g.beginPath(); g.moveTo(pv[0], pv[1]); g.lineTo(c[0], c[1] - r * 0.8); g.stroke();
+    g.strokeStyle = '#b9b0b8'; g.lineWidth = 1.2; g.setLineDash([2.5, 3]); g.stroke(); g.setLineDash([]);
+    const gr = g.createRadialGradient(c[0] - r * 0.35, c[1] - r * 0.4, r * 0.1, c[0], c[1], r);
+    gr.addColorStop(0, '#f2bd7f'); gr.addColorStop(0.55, '#d0873f'); gr.addColorStop(1, '#985420');
+    g.fillStyle = gr; g.beginPath(); g.arc(c[0], c[1], r, 0, 7); g.fill(); g.lineWidth = 1.5; g.strokeStyle = COL.plum; g.stroke();
+    if (glow) { g.strokeStyle = COL.orange; g.lineWidth = 2.5; g.beginPath(); g.arc(c[0], c[1], r + 4, 0, 7); g.stroke(); }
+    g.restore();
+  }
+  drawPole(g) {
+    const a = this.P(0, 0, SK_WALL), b = this.P(0, 0, SK.PIV), ra = SK.POLE * a[2], rb = SK.POLE * b[2];
+    g.save(); g.fillStyle = COL.plum; g.strokeStyle = COL.ink; g.lineWidth = 1.4;
+    g.beginPath(); g.moveTo(a[0] - ra, a[1]); g.lineTo(b[0] - rb, b[1]); g.lineTo(b[0] + rb, b[1]); g.lineTo(a[0] + ra, a[1]); g.closePath(); g.fill(); g.stroke();
+    g.strokeStyle = 'rgba(255,255,255,.22)'; g.lineWidth = Math.max(1, ra * 0.35); g.beginPath(); g.moveTo(a[0] - ra * 0.45, a[1]); g.lineTo(b[0] - rb * 0.45, b[1]); g.stroke();
+    g.fillStyle = COL.gold; g.beginPath(); g.ellipse(a[0], a[1], ra * 1.5, ra * 0.7, 0, 0, 7); g.fill(); g.stroke();
+    g.restore();
+  }
+  drawBodies(g) {
+    const B = this.st.ball, items = this.st.pins.map(p => ({ y: p.st === 'up' ? p.y : p.y + p.dy * SK.PH * 0.5 * Math.sin(p.ph), f: () => this.drawPin(g, p) }));
+    items.push({ y: 0.5, f: () => this.drawPole(g) });
+    const front = [];
+    if (B && !B.caught) (B.y < SK_OUT.y0 ? front : items).push({ y: B.y, f: () => this.drawBall(g, B.x, B.y) });
+    items.sort((a, b) => b.y - a.y).forEach(o => o.f());
+    this.frontWall(g); front.forEach(o => o.f());
+  }
+  held() { // the ball in your hand, when it isn't swinging
+    if (this.state === 'moving' || this.state === 'done') return null;
+    const sh = this.drag ? this.dragShot() : this.aimShow ? this.aimShow.shot : null;
+    return sh ? null : { x: 0, y: -SK_HOLD };
+  }
+  drawExtra(g) {
+    const h = this.held();
+    if (h && this.state !== 'rest') this.drawBall(g, h.x, h.y, this.state === 'aim' && this.human() ? 0.7 + 0.3 * Math.sin(performance.now() / 260) : 1);
+    else if (h) this.drawBall(g, h.x, h.y, 0.6);
+    const R = this.run(), left = R.done || this.state === 'done' ? 0 : Math.max(0, 3 - this.thrown), x0 = this.W / 2, y0 = this.H - 22;
+    for (let i = 0; i < left; i++) { const x = x0 + (i - (left - 1) / 2) * 26; g.save(); g.fillStyle = COL.orange; g.strokeStyle = COL.plum; g.lineWidth = 1.6; g.beginPath(); g.arc(x, y0, 8, 0, 7); g.fill(); g.stroke(); g.restore(); }
+  }
+  path(sh) { // where the ball goes on its way out and round behind the pole (no pins, nothing in the way)
+    const key = [sh.a, sh.b, sh.ang || 0].map(v => Math.round(v * 100)).join(':'); if (this.paths[key]) return this.paths[key];
+    const s = { t: 0, ball: null, pins: [] }; SK.launch(s, sh); const out = [];
+    for (let i = 0; i < 200 && s.ball.sweep < 1.08 * Math.PI; i++) { out.push([s.ball.x, s.ball.y, this.ballZ(s.ball.x, s.ball.y)]); SK.step(s, 1 / 90); }
+    const keys = Object.keys(this.paths); if (keys.length > 60) this.paths = {};
+    return (this.paths[key] = out);
+  }
+  drawAim(g, sh) {
+    const pts = this.path(sh);
+    if (pts.length > 1) {
+      dashLine(g, this.cam, pts, COL.orange, 3.2, [7, 7]);
+      const a = this.P(...pts[pts.length - 2]), b = this.P(...pts[pts.length - 1]), an = Math.atan2(b[1] - a[1], b[0] - a[0]);
+      g.save(); g.strokeStyle = COL.orange; g.lineWidth = 3.2; g.lineCap = 'round'; g.lineJoin = 'round'; g.beginPath();
+      g.moveTo(b[0] - 11 * Math.cos(an - 0.5), b[1] - 11 * Math.sin(an - 0.5)); g.lineTo(b[0], b[1]); g.lineTo(b[0] - 11 * Math.cos(an + 0.5), b[1] - 11 * Math.sin(an + 0.5)); g.stroke(); g.restore();
+    }
+    this.drawBall(g, 0, -sh.b, 1, true);
+    // power runs left to right along the bottom, the way you pull
+    const pow = sh.pow != null ? sh.pow : clamp((sh.a - SK_AMIN) / (SK_AMAX - SK_AMIN), 0, 1), Wd = Math.min(this.W * 0.5, 190), x = (this.W - Wd) / 2, y = this.H - 54;
+    g.save(); g.fillStyle = 'rgba(255,255,255,.92)'; g.strokeStyle = COL.plum; g.lineWidth = 2;
+    rr(g, x, y, Wd, 16, 8); g.fill(); g.stroke(); g.fillStyle = pow > 0.85 ? '#c44d1a' : COL.orange;
+    const fw = (Wd - 6) * pow; rr(g, x + 3, y + 3, fw, 10, 5); g.fill();
+    g.fillStyle = COL.plum; g.font = '700 12px Lexend, system-ui'; g.textAlign = 'left'; g.textBaseline = 'middle'; g.fillText(Math.round(pow * 100) + '%', x + Wd + 8, y + 8); g.restore();
+  }
+  /* --- input: pull right for power, down to hold the ball further out in front of the pole --- */
+  dragShot() {
+    if (!this.drag) return null; const dx = this.drag.x - this.drag.sx, dy = this.drag.y - this.drag.sy; if (Math.hypot(dx, dy) < 6) return null;
+    const pow = clamp(dx / this.pullMax, 0, 1), hold = clamp(dy / (this.pullMax * 0.85), 0, 1);
+    return { a: lerp(SK_AMIN, SK_AMAX, pow), b: lerp(SK_BMIN, SK_BMAX, hold), ang: 0, pow };
+  }
+  shoot(sh, steady) {
+    Sound.init(); Sound.slide();
+    if (!steady) sh = { a: sh.a * (1 + gauss() * SK_WOBBLE.a), b: sh.b + gauss() * SK_WOBBLE.b, ang: (sh.ang || 0) + gauss() * SK_WOBBLE.g };
+    sh = { a: clamp(sh.a, 110, 520), b: clamp(sh.b, 60, 340), ang: clamp(sh.ang || 0, -0.3, 0.3) };
+    this.upBefore = this.st.pins.filter(p => p.st === 'up').length;
+    SK.launch(this.st, sh); this.acc = 0; this.thrown++; this.shots++; this.state = 'moving'; this.ui.tip(null); this.refresh();
+  }
+  async cpuGo() {
+    const t0 = performance.now(); this.ui.status(this.status()[0], 'Lining it up…'); await sleep(60); if (this.dead) return;
+    const lvl = this.m.diff || 'med', L = SK_AI[lvl] || SK_AI.med, R = this.run(), race = skRace(this.m);
+    const value = race ? d => (R.tot + d === race.goal ? 60 : R.tot + d > race.goal ? race.back - R.tot - 8 : d) : d => d;
+    let sh; try { sh = await skPlan(this, SK.rack(this.st.pins.filter(p => p.st === 'up').map(p => ({ x: p.x, y: p.y, k: p.k }))), value, lvl); } catch (e) { return; }
+    if (this.dead || !sh) return;
+    await sleep(Math.max(0, 450 - (performance.now() - t0)) / SPEED); if (this.dead) return;
+    this.ui.status(...this.status()); this.aimShow = { shot: sh, t: 0 }; await sleep(750 / SPEED); if (this.dead) return; this.aimShow = null;
+    this.shoot({ a: sh.a * (1 + gauss() * L.sa), b: sh.b + gauss() * L.sb, ang: sh.ang + gauss() * L.sg }, true);
+  }
+  update(dt) {
+    const st = this.st;
+    for (const p of st.pins) {
+      const tz = p.z < 0 ? SK_FLOOR : 0; p.zv = p.zv == null ? tz : p.zv + (tz - p.zv) * Math.min(1, dt * 14);
+      if (p.fade != null && p.fade < 1) p.fade = Math.min(1, p.fade + dt * 2.4);
+      if (p.fadeIn != null && p.fadeIn < 1) p.fadeIn = Math.min(1, p.fadeIn + dt * 2.6);
+    }
+    if (this.state !== 'moving') return;
+    this.acc += dt; let k = 0;
+    while (this.acc > 0 && k++ < 800 && !SK.done(st)) { const h = SK.dt(st); SK.step(st, h, this.ev); this.acc -= h; }
+    const B = st.ball; if (B && !B.caught && B.sweep > 0.75 * Math.PI && this.camName !== 'watch') this.setCam('watch', 0.8);
+    if (SK.done(st)) { this.state = 'rest'; this.afterBall(); }
+  }
+  afterBall() {
+    const st = this.st, up = st.pins.filter(p => p.st === 'up'), d = this.upBefore - up.length;
+    this.balls.push(d); st.ball = null;
+    const R = this.run(), last = R.steps[R.steps.length - 1], race = skRace(this.m), reset = !!(last && last.reset && !R.done);
+    this.snapUp = reset || !up.length ? null : up.map(p => ({ x: p.x, y: p.y, k: p.k }));
+    this.saveBoard(); this.refresh();
+    if (last.kind === 'win') { Sound.chime(true); this.ui.flash(last.floorer ? 'Floorer! Spot on!' : 'Spot on!', `Exactly ${race.goal}`); }
+    else if (last.kind === 'bust') { Sound.chime(false); this.ui.flash('Bust!', `${last.before + last.v} is too many · back to ${race.back}`, true); }
+    else if (last.floorer) { Sound.chime(true); this.ui.flash('Floorer!', R.done ? 'All nine with one ball' : 'All nine with one ball · set them up again'); }
+    else if (!d) this.ui.flash('Missed', 'No pins down', true);
+    else this.ui.flash(`${plural(d, 'pin')} down`, reset ? 'All nine down · set them up again' : race ? `On ${R.tot} · needs ${race.goal - R.tot}` : `This turn ${R.tot}`);
+    for (const p of st.pins) if (p.st !== 'up') p.fade = 0;
+    setTimeout(() => {
+      if (this.dead) return; this.setCam('aim', 0.9);
+      st.pins = st.pins.filter(p => p.st === 'up');
+      if (reset || !st.pins.length) { st.pins = SK.rack().pins; st.pins.forEach(p => { p.fadeIn = 0; }); }
+      this.upBefore = st.pins.length; this.refresh();
+      setTimeout(() => !this.dead && this.next(), (R.done ? 650 : reset ? 650 : 250) / SPEED);
+    }, 750 / SPEED);
+  }
+}
+
+GAMES.skittles = {
+  id: 'skittles', name: 'Table Skittles', short: 'Table Skittles', tag: 'Swing the ball round the pole. Floor all nine.', icon: ICON.skittles,
+  blurb: 'Swing the ball round the pole. Race to 101.', Table: SkittlesTable, kind: 'turns',
+  seat: { min: 2, max: 6, label: 'Players or teams' },
+  options: [
+    { id: 'game', label: 'Game', sub: 'Race to exactly 101 (bust: back to 92), the cribbage board’s 61 (back to 52), or lives: lowest turn each round loses one', choices: [['101', '101'], ['61', '61 · cribbage'], ['lives5', 'Lives · 5'], ['lives3', 'Lives · 3']], def: '101' },
+    { id: 'first', label: 'Who swings first', sub: '', choices: [['toss', 'Coin toss'], [0, '@0']], def: 'toss' }
+  ],
+  info: [['sktable', '1 skittles table', 'the pole on your left'], ['skpin', '9 skittles', 'and a ball on a chain'], ['people', '2+ players', 'or two teams']],
+  init(m) {
+    const n = m.players.length, first = m.opts.first === 'toss' ? Math.floor(Math.random() * n) : 0;
+    if (skRace(m)) { m.s = { tot: Array(n).fill(0), cur: first, log: [] }; return; }
+    m.s = { lives: Array(n).fill(skLivesN(m)), first, cur: first, log: [], rounds: [] };
+    m.s.round = { n: 1, worth: 1, order: skRoundOrder(m), idx: 0, sc: {} }; m.s.cur = m.s.round.order[0];
+  },
+  unit(m) {
+    const s = m.s, who = s.cur, race = skRace(m);
+    if (race) return { who, title: `${rname(m, who)}'s turn`, sub: `On ${s.tot[who]} · needs ${race.goal - s.tot[who]} · three balls` };
+    const rd = s.round; return { who, title: `${rname(m, who)}'s turn`, sub: `${plural(s.lives[who], 'life', 'lives')} left · round ${rd.n}${rd.worth === 2 ? ', worth two lives' : ''}` };
+  },
+  apply(m, res) {
+    const s = m.s, who = s.cur, race = skRace(m), R = skRun(m, who, res.balls || []), floor = R.steps.some(x => x.floorer);
+    if (race) {
+      const before = s.tot[who];
+      s.log.push({ who, balls: R.steps.map(x => x.v), before, after: R.tot, end: R.end, floor, where: res.where });
+      s.tot[who] = R.tot;
+      if (R.win) { m.over = true; m.winner = [who]; return { t: `${rname(m, who)} hits ${race.goal} exactly!`, s: '' }; }
+      s.cur = (who + 1) % m.players.length; const gain = R.tot - before;
+      return { t: R.end === 'bust' ? `Bust! ${rname(m, who)} goes back to ${race.back}` : gain ? `${rname(m, who)} scores ${gain}` : `${rname(m, who)} scores nothing`, s: `${floor && R.end !== 'bust' ? 'With a floorer! ' : ''}On ${R.tot} · needs ${race.goal - R.tot}` };
+    }
+    const rd = s.round; rd.sc[who] = { tot: R.tot, first: R.first };
+    s.log.push({ who, balls: R.steps.map(x => x.v), tot: R.tot, floor, round: rd.n, where: res.where });
+    rd.idx++;
+    if (rd.idx < rd.order.length) { s.cur = rd.order[rd.idx]; return { t: `${rname(m, who)} scores ${R.tot}${floor ? ', with a floorer' : ''}`, s: `Round ${rd.n}: ${rname(m, s.cur)} next` }; }
+    const out = skSettle(m);
+    if (m.over) return { t: `${listAnd(m.winner.map(i => rname(m, i)))} ${m.winner.length > 1 ? 'share it' : 'is the last one standing'}!`, s: skSettleText(m, out) };
+    return { t: `End of round ${rd.n}`, s: skSettleText(m, out) };
+  },
+  chips(m) {
+    const race = skRace(m);
+    if (race) return m.players.map((p, i) => ({ name: p.name, v: m.s.tot[i], small: '/' + race.goal, sub: `needs ${race.goal - m.s.tot[i]}`, on: !m.over && m.s.cur === i }));
+    const rd = m.s.round;
+    return m.players.map((p, i) => { const l = m.s.lives[i], sc = rd && rd.sc[i]; return { name: p.name, v: l > 0 ? l : 'out', small: l > 0 ? (l === 1 ? ' life' : ' lives') : '', sub: l <= 0 ? '&nbsp;' : sc ? `scored ${sc.tot}` : 'to play', on: !m.over && m.s.cur === i }; });
+  },
+  board(m) {
+    const race = skRace(m), balls = l => l.balls.length ? l.balls.join(' · ') : 'no balls';
+    if (race) {
+      const rows = m.s.log.slice().reverse().map(l => `<div class="tr"><div class="tx"><b>${pname(m, l.who)}${l.end === 'win' ? ' · wins' : l.end === 'bust' ? ' · bust' : l.floor ? ' · floorer!' : ''}</b><span>${balls(l)}${l.where === 'real' ? ' · real table' : ''}</span></div><div class="v">${skSigned(l.after - l.before)}<small> → ${l.after}</small></div></div>`).join('');
+      return `<table class="grid"><tr><th>Player</th><th>Score</th><th>Turns</th></tr>${m.players.map((p, i) => `<tr><td class="nm">${pname(m, i)}</td><td class="tot">${m.s.tot[i]}</td><td>${m.s.log.filter(l => l.who === i).length}</td></tr>`).join('')}</table>
+      <div class="tbl" style="margin-top:12px"><div class="th"><span>Turn by turn · latest first</span><span>Score</span></div>${rows || '<div class="tr"><div class="tx"><span>No turns yet</span></div></div>'}</div>
+      <p class="note">First to exactly ${race.goal}. Go over and you’re back to ${race.back}, a floorer short.</p>`;
+    }
+    const s = m.s, rounds = s.rounds.slice().reverse().map(r => `<div class="tr"><div class="tx"><b>Round ${r.n}${r.worth === 2 ? ' · two lives' : ''}</b><span>${r.order.map(i => `${pname(m, i)} ${r.sc[i].tot}${r.worth === 2 ? ` (first ${r.sc[i].first})` : ''}`).join(' · ')}</span><span>${esc(skSettleText(m, { res: r.res, voided: r.voided, ties: [] }))}</span></div></div>`).join('');
+    const now = s.round && !m.over ? Object.keys(s.round.sc).map(i => `${pname(m, +i)} ${s.round.sc[i].tot}`).join(' · ') : '';
+    return `<table class="grid"><tr><th>Player</th><th>Lives</th><th>Turns</th></tr>${m.players.map((p, i) => `<tr><td class="nm">${pname(m, i)}</td><td class="tot">${s.lives[i] > 0 ? s.lives[i] : 'out'}</td><td>${s.log.filter(l => l.who === i).length}</td></tr>`).join('')}</table>
+    ${now ? `<p class="note" style="margin-top:10px">Round ${s.round.n} so far${s.round.worth === 2 ? ' (worth two lives)' : ''}: ${now}</p>` : ''}
+    <div class="tbl" style="margin-top:12px"><div class="th"><span>Round by round · latest first</span><span></span></div>${rounds || '<div class="tr"><div class="tx"><span>No rounds finished yet</span></div></div>'}</div>
+    <p class="note">The lowest turn each round loses a life. A tie makes the next round worth two: one for the lowest first ball, one for the lowest turn. Last one with a life wins.</p>`;
+  },
+  entryInit() { return { balls: [] }; },
+  entryHTML(m, st, u) {
+    const R = skRun(m, u.who, st.balls), race = skRace(m), n = st.balls.length, last = R.steps[n - 1], stand = R.stand;
+    const slots = [0, 1, 2].map(i => i < n ? `<button class="skb ${R.steps[i].v ? '' : 'miss'} ${R.steps[i].floorer ? 'fl' : ''}" data-tg="e:rm:${i}" aria-label="Ball ${i + 1}: ${plural(R.steps[i].v, 'pin')} down. Tap to take it out">${R.steps[i].v}</button>` : `<span class="skb e">${i + 1}</span>`).join('');
+    const pad = `<div class="skpad">${[...Array(stand + 1)].map((_, k) => `<button class="${k === 9 ? 'nine' : ''}" data-tg="e:ball:${k}" ${R.done ? 'disabled' : ''} aria-label="${plural(k, 'pin')} down">${k}<small>${k === 9 ? 'floorer!' : k === stand && stand < 9 && k ? 'the rest' : k === 1 ? 'pin' : 'pins'}</small></button>`).join('')}</div>`;
+    let msg;
+    if (!last) msg = race ? `On ${R.tot} · needs ${race.goal - R.tot}` : 'Three balls';
+    else if (last.kind === 'win') msg = `Exactly ${race.goal}! That’s the game`;
+    else if (last.kind === 'bust') msg = `Bust! Back to ${race.back}. Turn over`;
+    else if (R.done) msg = 'All three balls thrown';
+    else if (last.floorer) msg = 'Floorer! Set all nine up again';
+    else if (last.reset) msg = 'All nine down: set them up again';
+    else msg = `${plural(stand, 'pin')} still up`;
+    const head = race ? `${pname(m, u.who)} · on ${m.s.tot[u.who]}, needs ${race.goal - m.s.tot[u.who]}` : `${pname(m, u.who)} · ${plural(m.s.lives[u.who], 'life', 'lives')} left`;
+    return `<div class="panel lite"><h3>${head}</h3><p class="note" style="margin:0">After each ball, tap how many pins went down. Went round the pole twice? That’s a foul: stand those pins up again and tap 0. Tap a ball above to take it out.</p></div>
+      <div class="skrow">${slots}</div>
+      <p class="skup">${ICON.skpin}${R.done ? 'Turn over' : `${plural(stand, 'pin')} up for ball ${n + 1}`}</p>${R.done ? '' : pad}
+      <div class="big" style="margin-top:10px">${R.tot}<small>${esc(msg)}</small></div>
+      <div class="btns"><button class="btn primary wide" data-tg="e:done">${R.done || !n ? 'Save turn' : `Save turn · ${3 - n} more missed`}</button></div>`;
+  },
+  entryAct(m, st, a, v) {
+    const R = skRun(m, m.s.cur, st.balls);
+    if (a === 'ball' && !R.done) st.balls.push(+v);
+    else if (a === 'rm') st.balls.splice(+v);
+    else if (a === 'done') return { done: { balls: st.balls.slice() } };
+  },
+  rules: {
+    pre: ['Before you start', '<b>Toss a coin</b> to see who goes first. <b>Stand facing the table</b> with the pole on your left. <b>Set all nine pins</b> on their spots, in a diamond.'],
+    s1: ['Your turn', [['Swing it to the left of the pole.', 'The ball goes round behind it and hits the pins on the way back to you.'], ['Catch it as it comes back.', 'Once round the pole per ball, no more.'], ['Three balls a turn.', 'Pins that fall stay down for your next ball.'], ['All nine down?', 'Set them all up again and keep going.']]],
+    s2: ['Scoring', [[1, 'point', 'Each pin knocked down'], [9, 'a floorer', 'All nine with one ball'], [27, 'points', 'The best a turn can be']], ['a floorer, then 4, then 2', '= 15 points'], 'Count the pins down after every ball.'],
+    s3: ['Count up to 101', 'Ball by ball, near the end.', ['Ball by ball · near the end', 'Total'], [['On 90, knock down 6', 'Still under 101. Keep swinging.', 96, false], ['On 96, knock down 8', 'Over 101! Bust: back to 92.', 92, false], ['On 92, floor all nine', 'Exactly 101. You win!', 101, true]]],
+    s4: ['Good to know', [['Round twice?', 'Foul. Stand those pins up again: that ball scores nothing.'], ['Cribbage board?', 'Play to 61. Bust and you go back to 52.'], ['Lives.', 'Five each. Lowest turn every round loses one. A tie makes the next round worth two.']]],
+    post: ['Where it’s from', 'Also called <b>bar skittles</b>, pole skittles or <b>Devil among the Tailors</b>: the ball is the devil and the pins are the tailors. Aim for the furthest pin first.'],
+    banner: ['First to exactly <em>101</em> wins!', 'Go over? Back to 92, a floorer short. Short on time? Play to 61.']
+  },
+  appNotes: ['Pull right for power and down to hold the ball further out in front of the pole, then let go. It swings out to the left, round behind the pole and back through the pins. The dashed line shows the swing out; it comes back just as wide on the other side. Every swing wobbles a little.', 'The app catches the ball as it comes back, so it never goes round twice. Fallen pins are cleared after each ball; ones that wobble but stay up stay where they are.']
+};
+
+/* =========================================================
    App shell: home, setup, play loop, score entry, overlays
    ========================================================= */
 const CPU_NAMES = ['Hamish', 'Fiona', 'Angus', 'Isla', 'Rab', 'Kirsty'];
@@ -2539,7 +3058,7 @@ function humanName(i) {
   if (i === 0) { try { const f = JSON.parse(localStorage.getItem('pubgames.firstName')); if (f) return f; } catch (e) { } if (window.PubHome) return 'Jeanette'; }
   return `Player ${i + 1}`;
 }
-const ORDER = ['toad', 'hookey', 'sjoel', 'shuffle', 'bank', 'curling', 'airhockey', 'shove'];
+const ORDER = ['toad', 'hookey', 'skittles', 'sjoel', 'shuffle', 'bank', 'curling', 'airhockey', 'shove'];
 const MODES = {
   app: { n: 'Play in the app', d: 'Slide, throw and shove on the phone. Add the computer if you’re short of players.', ic: 'phone' },
   real: { n: 'Keep score at the real table', d: 'Play the real board. The app keeps the score and the rules.', ic: 'pencil' },
@@ -2590,7 +3109,7 @@ const App = {
       <ol class="steps"><li><span class="L">A</span><span><b>Touch the table</b> where you want to shoot from.</span></li><li><span class="L">B</span><span><b>Pull back</b> like a catapult. Further back means more power.</span></li><li><span class="L">C</span><span><b>Let go</b> to shoot. Every shot wobbles a little, just like the real thing.</span></li></ol>
       <div class="sec"><span class="n">2</span>Three ways to play</div>
       <div class="modes">${['app', 'real', 'hybrid'].map(k => `<div class="mode"><span class="mi">${ICON[MODES[k].ic]}</span><span><b>${MODES[k].n}</b><span>${k === 'hybrid' ? 'Mix the real board and the phone in one match. Great when there’s only one table, or someone fancies a go on the app.' : MODES[k].d}</span></span></div>`).join('')}</div>
-      <div class="banner"><div><div class="t">Eight games. <em>One</em> scoreboard.</div><div class="s">Every game has its rules card inside.</div></div><div class="ic">${ICON.crown}</div></div>
+      <div class="banner"><div><div class="t">Nine games. <em>One</em> scoreboard.</div><div class="s">Every game has its rules card inside.</div></div><div class="ic">${ICON.crown}</div></div>
       <p class="foot">Pub games night · table games</p></div>`;
     window.scrollTo(0, 0);
   },
@@ -3020,7 +3539,7 @@ function homeView() {
   const tile = (id, k, arr) => { const g = G[id], wide = k === arr.length - 1 && arr.length % 2 === 1; return `<button class="tile ${wide ? 'wide' : ''}" data-act="open" data-arg="${id}"><span class="ic">${g.icon()}</span><span class="tx"><b>${g.name}</b><small>${g.tagline}</small><span class="pp">${I.people}${g.players}</span></span></button>`; };
   return `<div class="sheet">
     ${headHTML('Pub Games', 'Roll, deal, slide and throw. The games from the rules cards, in one place.', homeArt())}
-    ${infoHTML([['dice', '11 dice, card &amp; tile games', 'Zanzibar to Texas 42'], ['<svg viewBox="0 0 24 24" fill="none" stroke="#4e1f4d" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M8 3h8l4 18H4z" fill="#f8dca8"/><path d="M8.6 8h6.8"/><ellipse cx="12" cy="15.5" rx="3.2" ry="1.6" fill="#dd7f27"/></svg>', '8 table games', 'Toad to Shove Ha’penny'], ['people', 'Play your way', 'friends, computer or the real table']])}
+    ${infoHTML([['dice', '11 dice, card &amp; tile games', 'Zanzibar to Texas 42'], ['<svg viewBox="0 0 24 24" fill="none" stroke="#4e1f4d" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M8 3h8l4 18H4z" fill="#f8dca8"/><path d="M8.6 8h6.8"/><ellipse cx="12" cy="15.5" rx="3.2" ry="1.6" fill="#dd7f27"/></svg>', '9 table games', 'Toad to Shove Ha’penny'], ['people', 'Play your way', 'friends, computer or the real table']])}
     ${sec(1, 'Dice games')}<p class="note" style="margin:-4px 0 10px">Roll the app’s dice, roll your own and tap them in, or a bit of both.</p><div class="tiles">${ORDER.dice.map(tile).join('')}</div>
     ${sec(2, 'Card games')}<div class="tiles">${ORDER.cards.map(tile).join('')}</div>
     ${sec(3, 'Dominoes')}<div class="tiles">${ORDER.dominoes.map(tile).join('')}</div>
