@@ -658,12 +658,24 @@ button.dom.ok:hover{transform:translateY(-4px)}
 .tg .skpad button.nine{background:var(--orange);border-color:var(--orange);color:#fff}
 .tg .skpad button.nine small{color:#fff}
 .tg .skpad button[disabled]{opacity:.4}
+.tg .rcrow{display:flex;gap:10px;justify-content:center;margin:12px 0 4px}
+.tg .rcd{min-width:52px;height:46px;border-radius:12px;display:grid;place-items:center;font-weight:700;font-size:17px;color:#fff;background:var(--plum);border:2px solid var(--plum);padding:0 8px;font-family:inherit}
+.tg .rcd.miss{background:#efe3ef;color:var(--muted)}
+.tg .rcd.e{background:none;border:2px dashed rgba(78,31,77,.35);color:var(--muted);font-weight:600;font-size:12px}
+.tg .rcup{text-align:center;margin:6px 0 0;font-weight:600;color:var(--plum);font-size:14px}
+.tg .rcpad{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:8px;margin:10px 0 4px}
+.tg .rcpad button{min-height:64px;border-radius:14px;border:2px solid var(--plum);background:#fff;color:var(--plum);font-weight:700;font-size:21px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 2px;font-family:inherit;line-height:1.1}
+.tg .rcpad button small{font-weight:500;font-size:10.5px;color:var(--muted);text-align:center}
+.tg .rcpad button.hit{background:var(--orange);border-color:var(--orange);color:#fff}
+.tg .rcpad button.hit small{color:#fff}
+.tg .rcpad button:active{filter:brightness(.9)}
+.tg .rcpad button.miss{font-size:16px}
 </style>
 </head>
 <body>
 <main id="app"></main>
 <script>
-/* ===== Table games (Toad, Hookey, Table Skittles, Sjoelbak, Shuffleboard, Bank Shot, Curling, Air Hockey, Shove Ha'penny) ===== */
+/* ===== Table games (Toad, Hookey, Round the Clock, Table Skittles, Sjoelbak, Shuffleboard, Bank Shot, Curling, Air Hockey, Shove Ha'penny) ===== */
 (function () {
 'use strict';
 
@@ -2329,6 +2341,327 @@ GAMES.hookey = {
 };
 
 /* =========================================================
+   Round the Clock: darts. Hit 1 to 20 in order, then the bull.
+   A standard board, seen face on from the oche. Board coordinates: u across and v up from the bull, in millimetres.
+   ========================================================= */
+const RC = { DB: 6.35, B: 15.9, TI: 99, TO: 107, DI: 162, DO: 170, EDGE: 225.5 }; // radii: bullseye, bull, treble ring, double ring, edge of the board
+const RC_NUMS = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5]; // clockwise from the top
+const RC_SIG = { easy: 28, med: 21, hard: 13 }; // how far the computer's darts stray from where it aims (mm)
+const RC_WOBBLE = 15; // and a person's, on top of their own aim
+const RC_COL = { dark: '#2b2628', light: '#f3e2c0', red: '#d0452b', green: '#2f7d4f', wire: 'rgba(214,208,220,.85)', surround: '#1f1b1e' };
+const RC_FLIGHT = [COL.side[0].top, COL.side[1].top]; // orange and plum flights, turn about
+ICON.clock = `<svg viewBox="0 0 64 48"><circle cx="34" cy="26" r="20" fill="#3b3b3b"/><circle cx="31" cy="23" r="20" fill="#2b2628" ${S}/>${RC_NUMS.map((_, i) => { const a0 = (i * 18 - 99) * Math.PI / 180, a1 = a0 + Math.PI / 10, p = (a, r) => `${(31 + r * Math.cos(a)).toFixed(2)} ${(23 + r * Math.sin(a)).toFixed(2)}`; return `<path d="M31 23L${p(a0, 15)}A15 15 0 0 1 ${p(a1, 15)}z" fill="${i % 2 ? '#f3e2c0' : '#2b2628'}"/>`; }).join('')}<circle cx="31" cy="23" r="14.2" fill="none" stroke="#d0452b" stroke-width="1.7"/><circle cx="31" cy="23" r="9" fill="none" stroke="#2f7d4f" stroke-width="1.5"/><circle cx="31" cy="23" r="2.9" fill="#2f7d4f"/><circle cx="31" cy="23" r="1.3" fill="#d0452b"/><path d="M36 18.5l8.5-7.5" stroke="#3b3b3b" stroke-width="4.4" stroke-linecap="round"/><path d="M36 18.5l8.5-7.5" stroke="#c9c4cf" stroke-width="2.4" stroke-linecap="round"/><path d="M44.5 11l4-3.5" stroke="#3b3b3b" stroke-width="1.6"/><path d="M48.5 7.5l2-6.5 7.5 4.5-3 6z" fill="#dd7f27" ${S}/></svg>`;
+ICON.dartboard = `<svg viewBox="0 0 24 24" fill="none" ${S}><circle cx="12" cy="12" r="9" fill="#f8dca8"/><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4" stroke-width="1.3"/><circle cx="12" cy="12" r="5.6" fill="none"/><circle cx="12" cy="12" r="1.9" fill="#dd7f27"/></svg>`;
+ICON.dart = `<svg viewBox="0 0 24 24" fill="none" ${S}><path d="M3 21l3.5-3.5"/><path d="M6.5 17.5l5.5-5.5" stroke-width="4.2"/><path d="M12 12l3-3"/><path d="M15 9l-.6-5.6L20.6 9.6z" fill="#dd7f27"/></svg>`;
+
+// what a dart at (u, v) scores: 'S7', 'D7', 'T7', '25', '50', 'M' (on the board, no score) or 'O' (off the board).
+// At the real board a hit on the bull can be tapped in as 'B' (25 or 50), and a miss as 'X'.
+function rcHit(u, v) {
+  const r = Math.hypot(u, v); if (r <= RC.DB) return '50'; if (r <= RC.B) return '25'; if (r > RC.EDGE) return 'O'; if (r > RC.DO) return 'M';
+  const a = (Math.atan2(u, v) / DEG + 369) % 360, n = RC_NUMS[Math.floor(a / 18) % 20];
+  return (r >= RC.TI && r <= RC.TO ? 'T' : r >= RC.DI ? 'D' : 'S') + n;
+}
+function rcDart(c) {
+  if (c === '25') return { n: 25, x: 1 }; if (c === '50') return { n: 25, x: 2 }; if (c === 'B') return { n: 25, x: 0 };
+  const k = /^([SDT])(\d+)$/.exec(c || ''); return k ? { n: +k[2], x: k[1] === 'T' ? 3 : k[1] === 'D' ? 2 : 1 } : null;
+}
+const rcShow = c => (c === 'B' ? 'Bull' : !rcDart(c) ? '–' : c[0] === 'S' ? c.slice(1) : c);
+const rcNeed50 = m => m.opts.finish === 'eye' || m.opts.twist === 'doubles'; // doubles only: the bull's double is the 50
+const rcTarget = p => (p < 20 ? String(p + 1) : p === 20 ? 'Bull' : '✓'); // p: 0 to 19 needs 1 to 20, 20 needs the bull, 21 is all the way round
+const rcNeed = (m, p) => (p < 20 ? `needing ${p + 1}` : p === 20 ? (rcNeed50(m) ? 'needing the bullseye' : 'needing the bull') : 'all the way round');
+const rcCap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const rcLegs = m => (m.players.length < 2 ? 1 : +m.opts.legs || 1);
+const rcBestKey = m => `clock.best.${m.opts.twist}.${m.opts.finish}`;
+// how far one dart moves you on from p. The jump twist can't take you past the bull
+function rcAdv(m, p, c) {
+  const d = rcDart(c), tw = m.opts.twist; if (!d || p > 20) return 0;
+  if (p === 20) return d.n === 25 && (!rcNeed50(m) || d.x === 2) ? 1 : 0;
+  if (d.n !== p + 1) return 0;
+  if (tw === 'doubles') return d.x === 2 ? 1 : 0;
+  return tw === 'jump' ? Math.min(d.x, 20 - p) : 1;
+}
+// Plays a turn's darts in order. The app, the real-board entry and the scoreboard all score turns here.
+function rcRun(m, who, darts) {
+  const start = m.s.at[who]; let p = start; const steps = [];
+  for (let i = 0; i < darts.length && i < 3 && p <= 20; i++) {
+    const c = darts[i], before = p, a = rcAdv(m, p, c); p += a;
+    steps.push({ c, before, after: p, adv: a, kind: !a ? 'miss' : p > 20 ? 'win' : 'hit' });
+  }
+  return { at: p, steps, win: p > 20, done: p > 20 || steps.length >= 3, gain: p - start };
+}
+// where the computer aims: along the middle of the number it needs, at the distance out that moves it on furthest on average
+function rcAim(m, p, sig) {
+  if (p >= 20) return { u: 0, v: 0 };
+  const th = RC_NUMS.indexOf(p + 1) * 18 * DEG, su = Math.sin(th), sv = Math.cos(th), S = [];
+  for (let i = 0; i < 360; i++) S.push([gauss() * sig, gauss() * sig]);
+  let best = null, bv = -1;
+  for (const r of [35, 55, 75, 90, 103, 115, 125, 135, 145, 155, 162, 166]) {
+    const u = r * su, v = r * sv; let t = 0;
+    for (const [a, b] of S) t += rcAdv(m, p, rcHit(u + a, v + b));
+    if (t > bv + 1e-9) { bv = t; best = { u, v }; }
+  }
+  return best;
+}
+
+class ClockTable extends SlideTable {
+  init() {
+    this.who = this.unit.who; this.side = this.who % 2; this.darts = []; this.fly = null; this.thrown = 0; this.bg = COL.soft; this.showReady = false;
+    this.aim = { u: 0, v: 0 }; // each turn starts aimed at the bull; after that, where the last dart was aimed
+  }
+  /* darts stay in the board if you leave partway through a turn */
+  get keepBoard() { return 'The darts'; }
+  saveBoard() {
+    const done = this.darts.filter(d => d.done); if (!done.length || this.state === 'done') return;
+    store.set(BOARD_KEY(this.G.id), { id: this.bid, darts: done.map(d => ({ c: d.c, u: Math.round(d.u * 10) / 10, v: Math.round(d.v * 10) / 10 })), aim: { u: Math.round(this.aim.u), v: Math.round(this.aim.v) } });
+  }
+  loadBoard() {
+    const s = store.get(BOARD_KEY(this.G.id), null); if (!s || s.id !== this.bid || !Array.isArray(s.darts) || !s.darts.length) return false;
+    this.darts = s.darts.slice(0, 3).map(o => ({ c: String(o.c), u: +o.u || 0, v: +o.v || 0, done: true, state: o.c === 'O' ? 'gone' : 'in' }));
+    if (s.aim) this.aim = { u: +s.aim.u || 0, v: +s.aim.v || 0 };
+    this.thrown = this.shots = this.darts.length; return true;
+  }
+  codes() { return this.darts.filter(d => d.done).map(d => d.c); }
+  run() { return rcRun(this.m, this.who, this.codes()); }
+  nextShooter() { if (this.run().done) return null; const p = this.m.players[this.who]; return { side: this.side, cpu: p.kind === 'cpu', name: p.name }; }
+  status() {
+    const p = this.m.players[this.who], R = this.run(), k = Math.min(3, this.thrown + (this.state === 'moving' || R.done ? 0 : 1)); // the dart in the air, or the one to come
+    return [`${p.name} · dart ${Math.max(1, k)} of 3`, rcCap(rcNeed(this.m, R.at)) + (R.gain ? ` · on ${R.gain} this turn` : '')];
+  }
+  tipText() { return 'Slide to aim, let go to throw'; }
+  result() { return { darts: this.codes() }; }
+  /* --- the board is drawn flat, face on, so there's no camera to speak of --- */
+  camPresets() { return { aim: { E: [0, -1000, 1000], T: [0, 1000, 0], F: 500, ox: 0, oy: 0 } }; }
+  resize() {
+    super.resize(); if (!this.W) return;
+    const top = 8, bottom = 40, size = Math.min(this.W - 16, this.H - top - bottom);
+    this.k = size / 2 / (RC.EDGE + 4); this.cx = this.W / 2; this.cy = top + (this.H - top - bottom) / 2; this._bgKey = null;
+  }
+  S(u, v) { return [this.cx + u * this.k, this.cy - v * this.k]; }
+  drawTable(g) { // the board never changes, so it's painted once and copied each frame
+    const key = [this.W, this.H, this.dpr].join('x');
+    if (this._bgKey !== key) {
+      this._bgKey = key; this._bg = document.createElement('canvas'); this._bg.width = this.cv.width; this._bg.height = this.cv.height;
+      const b = this._bg.getContext('2d'); b.setTransform(this.dpr, 0, 0, this.dpr, 0, 0); this.paintBoard(b);
+    }
+    g.drawImage(this._bg, 0, 0, this.W, this.H);
+    this.drawTarget(g);
+    for (const d of this.darts) if (d.state === 'in') { const [x, y] = this.S(d.u, d.v); this.dartAt(g, x, y, this.k, this.side); }
+  }
+  paintBoard(g) {
+    const k = this.k, cx = this.cx, cy = this.cy, ring = (r, col) => { g.fillStyle = col; g.beginPath(); g.arc(cx, cy, r * k, 0, 7); g.fill(); };
+    g.fillStyle = this.bg; g.fillRect(0, 0, this.W, this.H);
+    g.fillStyle = 'rgba(46,16,45,.22)'; g.beginPath(); g.arc(cx + 6, cy + 8, RC.EDGE * k, 0, 7); g.fill();
+    ring(RC.EDGE, RC_COL.surround); g.strokeStyle = COL.ink; g.lineWidth = 2.5; g.stroke();
+    for (let i = 0; i < 20; i++) { // canvas angles run clockwise, like the numbers
+      const a0 = (i * 18 - 99) * DEG, a1 = a0 + 18 * DEG, dark = i % 2 === 0;
+      const band = (r0, r1, col) => { g.beginPath(); g.arc(cx, cy, r1 * k, a0, a1); g.arc(cx, cy, r0 * k, a1, a0, true); g.closePath(); g.fillStyle = col; g.fill(); };
+      band(RC.B, RC.TI, dark ? RC_COL.dark : RC_COL.light); band(RC.TI, RC.TO, dark ? RC_COL.red : RC_COL.green);
+      band(RC.TO, RC.DI, dark ? RC_COL.dark : RC_COL.light); band(RC.DI, RC.DO, dark ? RC_COL.red : RC_COL.green);
+    }
+    ring(RC.B, RC_COL.green); ring(RC.DB, RC_COL.red);
+    g.strokeStyle = RC_COL.wire; g.lineWidth = Math.max(0.6, 0.9 * k);
+    for (const r of [RC.DB, RC.B, RC.TI, RC.TO, RC.DI, RC.DO]) { g.beginPath(); g.arc(cx, cy, r * k, 0, 7); g.stroke(); }
+    g.beginPath(); for (let i = 0; i < 20; i++) { const a = (i * 18 - 99) * DEG, c = Math.cos(a), s = Math.sin(a); g.moveTo(cx + c * RC.B * k, cy + s * RC.B * k); g.lineTo(cx + c * RC.DO * k, cy + s * RC.DO * k); } g.stroke();
+    g.fillStyle = '#fff'; g.font = `700 ${Math.max(9, 23 * k).toFixed(1)}px Lexend, system-ui, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    RC_NUMS.forEach((n, i) => { const a = (i * 18 - 90) * DEG; g.fillText(String(n), cx + Math.cos(a) * 197 * k, cy + Math.sin(a) * 197 * k + 0.5); });
+  }
+  drawTarget(g) { // the number you need, lit up
+    if (this.state === 'done') return; const p = this.run().at; if (p > 20) return;
+    const k = this.k, cx = this.cx, cy = this.cy;
+    g.save(); g.strokeStyle = COL.orange; g.lineWidth = 3; g.lineJoin = 'round'; g.globalAlpha = 0.6 + 0.35 * Math.sin(performance.now() / 280); g.shadowColor = COL.orange; g.shadowBlur = 8;
+    g.beginPath();
+    if (p === 20) g.arc(cx, cy, (rcNeed50(this.m) ? RC.DB : RC.B) * k + 2, 0, 7);
+    else {
+      const i = RC_NUMS.indexOf(p + 1), a0 = (i * 18 - 99) * DEG, a1 = a0 + 18 * DEG, a = (i * 18 - 90) * DEG, r0 = this.m.opts.twist === 'doubles' ? RC.DI : RC.B;
+      g.arc(cx, cy, RC.DO * k + 1, a0, a1); g.arc(cx, cy, r0 * k - 1, a1, a0, true); g.closePath();
+      g.moveTo(cx + Math.cos(a) * 197 * k + 14 * k + 3, cy + Math.sin(a) * 197 * k); g.arc(cx + Math.cos(a) * 197 * k, cy + Math.sin(a) * 197 * k, 14 * k + 3, 0, 7);
+    }
+    g.stroke(); g.restore();
+  }
+  dartAt(g, x, y, k, side, alpha = 1) { // a dart in the board, seen from the oche: the point at (x, y), flights up and to the right
+    const L = k * 0.92, sx = x + 8 * L, sy = y - 31 * L, fx = x + 12 * L, fy = y - 45 * L;
+    g.save(); g.globalAlpha = alpha; g.lineCap = 'round'; g.lineJoin = 'round';
+    g.strokeStyle = 'rgba(0,0,0,.32)'; g.lineWidth = 3.2 * L; g.beginPath(); g.moveTo(x, y); g.lineTo(x + 15 * L, y - 9 * L); g.stroke(); // its shadow on the board
+    g.strokeStyle = COL.ink; g.lineWidth = 3.4 * L + 1.6; g.beginPath(); g.moveTo(x + 1.5 * L, y - 5 * L); g.lineTo(x + 5 * L, y - 19 * L); g.stroke();
+    g.strokeStyle = '#d4cfda'; g.lineWidth = 3.4 * L; g.stroke(); // the barrel
+    g.strokeStyle = COL.ink; g.lineWidth = 1.5 * L + 0.6; g.beginPath(); g.moveTo(x, y); g.lineTo(x + 1.5 * L, y - 5 * L); g.moveTo(x + 5 * L, y - 19 * L); g.lineTo(sx, sy); g.stroke(); // point and shaft
+    g.fillStyle = RC_FLIGHT[side]; g.lineWidth = 1.3; g.beginPath(); g.moveTo(sx, sy); g.lineTo(sx - 7 * L, sy - 9 * L); g.lineTo(fx, fy); g.lineTo(sx + 8 * L, sy - 4 * L); g.closePath(); g.fill(); g.stroke();
+    g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 1; g.beginPath(); g.moveTo(sx, sy); g.lineTo(fx - 1 * L, fy + 2 * L); g.stroke();
+    g.restore();
+  }
+  drawExtra(g) {
+    for (const d of this.darts) if (d.state === 'drop') { const [x, y] = this.S(d.u, d.v); this.dartAt(g, x, y, this.k, this.side, clamp(1 - (d.fade || 0), 0, 1)); }
+    const f = this.fly, hx = this.W * 0.62, hy = this.H + 30;
+    if (f) { const t = clamp(f.t, 0, 1), [ax, ay] = this.S(f.u, f.v), x = lerp(hx, ax, t), y = lerp(hy, ay, t) - 4 * t * (1 - t) * Math.min(60, this.H * 0.1); this.dartAt(g, x, y, this.k * lerp(2.6, 1, t), this.side); }
+    const R = this.run(), left = R.done || this.state === 'done' ? 0 : Math.max(0, 3 - this.thrown);
+    for (let i = 0; i < left; i++) this.dartAt(g, 14 + i * 18, this.H - 44, 0.62, this.side); // darts in hand, clear of the tip below
+    if (this.state === 'aim' && this.human() && !this.drag) this.drawReticle(g, this.aim, RC_WOBBLE, 0.55 + 0.25 * Math.sin(performance.now() / 260));
+  }
+  dragShot() { return this.drag ? { u: this.aim.u, v: this.aim.v } : null; }
+  drawAim(g, sh) {
+    const sig = this.human() ? RC_WOBBLE : RC_SIG[this.m.diff || 'med'];
+    this.drawReticle(g, sh, sig, 1); if (this.drag) this.drawLoupe(g, sh);
+  }
+  hitLabel(c) { return c === 'O' ? 'Off' : c === 'M' ? 'No score' : rcShow(c); }
+  drawReticle(g, a, sig, alpha) {
+    const [x, y] = this.S(a.u, a.v), r = Math.max(6, sig * this.k), c = rcHit(a.u, a.v);
+    g.save(); g.globalAlpha = alpha; g.strokeStyle = '#fff'; g.lineWidth = 4.5; g.lineCap = 'round';
+    const mark = () => { g.beginPath(); g.arc(x, y, r, 0, 7); g.moveTo(x - 7, y); g.lineTo(x + 7, y); g.moveTo(x, y - 7); g.lineTo(x, y + 7); g.stroke(); };
+    g.setLineDash([5, 5]); mark(); g.strokeStyle = COL.orange; g.lineWidth = 2.4; mark(); g.setLineDash([]);
+    const txt = this.hitLabel(c); g.font = '700 13px Lexend, system-ui, sans-serif'; const w = Math.max(30, g.measureText(txt).width + 16);
+    let tx = x + r + 6, ty = y - r - 4; if (tx + w > this.W - 4) tx = x - r - 6 - w; if (ty < 14) ty = y + r + 14;
+    g.fillStyle = COL.orange; rr(g, tx, ty - 11, w, 22, 11); g.fill();
+    g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, tx + w / 2, ty + 0.5); g.restore();
+  }
+  drawLoupe(g, a) { // a close-up of where you're aiming, out of the way of your finger
+    if (!this._bg) return; const [x, y] = this.S(a.u, a.v), R = Math.min(56, this.W * 0.15), z = 2.6, d = this.dpr;
+    const lx = x > this.W / 2 ? 8 + R : this.W - 8 - R, ly = 8 + R;
+    g.save(); g.beginPath(); g.arc(lx, ly, R, 0, 7); g.fillStyle = this.bg; g.fill(); g.clip();
+    const sw = 2 * R / z; g.drawImage(this._bg, (x - sw / 2) * d, (y - sw / 2) * d, sw * d, sw * d, lx - R, ly - R, 2 * R, 2 * R);
+    g.strokeStyle = '#fff'; g.lineWidth = 3.5; g.beginPath(); g.moveTo(lx - 9, ly); g.lineTo(lx + 9, ly); g.moveTo(lx, ly - 9); g.lineTo(lx, ly + 9); g.stroke();
+    g.strokeStyle = COL.orange; g.lineWidth = 1.8; g.stroke(); g.restore();
+    g.save(); g.strokeStyle = COL.plum; g.lineWidth = 2.5; g.beginPath(); g.arc(lx, ly, R, 0, 7); g.stroke(); g.restore();
+  }
+  /* --- input: touch anywhere and slide to move the aim; let go to throw --- */
+  down(e) {
+    if (this.state !== 'aim' || !this.human() || this.drag) return; e.preventDefault(); Sound.init();
+    try { this.cv.setPointerCapture(e.pointerId); } catch (_) { }
+    const p = this.pt(e); this.drag = { id: e.pointerId, sx: p[0], sy: p[1], x: p[0], y: p[1], a0: { u: this.aim.u, v: this.aim.v }, t0: performance.now(), moved: 0 }; this.ui.tip(null);
+  }
+  move(e) {
+    const d = this.drag; if (!d || e.pointerId !== d.id) return; e.preventDefault(); const p = this.pt(e); d.x = p[0]; d.y = p[1];
+    d.moved = Math.max(d.moved, Math.hypot(d.x - d.sx, d.y - d.sy));
+    const f = 0.8 / this.k; let u = d.a0.u + (d.x - d.sx) * f, v = d.a0.v - (d.y - d.sy) * f; const r = Math.hypot(u, v), lim = RC.EDGE + 12;
+    if (r > lim) { u *= lim / r; v *= lim / r; } this.aim = { u, v };
+  }
+  up(e) {
+    const d = this.drag; if (!d || e.pointerId !== d.id) return; this.drag = null; if (this.state !== 'aim') return;
+    if (d.moved < 5 && performance.now() - d.t0 < 220) { this.ui.tip('Slide your finger to aim, then let go'); return; }
+    this.shoot({ u: this.aim.u, v: this.aim.v });
+  }
+  shoot(sh) {
+    Sound.init(); Sound.slide(); this.state = 'moving'; this.ui.tip(null); this.thrown++; this.shots++;
+    const w = this.human() ? RC_WOBBLE : 0;
+    this.fly = { u: sh.u + gauss() * w, v: sh.v + gauss() * w, t: 0, dur: 0.4 };
+    this.refresh();
+  }
+  async cpuGo() {
+    this.ui.status(this.status()[0], 'Lining it up…'); await sleep(320 / SPEED); if (this.dead) return;
+    const sig = RC_SIG[this.m.diff || 'med'], aim = rcAim(this.m, this.run().at, sig);
+    this.aim = aim; this.ui.status(...this.status()); this.aimShow = { shot: aim, t: 0 }; await sleep(620 / SPEED); if (this.dead) return; this.aimShow = null;
+    this.shoot({ u: aim.u + gauss() * sig, v: aim.v + gauss() * sig });
+  }
+  update(dt) {
+    const f = this.fly;
+    if (f) { f.t += dt / f.dur; if (f.t >= 1) { this.fly = null; this.land(f.u, f.v); } }
+    for (const d of this.darts) if (d.state === 'drop') { d.vv -= 5200 * dt; d.u += d.vu * dt; d.v += d.vv * dt; d.fade = (d.fade || 0) + dt * 1.8; if (d.fade >= 1) d.state = 'gone'; }
+    if (this.state === 'moving' && !this.fly && this.darts.every(d => d.state !== 'drop')) { this.state = 'rest'; this.afterDart(); }
+  }
+  land(u, v) {
+    const c = rcHit(u, v); this.darts.push({ c, u, v, done: true, state: c === 'O' ? 'drop' : 'in', vu: gauss() * 60, vv: 140 });
+    if (c === 'O') Sound.clack(500, 900); else { Sound.thud(0.3); Sound.clack(900, 1500); }
+  }
+  afterDart() {
+    const m = this.m, R = this.run(), st = R.steps[R.steps.length - 1]; this.saveBoard(); this.refresh();
+    if (st) {
+      const d = rcDart(st.c);
+      if (st.kind === 'win') { Sound.chime(true); this.ui.flash('Round the clock!', `In ${plural(m.s.darts[this.who] + R.steps.length, 'dart')}`); }
+      else if (st.kind === 'hit') this.ui.flash(`${rcShow(st.c)} ✓`, st.after === 20 ? 'Now the bull' : st.adv > 1 ? `On ${st.adv} · now ${st.after + 1}` : `Next: ${st.after + 1}`);
+      else if (st.c === 'O') this.ui.flash('Off the board', `Still ${rcNeed(m, st.before)}`, true);
+      else if (d && st.before === 20 && d.n === 25) this.ui.flash('25', 'Not the 50 · it has to be the bullseye', true);
+      else if (d && d.n === st.before + 1) this.ui.flash(rcShow(st.c), `Not the double · still ${rcNeed(m, st.before)}`, true);
+      else this.ui.flash(st.c === 'M' ? 'No score' : rcShow(st.c), `Still ${rcNeed(m, st.before)}`, true);
+    }
+    setTimeout(() => !this.dead && this.next(), (R.done ? 1300 : 700) / SPEED);
+  }
+}
+
+GAMES.clock = {
+  id: 'clock', name: 'Round the Clock', short: 'Round the Clock', tag: 'Hit 1 to 20 in order. Then go for the bull.', icon: ICON.clock,
+  blurb: 'Darts: 1 to 20 in order, then the bull.', Table: ClockTable, kind: 'turns',
+  seat: { min: 1, max: 6, label: 'Players' },
+  options: [
+    { id: 'twist', label: 'Twist', sub: 'From the card. Jump ahead: a double moves you on 2 numbers, a treble 3. Doubles only: just the outer ring counts (a long game!)', choices: [['none', 'None'], ['jump', 'Jump ahead'], ['doubles', 'Doubles only']], def: 'none' },
+    { id: 'finish', label: 'Finish', sub: 'After 20, the bull: the 25 or the 50, or only the 50. Doubles only always needs the 50', choices: [['bull', 'Bull · 25 or 50'], ['eye', 'Bullseye · 50']], def: 'bull' },
+    { id: 'legs', label: 'Play to', sub: 'Legs won. The first dart passes left each leg. Practising on your own? It’s one leg, and your best is kept', choices: [[1, '1 leg'], [2, 'Best of 3'], [3, 'Best of 5']], def: 1 },
+    { id: 'first', label: 'Who throws first', sub: 'Or throw for the bull at the board: closest to the centre goes first', choices: [['toss', 'Random'], [0, '@0']], def: 'toss' }
+  ],
+  info: [['dartboard', '1 dartboard', 'bull 1.73 m (5 ft 8 in) high'], ['dart', '3 darts each', 'oche at 2.37 m (7 ft 9¼ in)'], ['people', '2+ players', 'or practise solo']],
+  init(m) { const n = m.players.length, first = m.opts.first === 'toss' ? Math.floor(Math.random() * n) : 0; m.s = { at: Array(n).fill(0), darts: Array(n).fill(0), legs: Array(n).fill(0), leg: 1, first, cur: first, log: [] }; },
+  unit(m) { const s = m.s, who = s.cur; return { who, title: `${rname(m, who)}'s turn`, sub: `${rcCap(rcNeed(m, s.at[who]))}${rcLegs(m) > 1 ? ` · leg ${s.leg}` : ''} · three darts` }; },
+  apply(m, res) {
+    const s = m.s, who = s.cur, n = m.players.length, R = rcRun(m, who, res.darts || []);
+    s.darts[who] += R.win ? R.steps.length : 3; s.log.push({ who, darts: R.steps.map(x => x.c), before: s.at[who], after: R.at, win: R.win, leg: s.leg, where: res.where }); s.at[who] = R.at;
+    if (R.win) {
+      const d = s.darts[who]; s.legs[who]++;
+      if (n === 1) { // practising: keep the best on the phone, one for each way of playing
+        const key = rcBestKey(m), b = store.get(key, null); if (b == null || d < b) store.set(key, d);
+        m.over = true; m.winner = [who]; return { t: `Round the clock in ${plural(d, 'dart')}!`, s: b == null ? 'Your first time round with these rules' : d < b ? `A new best: it was ${b}` : `Your best is ${b}` };
+      }
+      if (s.legs[who] >= rcLegs(m)) { m.over = true; m.winner = [who]; return { t: `${rname(m, who)} goes round the clock!`, s: `In ${plural(d, 'dart')}` }; }
+      const won = `${rname(m, who)} wins leg ${s.leg} in ${plural(d, 'dart')}`;
+      s.leg++; s.first = (s.first + 1) % n; s.cur = s.first; s.at = Array(n).fill(0); s.darts = Array(n).fill(0);
+      return { t: won, s: `Leg ${s.leg}: ${rname(m, s.cur)} throws first` };
+    }
+    s.cur = (who + 1) % n; const hits = R.steps.filter(x => x.kind !== 'miss').map(x => rcShow(x.c));
+    return { t: hits.length ? `${rname(m, who)} hits ${listAnd(hits)}` : `No luck for ${rname(m, who)}`, s: `Now ${rcNeed(m, R.at)}` };
+  },
+  chips(m) {
+    const s = m.s, legs = rcLegs(m), solo = m.players.length === 1, best = solo ? store.get(rcBestKey(m), null) : null;
+    return m.players.map((p, i) => ({ name: p.name, v: rcTarget(s.at[i]), small: '', sub: solo ? `${plural(s.darts[i], 'dart')}${best != null ? ` · best ${best}` : ''}` : s.at[i] > 20 ? 'all round' : legs > 1 ? `${plural(s.legs[i], 'leg')} won` : 'to hit', on: !m.over && s.cur === i }));
+  },
+  board(m) {
+    const s = m.s, legs = rcLegs(m), solo = m.players.length === 1, tw = m.opts.twist;
+    const rows = s.log.slice().reverse().map(l => `<div class="tr"><div class="tx"><b>${pname(m, l.who)}${legs > 1 ? ` · leg ${l.leg}` : ''}${l.win ? ' · round the clock!' : ''}</b><span>${l.darts.length ? l.darts.map(rcShow).join(' · ') : 'no darts'}${l.where === 'real' ? ' · real board' : ''}</span></div><div class="v">+${l.after - l.before}<small> → ${rcTarget(l.after)}</small></div></div>`).join('');
+    return `<table class="grid"><tr><th>Player</th><th>Next</th><th>Darts</th>${legs > 1 ? '<th>Legs</th>' : ''}</tr>${m.players.map((p, i) => `<tr><td class="nm">${pname(m, i)}</td><td class="tot">${rcTarget(s.at[i])}</td><td>${s.darts[i]}</td>${legs > 1 ? `<td>${s.legs[i]}</td>` : ''}</tr>`).join('')}</table>
+    <div class="tbl" style="margin-top:12px"><div class="th"><span>Turn by turn · latest first</span><span>Moved on</span></div>${rows || '<div class="tr"><div class="tx"><span>No turns yet</span></div></div>'}</div>
+    <p class="note">Hit 1 to 20 in order, then ${rcNeed50(m) ? 'the bullseye (only the 50)' : 'the bull (the 25 or the 50)'}. ${tw === 'jump' ? 'Jump ahead: a double moves you on 2, a treble 3. ' : tw === 'doubles' ? 'Doubles only: just the outer ring counts. ' : 'Any part of the number counts. '}${solo ? 'On your own: fewest darts is best.' : legs > 1 ? `First round the clock wins the leg. First to ${plural(legs, 'leg')} wins.` : 'First round the clock wins.'}</p>`;
+  },
+  winTitle(m) { return m.players.length === 1 ? `All the way round, ${pname(m, 0)}!` : ''; }, // practising on your own: nobody to beat
+  entryInit() { return { darts: [] }; },
+  entryHTML(m, st, u) {
+    const R = rcRun(m, u.who, st.darts), n = st.darts.length, last = R.steps[n - 1], p = R.at, tw = m.opts.twist;
+    const slots = [0, 1, 2].map(i => { if (i >= n) return `<span class="rcd e">${i + 1}</span>`; const miss = R.steps[i].kind === 'miss', t = miss ? '–' : rcShow(st.darts[i]); return `<button class="rcd ${miss ? 'miss' : ''}" data-tg="e:rm:${i}" aria-label="Dart ${i + 1}: ${miss ? 'missed' : t}. Tap to take it out">${t}</button>`; }).join('');
+    let pad = '';
+    if (!R.done) {
+      const t = p + 1, on = x => (p + Math.min(x, 20 - p) >= 20 ? 'on to the bull' : `on ${Math.min(x, 20 - p)}`);
+      const b = (c, label, small, cls = '') => `<button class="${cls}" data-tg="e:dart:${c}" aria-label="${label}, ${small}">${label}<small>${small}</small></button>`;
+      const hits = p === 20 ? [rcNeed50(m) ? b('50', 'Bull', 'the 50', 'hit') : b('B', 'Bull', '25 or 50', 'hit')]
+        : tw === 'jump' ? [b('S' + t, t, `single · ${on(1)}`, 'hit'), b('D' + t, 'D' + t, `double · ${on(2)}`, 'hit'), b('T' + t, 'T' + t, `treble · ${on(3)}`, 'hit')]
+          : tw === 'doubles' ? [b('D' + t, 'D' + t, 'the double', 'hit')] : [b('S' + t, t, 'any part', 'hit')];
+      pad = `<div class="rcpad">${b('X', 'Missed', 'or another', 'miss')}${hits.join('')}</div>`;
+    }
+    const lastLeg = m.players.length === 1 || m.s.legs[u.who] + 1 >= rcLegs(m);
+    let msg;
+    if (!last) msg = `${rcCap(rcNeed(m, p))} · three darts`;
+    else if (last.kind === 'win') msg = `Round the clock! That’s the ${lastLeg ? 'game' : 'leg'}`;
+    else if (R.done) msg = `All three thrown · ${rcNeed(m, p)}`;
+    else if (last.kind === 'miss') msg = `Missed · still ${rcNeed(m, p)}`;
+    else msg = `${rcShow(last.c)} ✓ · now ${rcNeed(m, p)}`;
+    const how = p >= 20 ? (rcNeed50(m) ? 'Only the 50 counts.' : 'The 25 or the 50.') : tw === 'jump' ? 'Single, double or treble?' : tw === 'doubles' ? 'Only its double counts.' : 'Any part counts.';
+    return `<div class="panel lite"><h3>${pname(m, u.who)} · ${esc(rcNeed(m, m.s.at[u.who]))}</h3><p class="note" style="margin:0">Throw your three darts and tap each one in as it lands: a hit on the number you need, or <b>Missed</b>. Tap a dart above to take it out.</p></div>
+      <div class="rcrow">${slots}</div>
+      <p class="rcup">${R.done ? 'Turn over' : `Dart ${n + 1} · ${rcNeed(m, p)}. ${how}`}</p>${pad}
+      <div class="big" style="margin-top:10px">${rcTarget(p)}<small>${esc(msg)}</small></div>
+      <div class="btns"><button class="btn primary wide" data-tg="e:done">${R.done || !n ? 'Save turn' : `Save turn · ${3 - n} more missed`}</button></div>`;
+  },
+  entryAct(m, st, a, v) {
+    const R = rcRun(m, m.s.cur, st.darts);
+    if (a === 'dart' && !R.done) st.darts.push(v);
+    else if (a === 'rm') st.darts.splice(+v);
+    else if (a === 'done') return { done: { darts: st.darts.slice() } };
+  },
+  rules: {
+    s1: ['Play a turn', [['Throw for the bull.', 'Closest to the centre goes first.'], ['Start on 1.', 'Hit it, then aim for 2, then 3, and so on.'], ['Three darts a turn.', 'Keep moving on as long as you keep hitting.'], ['After 20,', 'hit the bull to finish.']]],
+    s2: ['What counts', [['+1', 'single', 'The wide part'], ['+1', 'double', 'Counts the same'], ['+1', 'treble', 'Counts the same']], ['4 · D5 · 7, needing 4', '= now on 6'], 'Any part of your number counts.'],
+    s3: ['Turn by turn', 'Three darts, and where they leave you.', ['Three darts · one turn', 'Next aim'], [['Needing 1: 1 · 2 · 3', 'Three hits. A perfect start.', 4, false], ['Needing 4: 13 · 4 · 18', 'One hit. 13 and 18 sit next to 4. No use!', 5, false], ['Needing 20: 20 · bull', 'All the way round. You win!', 'Done', true]]],
+    s4: ['Want a twist?', [['Jump ahead.', 'A double moves you on 2 numbers, a treble 3.'], ['Doubles only.', 'Just the outer ring counts. Tough!'], ['Bullseye finish.', 'Only the 50 counts, not the 25.']]],
+    banner: ['First round the <em>clock</em> wins!', 'Great warm-up before a game of 501.']
+  },
+  appNotes: ['Touch anywhere and slide to move the aim, then let go to throw. The number you need is lit up, and a close-up shows exactly where you’re aiming. Every dart wobbles a little (the dashed ring shows how much), so the fat part of the number is the safest place to aim.', 'Practise on your own (remove the second player) and your best is kept on the phone.']
+};
+
+/* =========================================================
    Air hockey: played live on one phone. Two people, a finger each at their own end, or one against the computer.
    Table units are millimetres; player 1 defends the near end (y = 0), player 2 the far end (y = L).
    ========================================================= */
@@ -3058,7 +3391,7 @@ function humanName(i) {
   if (i === 0) { try { const f = JSON.parse(localStorage.getItem('pubgames.firstName')); if (f) return f; } catch (e) { } if (window.PubHome) return 'Jeanette'; }
   return `Player ${i + 1}`;
 }
-const ORDER = ['toad', 'hookey', 'skittles', 'sjoel', 'shuffle', 'bank', 'curling', 'airhockey', 'shove'];
+const ORDER = ['toad', 'hookey', 'clock', 'skittles', 'sjoel', 'shuffle', 'bank', 'curling', 'airhockey', 'shove'];
 const MODES = {
   app: { n: 'Play in the app', d: 'Slide, throw and shove on the phone. Add the computer if you’re short of players.', ic: 'phone' },
   real: { n: 'Keep score at the real table', d: 'Play the real board. The app keeps the score and the rules.', ic: 'pencil' },
@@ -3109,7 +3442,7 @@ const App = {
       <ol class="steps"><li><span class="L">A</span><span><b>Touch the table</b> where you want to shoot from.</span></li><li><span class="L">B</span><span><b>Pull back</b> like a catapult. Further back means more power.</span></li><li><span class="L">C</span><span><b>Let go</b> to shoot. Every shot wobbles a little, just like the real thing.</span></li></ol>
       <div class="sec"><span class="n">2</span>Three ways to play</div>
       <div class="modes">${['app', 'real', 'hybrid'].map(k => `<div class="mode"><span class="mi">${ICON[MODES[k].ic]}</span><span><b>${MODES[k].n}</b><span>${k === 'hybrid' ? 'Mix the real board and the phone in one match. Great when there’s only one table, or someone fancies a go on the app.' : MODES[k].d}</span></span></div>`).join('')}</div>
-      <div class="banner"><div><div class="t">Nine games. <em>One</em> scoreboard.</div><div class="s">Every game has its rules card inside.</div></div><div class="ic">${ICON.crown}</div></div>
+      <div class="banner"><div><div class="t">Ten games. <em>One</em> scoreboard.</div><div class="s">Every game has its rules card inside.</div></div><div class="ic">${ICON.crown}</div></div>
       <p class="foot">Pub games night · table games</p></div>`;
     window.scrollTo(0, 0);
   },
@@ -3235,7 +3568,7 @@ const App = {
   finish(msg) {
     const m = this.m, G = this.G, names = (m.winner || []).map(i => m.players[i].name);
     store.del('match.' + m.gid); store.del(BOARD_KEY(m.gid));
-    const title = names.length > 1 ? `${listAnd(names.map(esc))} share it!` : `${esc(names[0] || 'Nobody')} wins!`;
+    const title = (G.winTitle && G.winTitle(m)) || (names.length > 1 ? `${listAnd(names.map(esc))} share it!` : `${esc(names[0] || 'Nobody')} wins!`);
     this.R().innerHTML = `<div class="sheet"><div class="bar"><button class="iconbtn" data-tg="home">${ICON.back}</button><span class="nm">${G.short}</span><span style="width:36px"></span></div>
       <div class="win"><div class="crown">${ICON.crown}</div><h2>${title}</h2>${msg ? `<p>${esc(msg.t)}${msg.s ? ' · ' + esc(msg.s) : ''}</p>` : ''}</div>
       <div class="sec"><span class="n p">${ICON.list.replace('<svg', '<svg style="width:16px;height:16px;stroke:#fff"').replace(/stroke="#4e1f4d"/g, 'stroke="#fff"')}</span>Final scores</div>${G.board(m)}
@@ -3539,7 +3872,7 @@ function homeView() {
   const tile = (id, k, arr) => { const g = G[id], wide = k === arr.length - 1 && arr.length % 2 === 1; return `<button class="tile ${wide ? 'wide' : ''}" data-act="open" data-arg="${id}"><span class="ic">${g.icon()}</span><span class="tx"><b>${g.name}</b><small>${g.tagline}</small><span class="pp">${I.people}${g.players}</span></span></button>`; };
   return `<div class="sheet">
     ${headHTML('Pub Games', 'Roll, deal, slide and throw. The games from the rules cards, in one place.', homeArt())}
-    ${infoHTML([['dice', '11 dice, card &amp; tile games', 'Zanzibar to Texas 42'], ['<svg viewBox="0 0 24 24" fill="none" stroke="#4e1f4d" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M8 3h8l4 18H4z" fill="#f8dca8"/><path d="M8.6 8h6.8"/><ellipse cx="12" cy="15.5" rx="3.2" ry="1.6" fill="#dd7f27"/></svg>', '9 table games', 'Toad to Shove Ha’penny'], ['people', 'Play your way', 'friends, computer or the real table']])}
+    ${infoHTML([['dice', '11 dice, card &amp; tile games', 'Zanzibar to Texas 42'], ['<svg viewBox="0 0 24 24" fill="none" stroke="#4e1f4d" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M8 3h8l4 18H4z" fill="#f8dca8"/><path d="M8.6 8h6.8"/><ellipse cx="12" cy="15.5" rx="3.2" ry="1.6" fill="#dd7f27"/></svg>', '10 table games', 'Toad to Shove Ha’penny'], ['people', 'Play your way', 'friends, computer or the real table']])}
     ${sec(1, 'Dice games')}<p class="note" style="margin:-4px 0 10px">Roll the app’s dice, roll your own and tap them in, or a bit of both.</p><div class="tiles">${ORDER.dice.map(tile).join('')}</div>
     ${sec(2, 'Card games')}<div class="tiles">${ORDER.cards.map(tile).join('')}</div>
     ${sec(3, 'Dominoes')}<div class="tiles">${ORDER.dominoes.map(tile).join('')}</div>
