@@ -3838,7 +3838,7 @@ function rulesHTML(g) {
     ${sec(2, r.s2)}<div class="panel">${r.score}</div>
     ${sec(3, r.s3)}${r.s3sub ? `<p class="note" style="margin:-4px 0 8px;color:var(--ink)">${r.s3sub}</p>` : ''}${tableHTML(r.head, r.rows)}
     ${sec(4, r.s4)}
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px"><span class="vpill">${r.pills[0]}</span><svg width="34" height="14" viewBox="0 0 34 14"><path d="M2 7h26M23 2l6 5-6 5" fill="none" stroke="${ORANGE}" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="7" r="4" fill="#fff" stroke="${ORANGE}" stroke-width="2.4"/></svg><span class="vpill o">${r.pills[1]}</span></div>
+    ${r.pills ? `<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px"><span class="vpill">${r.pills[0]}</span><svg width="34" height="14" viewBox="0 0 34 14"><path d="M2 7h26M23 2l6 5-6 5" fill="none" stroke="${ORANGE}" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="7" r="4" fill="#fff" stroke="${ORANGE}" stroke-width="2.4"/></svg><span class="vpill o">${r.pills[1]}</span></div>` : ''}
     ${r.notes.map(n => `<p style="margin:0 0 9px"><b style="color:var(--plum)">${n[0]}</b> ${n[1]}</p>`).join('')}
     ${r.post ? `<div class="cardnote dash"><span class="cn">${r.post[0]}</span><p>${r.post[1]}</p></div>` : ''}
     ${banner(r.foot, r.footSub, r.footIc || '')}
@@ -4088,6 +4088,17 @@ const blankDice = n => Array.from({ length: n }, () => ({ v: 0, kept: false }));
 const rotation = (st, from, alive = () => true) => { const n = st.players.length, o = []; for (let k = 0; k < n; k++) { const j = (from + k) % n; if (alive(st.players[j], j)) o.push(j); } return o; };
 const anyHuman = st => st.players.some(p => !p.cpu);
 const nm = (st, i) => `<b>${esc(st.players[i].name)}</b>`;
+// Roll one die each, highest starts (ties roll again). Used where the card says so.
+function rollToStart(st) {
+  let group = st.players.map((_, i) => i), notes = [], guard = 0;
+  while (group.length > 1 && guard++ < 20) {
+    const r = group.map(i => ({ i, v: d6() })), top = Math.max(...r.map(x => x.v));
+    notes.push(r.map(x => `${esc(st.players[x.i].name)} ${mini(String(x.v))}`).join(' · '));
+    group = r.filter(x => x.v === top).map(x => x.i);
+  }
+  st.starter = group[0];
+  if (st.players.length > 1) log(st, `Who starts? ${notes.join(' · then ')}. ${nm(st, st.starter)} starts${st.players.some(p => p.real) ? ' (rolled by the app)' : ''}.`);
+}
 const coinV = n => `${coinIc}${n}`;
 
 /* ---------------- Zanzibar ---------------- */
@@ -4139,15 +4150,18 @@ const coinV = n => `${coinIc}${n}`;
     const rest = evs.filter(x => x.i !== best), low = rest[rest.length - 1].ev;
     const wg = rest.filter(x => cmp(x.ev, low) === 0).map(x => x.i);
     const worst = wg.length > 1 ? rollOff(st, wg, false, notes) : wg[0];
-    const bev = evs.find(x => x.i === best).ev;
-    const pays = Math.min(bev.pays, st.players[best].counters);
-    st.players[best].counters -= pays; st.players[worst].counters += pays;
-    st.res = { evs, best, worst, pays, notes };
-    st.phase = 'result'; st.starter = worst;
-    log(st, `${nm(st, best)} pays ${nm(st, worst)} ${plural(pays, 'counter')}.`);
-    if (st.players[best].counters === 0) {
-      const most = st.players.reduce((m, p, i) => p.counters > st.players[m].counters ? i : m, 0);
-      st.over = { t: winsText(st.players[best].name), s: `${esc(st.players[best].name)} has no counters left. Pub tradition: ${esc(st.players[most].name)}, holding the most, buys the next round!` };
+    const bev = evs.find(x => x.i === best).ev, pays = bev.pays, given = {};
+    let total = 0;
+    st.order.forEach(i => { if (i === worst) return; const g = Math.min(pays, st.players[i].counters); given[i] = g; total += g; st.players[i].counters -= g; });
+    st.players[worst].counters += total;
+    st.res = { evs, best, worst, pays, given, total, bname: bev.name, notes };
+    st.phase = 'result'; st.starter = best;
+    log(st, `Best hand ${bev.name}: everyone gives ${nm(st, worst)} ${plural(pays, 'counter')} (${total} in all).`);
+    // first with none left wins; if two get there together, the better hand this round wins
+    const out = evs.map(x => x.i).filter(i => i !== worst && st.players[i].counters === 0);
+    if (out.length) {
+      const w = out.includes(best) ? best : out[0];
+      st.over = { t: winsText(st.players[w].name), s: `${esc(st.players[w].name)} has no counters left.` };
     }
   }
   function ai(st) {
@@ -4177,11 +4191,11 @@ const coinV = n => `${coinIc}${n}`;
   }
 
   G.zanzibar = {
-    id: 'zanzibar', kind: 'dice', name: 'Zanzibar', tagline: 'Roll the best hand. Dump your counters. Win.', players: '2+ players', min: 2, max: 8, defN: 3,
+    id: 'zanzibar', kind: 'dice', name: 'Zanzibar', tagline: 'Roll the best hand. Get rid of your counters.', players: '2+ players', min: 2, max: 8, defN: 3,
     art: () => diceArt([4, 5, 6], [1]), icon: () => iconDice([4, 5, 6], [1]),
     info: [['dice', '3 dice', 'standard six-sided'], ['coins', '20 counters each', 'or 10 for a quick game'], ['people', '2+ players', 'the more the merrier']],
     options: [{ key: 'counters', label: 'Counters each', help: 'First to get rid of them all wins.', def: 10, choices: [[10, '10 · quick'], [20, '20']] }],
-    create(players, o) { const st = { players: players.map(p => ({ ...p, counters: o.counters })), starter: 0, round: 0 }; round(st); log(st, `Round 1. ${nm(st, 0)} goes first and sets the limit.`); return st; },
+    create(players, o) { const st = { players: players.map(p => ({ ...p, counters: o.counters })), starter: 0, round: 0 }; rollToStart(st); round(st); log(st, `Round 1. ${nm(st, st.starter)} goes first and sets the limit.`); return st; },
     actor,
     next(st) {
       if (st.phase === 'turn') { const a = actor(st); return st.players[a].cpu ? { ms: st.rolls ? 1000 : 650, run: () => ai(st) } : null; }
@@ -4227,7 +4241,7 @@ const coinV = n => `${coinIc}${n}`;
         }
       } else if (st.res) {
         const r = st.res;
-        h += `<div class="status pop">${esc(st.players[r.best].name)} pays ${esc(st.players[r.worst].name)} ${plural(r.pays, 'counter')}<small>Best hand pays the worst. ${esc(st.players[r.worst].name)} starts next round.</small></div>`;
+        h += r.given ? `<div class="status pop">${esc(st.players[r.worst].name)} gets ${plural(r.total, 'counter')}<small>Best hand: ${esc(r.bname)}, so everyone else gives ${plural(r.pays, 'counter')}. ${esc(st.players[r.best].name)} starts next round.</small></div>` : '';
         if (r.notes.length) h += `<div class="hint">${r.notes.join('<br>')}</div>`;
         if (!st.over && anyHuman(st)) h += `<div class="btns">${btn('Next round', 'next', '', 'primary')}</div>`;
       }
@@ -4237,21 +4251,23 @@ const coinV = n => `${coinIc}${n}`;
         h += sec(3, st.phase === 'result' ? 'What beat what' : 'Hands so far');
         h += tableHTML(['Hand · best at the top', st.phase === 'result' ? 'Counters' : 'Points'], done.map(i => {
           const ev = zEval(st.hands[i]), r = st.res;
-          return { ic: mini(st.hands[i].join('')), t: esc(st.players[i].name), s: ev.name, hi: r && i === r.best, lo: r && i === r.worst, v: r ? (i === r.best ? `−${r.pays}` : i === r.worst ? `+${r.pays}` : '') : (ev.cat === 2 || ev.cat === 4 ? '★' : ev.pts) };
+          return { ic: mini(st.hands[i].join('')), t: esc(st.players[i].name), s: ev.name, hi: r && i === r.best, lo: r && i === r.worst, v: r ? (!r.given ? '' : i === r.worst ? `+${r.total}` : `−${r.given[i] || 0}`) : (ev.cat === 2 || ev.cat === 4 ? '★' : ev.pts) };
         }));
       }
       return h;
     },
     rules: {
+      pre: ['Before you start', '<b>Equal counters each.</b> <b>Roll one die each:</b> highest starts. Play passes left. The best hand starts each new round.'],
       s1: 'Play a round',
-      steps: [['Roll all three dice.', 'You get up to three rolls.'], ['Keep the best, re-roll the rest.', 'Set aside any dice you like.'], ['The first player sets the limit.', 'Stop after 1 roll and everyone gets just 1.'], ['Pass the dice left.', 'Once everyone has rolled, compare hands.']],
+      steps: [['The first player rolls all three dice,', 'up to three times, and stops when happy. The number of rolls they used is <b>the limit</b> for everyone this round.'], ['Keep any dice you like, re-roll the rest.', 'You can re-roll a die you kept earlier.'], ['Everyone else, in turn, rolls up to the limit.', 'First player stopped after 2 rolls? Nobody gets a third.'], ['Compare hands', 'once everyone has rolled, then hand out counters.']],
       s2: 'Score your dice',
-      score: scoreRow(mini('1'), '100', 'points') + scoreRow(mini('6'), '60', 'points') + scoreRow(mini('2345'), '', 'face value') + exampleHTML(mini('163'), '100 + 60 + 3', '= 163 points'),
-      s3: 'What beats what', head: ['Hand · best at the top', 'Pays'],
-      rows: [{ ic: mini('456'), t: 'Zanzibar!', s: '4-5-6, any order. Beats all.', v: coinV(4), hi: 1 }, { ic: mini('111'), t: 'Three of a kind', s: '1-1-1 is top, 2-2-2 lowest.', v: coinV(3) }, { ic: mini('123'), t: 'One-two-three', s: 'Any order. Beats all totals.', v: coinV(2) }, { ic: mini('641'), t: 'Points total', s: 'Anything else. Highest wins.', v: coinV(1) }],
-      s4: 'Settle up', pills: ['Best hand', 'Worst'],
-      notes: [['Best hand pays the worst.', 'Hand over the counters shown under Pays.'], ['Tie?', 'Tied players roll once more to settle it.'], ['Worst hand starts', 'the next round.']],
-      foot: 'First with no counters left <em>wins!</em>', footSub: 'Pub tradition: the last player still holding counters buys the next round.'
+      score: `<div style="font-size:13px;margin-bottom:4px">For a points total, add up all three dice:</div>` + scoreRow(mini('1'), '100', 'points <span style="font-weight:400">each 1</span>') + scoreRow(mini('6'), '60', 'points <span style="font-weight:400">each 6</span>') + scoreRow(mini('2345'), '', 'face value <span style="font-weight:400">2, 3, 4 or 5 points</span>') + exampleHTML(mini('163'), '100 + 60 + 3', '= 163 points'),
+      s3: 'What beats what', head: ['Hand · best at the top', 'Counters each'],
+      rows: [{ ic: mini('456'), t: 'Zanzibar!', s: '4-5-6, any order. Beats everything.', v: coinV(4), hi: 1 }, { ic: mini('111'), t: 'Three of a kind', s: '1-1-1 is top, then 6-6-6 … down to 2-2-2.', v: coinV(3) }, { ic: mini('123'), t: 'One-two-three', s: 'Any order. Beats every points total.', v: coinV(2) }, { ic: mini('652'), t: 'Points total', s: 'Anything else. Highest total wins.', v: coinV(1) }],
+      s4: 'Give counters',
+      notes: [['The worst hand loses.', 'Every other player gives the loser counters: the number next to the round’s best hand.'], ['Example:', '4 players, best hand three of a kind. The loser gets 3 from each of the other 3: 9 in all.'], ['Tie for best or worst?', 'The tied players roll once more to settle it.'], ['Short of counters?', 'Give what you have.']],
+      post: ['Top tip', 'Rolled Zanzibar first time? Stop there: everyone else gets just one roll to match it.'],
+      foot: 'First with no counters left <em>wins!</em>'
     }
   };
   G.zanzibar._eval = zEval;
@@ -4306,11 +4322,11 @@ const coinV = n => `${coinIc}${n}`;
     return `<div style="text-align:center">${d ? dieBtn(d, 0, { sm: true, kept: false }) : `<div class="die sm" style="border:2.5px dashed rgba(78,31,77,.35);border-radius:12px;display:grid;place-items:center;color:rgba(78,31,77,.45);font-weight:700;font-size:18px">${val}</div>`}<div class="kept-lbl" style="margin-top:3px">${label}</div></div>`;
   };
   G.scc = {
-    id: 'scc', kind: 'dice', name: 'Ship, Captain & Crew', title: 'Ship, Captain<br>&amp; Crew', small: true, tagline: 'Roll a 6, a 5 and a 4. Then load the best cargo.', players: '2+ players', min: 2, max: 8, defN: 4,
+    id: 'scc', kind: 'dice', name: 'Ship, Captain & Crew', title: 'Ship, Captain<br>&amp; Crew', small: true, tagline: 'Roll a 6, 5 and 4. Then load the best cargo.', players: '2+ players', min: 2, max: 8, defN: 4,
     art: () => diceArt([6, 5, 4, 6, 3], [3, 4]), icon: () => iconDice([6, 5, 4], []),
     info: [['dice', '5 dice', 'standard six-sided'], ['clock', '3 rolls', 'per turn, at most'], ['people', '2+ players', 'best with five or more']],
     options: [{ key: 'target', label: 'Play to', help: 'Rounds won to take the match.', def: 3, choices: [[3, '3 wins'], [5, '5 wins']] }],
-    create(players, o) { const st = { players: players.map(p => ({ ...p, wins: 0 })), starter: 0, target: o.target }; round(st); return st; },
+    create(players, o) { const st = { players: players.map(p => ({ ...p, wins: 0 })), starter: 0, target: o.target }; rollToStart(st); round(st); return st; },
     actor,
     next(st) {
       if (st.phase === 'turn') { const a = actor(st); return st.players[a].cpu ? { ms: st.rolls ? 1050 : 650, run: () => ai(st) } : null; }
@@ -4369,14 +4385,17 @@ const coinV = n => `${coinIc}${n}`;
       return h;
     },
     rules: {
-      steps: [['Roll all five dice.', 'You get three rolls in all.'], ['Load the ship in order.', 'Set aside a 6, then a 5, then a 4.'], ['Two at once is fine.', 'A 5 and 4 together after your 6? Keep both.'], ['Pass the dice left.', 'When everyone’s rolled, biggest cargo wins.']],
+      pre: ['Before you start', '<b>Who starts?</b> Roll one die each; highest goes first. Play passes left. <b>A round</b> is one turn each. Biggest cargo wins the round.'],
+      s1: 'Your turn',
+      steps: [['Roll all five dice.', 'You get up to three rolls.'], ['Load the ship in order:', 'a 6, then a 5, then a 4. A 5 or 4 can’t be kept before the dice ahead of it.'], ['More than one at once is fine.', 'Roll 6, 5 and 4 together? Keep all three.'], ['Roll the rest', 'until you’re loaded or out of rolls.']],
       s2: 'Scoring',
-      score: scoreRow(mini('6'), 'Ship', 'first') + scoreRow(mini('5'), 'Captain', 'second') + scoreRow(mini('4'), 'Crew', 'third') + exampleHTML(`<span class="mini">${dieSVG(6, true, true)}${dieSVG(3, true, true)}</span>`, '6 + 3', '= 9 cargo', 'Cargo is the two orange dice.'),
+      score: `<div style="font-size:13px;margin-bottom:4px">Once loaded, your other two dice (orange) are the <b>cargo</b>. Add them up.</div>` + scoreRow(mini('6'), 'Ship', 'first') + scoreRow(mini('5'), 'Captain', 'second') + scoreRow(mini('4'), 'Crew', 'third') + exampleHTML(`<span class="mini">${dieSVG(6, true, true)}${dieSVG(3, true, true)}</span>`, '6 + 3', '= 9 cargo'),
       s3: 'What beats what', head: ['Final dice · best at the top', 'Cargo'],
-      rows: [{ ic: mini('65466'), t: 'A full load', s: 'Two 6s of cargo. Can’t be beaten.', v: 12, hi: 1 }, { ic: mini('65412'), t: 'A light load', s: 'Still beats an empty ship.', v: 3 }, { ic: mini('65326'), t: 'No crew', s: 'No 4 by the third roll.', v: 0 }, { ic: mini('54321'), t: 'No ship', s: 'No 6? Then nothing counts.', v: 0 }],
-      s4: 'Cargo rules', pills: ['Rolls left', 'Re-roll'],
-      notes: [['Loaded early?', 'Re-roll the cargo with rolls you have left. The last roll stands.'], ['No ship, captain and crew?', 'You score nothing.'], ['Tie for the top?', 'Tied players roll again.']],
-      foot: 'Biggest cargo <em>wins!</em>', footSub: 'Playing for a pot? A stake each, and the winner takes the lot.'
+      rows: [{ ic: mini('65466'), t: 'A full load', s: 'Two 6s of cargo. Can’t be beaten.', v: 12, hi: 1 }, { ic: mini('65421'), t: 'Small cargo: 2 + 1', s: 'Still beats an empty ship.', v: 3 }, { ic: mini('65231'), t: 'No crew', s: 'No 4 after the third roll.', v: 0 }, { ic: mini('54333'), t: 'No ship', s: 'No 6, so the 5 and 4 can’t count.', v: 0 }],
+      s4: 'Cargo rules',
+      notes: [['Loaded with rolls left?', 'Stop, or re-roll the cargo dice. Never the 6, 5 or 4.'], ['The last roll stands.', 'Re-roll, and you keep the new cargo, even if it’s lower.'], ['Tie for the top?', 'The tied players take one more turn each.']],
+      post: ['Longer game', 'Score a point for each round you win. First to 5 points wins the game.'],
+      foot: 'Biggest cargo <em>wins!</em>'
     }
   };
 })();
@@ -4568,7 +4587,7 @@ const coinV = n => `${coinIc}${n}`;
     const i4 = v.indexOf(4); if (i4 < 0) return 0; v.splice(i4, 1); return sum(v);
   }
   const actor = st => st.phase === 'turn' ? st.order[st.ti] : -1;
-  function round(st) { st.order = rotation(st, st.starter); st.ti = 0; st.scores = {}; st.finals = {}; st.phase = 'turn'; st.res = null; turn(st); }
+  function round(st, only) { st.order = only || rotation(st, st.starter); st.ti = 0; st.scores = {}; st.finals = {}; st.phase = 'turn'; st.res = null; st.tiebreak = !!only; turn(st); }
   function turn(st) { st.dice = Array.from({ length: 6 }, () => ({ v: 0, kept: false })); st.rolls = 0; st.rin = []; }
   function roll(st) { st.dice.forEach(d => { d.pick = false; if (!d.kept) { d.v = d6(); d.spin = true; } }); st.rolls++; }
   function keep(st) {
@@ -4583,9 +4602,10 @@ const coinV = n => `${coinIc}${n}`;
     st.ti++;
     if (st.ti < st.order.length) return turn(st);
     const top = Math.max(...st.order.map(i => st.scores[i])), tied = st.order.filter(i => st.scores[i] === top);
-    st.phase = 'result'; st.starter = (st.starter + 1) % st.players.length;
-    if (tied.length > 1) { st.res = { tie: tied, top, pot: st.pot }; st.pot++; log(st, `Tie on ${top}. The stake carries over, so the next round is worth ${st.pot}.`); return; }
-    const w = tied[0]; st.players[w].wins += st.pot; st.res = { winner: w, top, pot: st.pot }; st.pot = 1;
+    st.phase = 'result';
+    if (tied.length > 1) { st.res = { tie: tied, top }; log(st, `Tie on ${top}! ${tied.map(i => nm(st, i)).join(' and ')} take one more turn each.`); return; }
+    st.starter = (st.starter + 1) % st.players.length;
+    const w = tied[0]; st.players[w].wins++; st.res = { winner: w, top };
     log(st, `${nm(st, w)} takes the round with ${top}.`);
     if (st.players[w].wins >= st.target) st.over = { t: winsText(st.players[w].name), s: 'Midnight is 24: a 1, a 4 and four 6s.' };
   }
@@ -4608,17 +4628,17 @@ const coinV = n => `${coinIc}${n}`;
   G.midnight = {
     id: 'midnight', kind: 'dice', name: 'Midnight', tagline: 'Keep a 1 and a 4. Then chase 24.', players: '2+ players', min: 2, max: 8, defN: 3,
     art: () => diceArt([1, 4, 6, 6, 6, 6], [2, 3, 4, 5]), icon: () => iconDice([1, 4, 6], [2]),
-    info: [['dice', '6 dice', 'standard six-sided'], ['clock', 'Up to 6 rolls', 'keep a die or more each time'], ['people', '2+ players', 'the more the merrier']],
-    options: [{ key: 'target', label: 'Play to', help: 'Round wins to take the match. Ties carry over.', def: 3, choices: [[3, '3 wins'], [5, '5 wins']] }],
-    create(players, o) { const st = { players: players.map(p => ({ ...p, wins: 0 })), starter: 0, target: o.target, pot: 1 }; round(st); return st; },
+    info: [['dice', '6 dice', 'standard six-sided'], ['clock', 'Up to 6 rolls', 'keep 1 or more each time'], ['people', '2+ players', 'the more the merrier']],
+    options: [{ key: 'target', label: 'Play to', help: 'Round wins to take the match. A tie for the top: the tied players go again.', def: 3, choices: [[3, '3 wins'], [5, '5 wins']] }],
+    create(players, o) { const st = { players: players.map(p => ({ ...p, wins: 0 })), starter: 0, target: o.target }; rollToStart(st); round(st); return st; },
     actor,
     next(st) {
       if (st.phase === 'turn') { const a = actor(st); return st.players[a].cpu ? { ms: st.dice.some(d => d.pick) ? 700 : st.rolls ? 1000 : 650, run: () => ai(st) } : null; }
-      if (st.phase === 'result' && !anyHuman(st)) return { ms: 2600, run: () => round(st) };
+      if (st.phase === 'result' && !anyHuman(st)) return { ms: 2600, run: () => round(st, st.res.tie) };
       return null;
     },
     act(st, a, arg) {
-      if (a === 'next' && st.phase === 'result' && !st.over) return round(st);
+      if (a === 'next' && st.phase === 'result' && !st.over) return round(st, st.res.tie);
       const p = actor(st); if (p < 0 || st.players[p].cpu) return;
       if (st.players[p].real) {
         if (rPadAct(st, a, arg, 6)) return;
@@ -4632,11 +4652,11 @@ const coinV = n => `${coinIc}${n}`;
     },
     view(st) {
       const a = actor(st), hum = humanTurn(st, a);
-      let h = chipsHTML(st, (p, i) => ({ v: `${p.wins}<small> / ${st.target}</small>`, sub: 'rounds won', on: i === a }));
+      let h = chipsHTML(st, (p, i) => ({ v: `${p.wins}<small> / ${st.target}</small>`, sub: 'rounds won', on: i === a, out: st.tiebreak && !st.order.includes(i) }));
       h += `<div class="board">`;
       if (st.phase === 'turn' && realTurn(st, a)) {
         const vals = st.rin, has1 = vals.includes(1), has4 = vals.includes(4);
-        h += `<div class="status">${esc(st.players[a].name)}’s turn<small>${st.pot > 1 ? `This round is worth ${st.pot}! ` : ''}Keep at least one die each roll. When all six are kept, tap them in.</small></div>${rTag()}`;
+        h += `<div class="status">${esc(st.players[a].name)}’s turn<small>${st.tiebreak ? 'Tie-break! ' : ''}Keep at least one die each roll. When all six are kept, tap them in.</small></div>${rTag()}`;
         h += rSlots(vals, 6);
         h += `<div class="verdict">${vals.length ? `<span class="vpill ${has1 ? '' : 'o'}">${has1 ? '1 ✓' : 'Need a 1'}</span><span class="vpill ${has4 ? '' : 'o'}">${has4 ? '4 ✓' : 'Need a 4'}</span>${has1 && has4 ? `<span class="vpill or">Counting ${mScore(vals)}</span>` : ''}` : ''}</div>`;
         h += rPad(vals, 6, 'Tap in your six kept dice');
@@ -4644,7 +4664,7 @@ const coinV = n => `${coinIc}${n}`;
       } else if (st.phase === 'turn') {
         const kept = st.dice.filter(d => d.kept).map(d => d.v), sel = st.dice.filter(d => d.pick).map(d => d.v), all = [...kept, ...sel];
         const free = st.dice.filter(d => !d.kept).length;
-        h += `<div class="status">${esc(st.players[a].name)}’s turn<small>${st.rolls ? `Roll ${st.rolls} · ${plural(free, 'die', 'dice')} still rolling` : (st.pot > 1 ? `This round is worth ${st.pot}!` : 'Six dice, keep at least one each roll.')}</small></div>`;
+        h += `<div class="status">${esc(st.players[a].name)}’s turn<small>${st.rolls ? `Roll ${st.rolls} · ${plural(free, 'die', 'dice')} still rolling` : (st.tiebreak ? 'Tie-break! Six dice, keep at least one each roll.' : 'Six dice, keep at least one each roll.')}</small></div>`;
         const kd = st.dice.map((d, i) => [d, i]).filter(([d]) => d.kept);
         if (kd.length) h += `<div class="kept-lbl" style="margin-top:10px">Kept</div><div class="dice sm-row" style="margin-top:4px;min-height:44px">${kd.map(([d, i]) => dieBtn(d, i, { sm: true, kept: true })).join('')}</div>`;
         h += `<div class="dice n${st.dice.filter(d => !d.kept).length}">${st.dice.map((d, i) => [d, i]).filter(([d]) => !d.kept).map(([d, i]) => dieBtn(d, i, { act: hum && st.rolls ? 'pick' : '', pick: d.pick, lift: d.pick, kept: d.pick })).join('')}</div>`;
@@ -4662,8 +4682,8 @@ const coinV = n => `${coinIc}${n}`;
         }
       } else {
         const r = st.res;
-        h += `<div class="status pop">${r.tie ? `Tie on ${r.top}` : `${esc(st.players[r.winner].name)} takes ${r.pot > 1 ? r.pot + ' rounds' : 'the round'}`}<small>${r.tie ? `Nobody wins. The next round is worth ${st.pot}.` : `Top score: ${r.top}${r.top === 24 ? '. Midnight!' : '.'}`}</small></div>`;
-        if (!st.over && anyHuman(st)) h += `<div class="btns">${btn('Next round', 'next', '', 'primary')}</div>`;
+        h += `<div class="status pop">${r.tie ? `Tie on ${r.top}!` : `${esc(st.players[r.winner].name)} takes the round`}<small>${r.tie ? 'The tied players take one more turn each.' : `Top score: ${r.top}${r.top === 24 ? '. Midnight!' : '.'}`}</small></div>`;
+        if (!st.over && anyHuman(st)) h += `<div class="btns">${btn(r.tie ? 'Play the tie-break' : 'Next round', 'next', '', 'primary')}</div>`;
       }
       h += `</div>`;
       const done = st.order.filter(i => i in st.scores).sort((x, y) => st.scores[y] - st.scores[x]);
@@ -4678,13 +4698,16 @@ const coinV = n => `${coinIc}${n}`;
       return h;
     },
     rules: {
-      steps: [['Roll all six dice.', 'Set aside at least one you want to keep.'], ['Roll the rest.', 'Keep at least one more every time. Kept dice stay kept.'], ['Stop when all six are kept.', 'That might take one roll, or six.'], ['Pass the dice left.', 'When everyone’s rolled, highest score wins.']],
+      pre: ['Before you start', '<b>Who starts?</b> Roll one die each; highest goes first. Play passes left. <b>A round</b> is one turn each. Highest score wins the round.'],
+      s1: 'Your turn',
+      steps: [['Roll all six dice.', 'Keep at least one. You can keep more.'], ['Roll the rest.', 'After every roll, keep at least one more. Kept dice are never re-rolled.'], ['Stop when all six are kept.', 'That might take one roll, or six. To stop early, keep everything you rolled.'], ['Score your six dice,', 'then pass them left.']],
       s2: 'Scoring',
-      score: scoreRow(mini('14'), '', 'Keep a 1 and 4 <span style="font-weight:400">or you can’t score</span>') + scoreRow(mini('6536'), '', 'Add up <span style="font-weight:400">the other four dice</span>') + scoreRow(mini('23'), '0', 'no 1, or no 4') + exampleHTML(`<span class="mini">${[1, 4, 6, 5, 3, 6].map((v, i) => dieSVG(v, i > 1, true)).join('')}</span>`, '6 + 5 + 3 + 6', '= 20 points', 'The orange dice are the four that count.'),
+      score: scoreRow(mini('14'), '', 'Keep a 1 and a 4 <span style="font-weight:400">They qualify you, but don’t score</span>') + scoreRow(mini('6666'), '', 'Add the other four <span style="font-weight:400">That total is your score</span>') + scoreRow(mini('23'), '0', 'No 1, or no 4? <span style="font-weight:400">You score 0</span>') + exampleHTML(`<span class="mini">${[1, 4, 6, 5, 3, 6].map((v, i) => dieSVG(v, i > 1, true)).join('')}</span>`, '6 + 5 + 3 + 6', '= 20 points', 'The four orange dice count.'),
       s3: 'What beats what', head: ['Six dice kept · best at the top', 'Score'],
-      rows: [{ ic: mini('146666'), t: 'Midnight!', s: 'Four 6s. Can’t be beaten.', v: 24, hi: 1 }, { ic: mini('146655'), t: 'So close', s: '6 + 6 + 5 + 5.', v: 22 }, { ic: mini('141232'), t: 'A spare 1', s: 'It just counts as 1. 1 + 2 + 3 + 2.', v: 8 }, { ic: mini('666655'), t: 'No 1 or 4', s: 'Doesn’t qualify, however high.', v: 0 }],
-      s4: 'Good to know', pills: ['Kept', 'No re-rolls'],
-      notes: [['Grab the 1 and 4 early.', 'Without both you score nothing.'], ['6s are gold.', 'Keep them as they come.'], ['Tie for the top?', 'Any stake carries over to the next game.']],
+      rows: [{ ic: mini('146666'), t: 'Midnight!', s: 'Four 6s. Can’t be beaten, only tied.', v: 24, hi: 1 }, { ic: mini('146655'), t: 'So close', s: '6 + 6 + 5 + 5.', v: 22 }, { ic: mini('141232'), t: 'A spare 1', s: 'Only one 1 sits out. 1 + 2 + 3 + 2.', v: 8 }, { ic: mini('666665'), t: 'No 1 or 4', s: 'Doesn’t qualify, however high.', v: 0 }],
+      s4: 'Good to know',
+      notes: [['Grab the 1 and 4 early.', 'Without both, you score nothing.'], ['6s are gold.', 'Keep them as they come.'], ['Spare 1s and 4s', 'count at face value.'], ['Tie for the top?', 'The tied players take one more turn each.']],
+      post: ['Longer game', 'Score a point for each round you win. First to 5 points wins the game.'],
       foot: 'Highest score <em>wins!</em>', footSub: 'Midnight is 24: a 1, a 4 and four 6s.'
     }
   };
@@ -4908,7 +4931,7 @@ const coinV = n => `${coinIc}${n}`;
   function won(st, w) {
     st.players[w].wins++; st.starter = (st.starter + 1) % st.players.length;
     if (!st.res.shut) log(st, `${nm(st, w)} takes the round with ${fmt(st.res.low)}.`);
-    if (st.players[w].wins >= st.target) st.over = { t: winsText(st.players[w].name), s: st.target > 1 ? `First to ${plural(st.target, 'round')}. Lowest score wins, and shutting the box wins on the spot.` : 'Lowest score wins. Playing for a pot? The winner takes the lot.', ic: boxIcon().replace('height="44"', 'width="48"') };
+    if (st.players[w].wins >= st.target) st.over = { t: winsText(st.players[w].name), s: st.target > 1 ? `First to ${plural(st.target, 'round')}. Lowest score wins, and shutting the box wins on the spot.` : 'Lowest score wins, and shutting the box wins on the spot.', ic: boxIcon().replace('height="44"', 'width="48"') };
   }
   function soloOver(st, s) {
     const key = 'stb.best.' + (st.digital ? 'digital' : 'add'), prev = store.get(key, null), better = prev == null || s < prev;
@@ -5078,7 +5101,7 @@ const coinV = n => `${coinIc}${n}`;
       s4: 'Good to know', pills: ['7 · 8 · 9 shut', 'One die'],
       notes: [['One die', 'is allowed once 7, 8 and 9 are all shut.'], ['Lowest score wins', 'when everyone has had a go.'], ['Shut the box?', 'You win on the spot.'], ['Tie?', 'The tied players go again.']],
       post: ['Try a twist', 'Read what’s left up as one number: 2, 5 and 9 scores 259.'],
-      foot: 'Lowest score <em>wins!</em>', footSub: 'Playing for a pot? The winner takes the lot.', footIc: `<svg viewBox="0 0 64 52" width="52"><rect x="6" y="8" width="15" height="34" rx="3" fill="${SAND}" stroke="#fff" stroke-width="2"/><rect x="24.5" y="8" width="15" height="34" rx="3" fill="#f2a91f" stroke="#fff" stroke-width="2"/><rect x="43" y="34" width="15" height="8" rx="2" fill="${ORANGE}" stroke="#fff" stroke-width="2"/><path d="M4 47h56" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>`
+      foot: 'Lowest score <em>wins!</em>', footSub: 'Playing solo? Try to beat your best score.', footIc: `<svg viewBox="0 0 64 52" width="52"><rect x="6" y="8" width="15" height="34" rx="3" fill="${SAND}" stroke="#fff" stroke-width="2"/><rect x="24.5" y="8" width="15" height="34" rx="3" fill="#f2a91f" stroke="#fff" stroke-width="2"/><rect x="43" y="34" width="15" height="8" rx="2" fill="${ORANGE}" stroke="#fff" stroke-width="2"/><path d="M4 47h56" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>`
     }
   };
   G.stb._t = { solver, bestMove, canMake, reachable, value, maskOf, SUM };
@@ -5153,7 +5176,7 @@ const seatTop = (st, i, extra = '') => `<div class="top">${who(st.players[i])}<s
   }
   function gameOver(st) {
     const w = st.players.reduce((m, p, i) => p.chips > st.players[m].chips ? i : m, 0);
-    st.over = { t: winsText(st.players[w].name), s: `${esc(st.players[w].name)} finishes with ${st.players[w].chips} chips${st.length && st.handNo >= st.length ? ` after ${st.length} hands` : ''}.` };
+    st.over = { t: winsText(st.players[w].name), s: `${esc(st.players[w].name)} finishes with ${plural(st.players[w].chips, 'counter')}${st.length && st.handNo >= st.length ? ` after ${st.length} hands` : ''}.` };
     st.phase = 'done';
   }
   function pay(st, i, n) { st.players[i].chips -= n; st.pot += n; }
@@ -5215,11 +5238,11 @@ const seatTop = (st, i, extra = '') => `<div class="top">${who(st.players[i])}<s
     deal(st);
   }
   G.brag = {
-    id: 'brag', kind: 'cards', name: 'Three-Card Brag', title: 'Three-Card<br>Brag', small: true, tagline: 'Bet blind or seen. Bluff. Take the pot.', players: '3+ players', min: 3, max: 7, defN: 4, priv: true,
+    id: 'brag', kind: 'cards', name: 'Three-Card Brag', title: 'Three-Card<br>Brag', small: true, tagline: 'Play blind or seen. Bluff. Win the counters.', players: '3+ players', min: 3, max: 7, defN: 4, priv: true,
     art: () => cardsArt([{ r: '3', s: 'H' }, { r: '3', s: 'S' }, { r: '3', s: 'D' }]), icon: () => iconCards([{ r: '3', s: 'H' }, { r: '3', s: 'S' }, { r: '3', s: 'D' }]),
-    info: [['cards', '1 pack of cards', '52 cards, no jokers'], ['coins', 'Chips', 'for the pot'], ['people', '3+ players', 'the more the merrier']],
-    options: [{ key: 'chips', label: 'Chips each', help: 'Ante is 1. Lose them all and you’re out.', def: 50, choices: [[30, '30'], [50, '50'], [100, '100']] },
-    { key: 'length', label: 'Game length', help: 'Most chips at the end wins.', def: 10, choices: [[10, '10 hands'], [20, '20 hands'], [0, 'To the last']] },
+    info: [['cards', '1 pack of cards', '52 cards, no jokers'], ['coins', 'Counters', '50 each to start'], ['people', '3+ players', 'the more the merrier']],
+    options: [{ key: 'chips', label: 'Counters each', help: 'Ante is 1. Lose them all and you’re out.', def: 50, choices: [[30, '30'], [50, '50'], [100, '100']] },
+    { key: 'length', label: 'Game length', help: 'Most counters at the end wins.', def: 10, choices: [[10, '10 hands'], [20, '20 hands'], [0, 'To the last']] },
     { key: 'top', label: 'Top bet', help: 'The most a seen player can bet in one go.', def: 10, choices: [[10, '10'], [20, '20']] }],
     create(players, o) { const st = { players: players.map(p => ({ ...p, chips: o.chips, cards: [], status: 'blind' })), dealer: players.length - 1, ante: 1, top: o.top, handNo: 0, length: o.length }; deal(st); return st; },
     actor,
@@ -5237,7 +5260,7 @@ const seatTop = (st, i, extra = '') => `<div class="top">${who(st.players[i])}<s
       const a = actor(st), me = viewer >= 0 ? viewer : -1, hum = humanTurn(st, a) && (me === a);
       const show = st.res && st.res.show;
       const reveal = i => show && (i === show.a || i === show.b);
-      let h = `<div class="pot"><svg viewBox="0 0 48 48" width="42">${coinStack()}</svg><div><div class="lbl">Pot</div><div class="amt">${st.pot || (st.res ? st.res.pot : 0)}</div></div><div style="margin-left:8px"><div class="lbl">Hand ${st.handNo}${st.length ? ' of ' + st.length : ''} · Stake</div><div style="font-weight:700;color:var(--plum)">${st.stake} seen · ${st.stake / 2} blind</div></div></div>`;
+      let h = `<div class="pot"><svg viewBox="0 0 48 48" width="42">${coinStack()}</svg><div><div class="lbl">Pot</div><div class="amt">${st.pot || (st.res ? st.res.pot : 0)}</div></div><div style="margin-left:8px"><div class="lbl">Hand ${st.handNo}${st.length ? ' of ' + st.length : ''} · Bet</div><div style="font-weight:700;color:var(--plum)">${st.stake} seen · ${st.stake / 2} blind</div></div></div>`;
       h += `<div class="seats">${st.players.map((p, i) => {
         const faceUp = (i === me && p.status !== 'blind') || reveal(i) || (st.phase === 'done' && i === me && p.cards.length && p.status !== 'blind');
         const tag = p.status === 'out' ? 'Out' : p.status === 'folded' ? 'Folded' : p.status === 'blind' ? 'Blind' : 'Seen';
@@ -5249,7 +5272,7 @@ const seatTop = (st, i, extra = '') => `<div class="top">${who(st.players[i])}<s
       h += `<div class="board" style="margin-top:12px">`;
       if (st.phase === 'bet') {
         const p = st.players[a];
-        h += `<div class="status">${hum ? 'Your go' : esc(p.name) + '’s go'}<small>${hum ? (p.status === 'blind' ? 'You’re betting blind: half price, but you haven’t seen your cards.' : 'To stay in, match the stake.') : 'Thinking…'}</small></div>`;
+        h += `<div class="status">${hum ? 'Your go' : esc(p.name) + '’s go'}<small>${hum ? (p.status === 'blind' ? 'You’re betting blind: half price, but you haven’t seen your cards.' : 'To stay in, match the bet.') : 'Thinking…'}</small></div>`;
         if (me >= 0 && st.players[me].status !== 'out') {
           const mp = st.players[me];
           if (mp.cards.length && mp.status === 'seen') h += `<div class="verdict"><span class="vpill">${bragKey(mp.cards).name}</span></div>`;
@@ -5270,15 +5293,16 @@ const seatTop = (st, i, extra = '') => `<div class="top">${who(st.players[i])}<s
       return h;
     },
     rules: {
+      pre: ['Before you start', '<b>50 counters each.</b> Agree the ante and the smallest and biggest bet (say 1, 2 and 10). <b>Left of the dealer</b> bets first. The deal passes left.'],
       s1: 'Play a hand',
-      steps: [['Everyone antes.', 'Put the agreed stake in the pot.'], ['Deal three cards each,', 'face down.'], ['Bet or fold, going left.', 'To stay in, put in at least the last bet.'], ['Down to two?', 'Either can pay double to see the other. Best hand wins.']],
+      steps: [['Everyone antes,', 'then the dealer deals three cards each, face down.'], ['Look, or play blind.', 'You can look on any of your turns. Once you look, you’re <b>seen</b> for the rest of the hand.'], ['Bet or fold, going left.', 'To stay in, match at least the last seen bet (blind players pay half). You may raise, up to the top bet.'], ['Keep going round', 'until one player is left, or the last two show down.']],
       s2: 'Blind or seen?',
-      score: scoreRow(cardHTML(null, { size: 'sm', back: true }), '½', 'blind <span style="font-weight:400">Don’t look. Bet half.</span>') + scoreRow(cardHTML({ r: 'K', s: 'S' }, { size: 'sm' }), '1', 'seen <span style="font-weight:400">Look. Bet full price.</span>') + scoreRow(`<span class="cards-row" style="gap:2px;flex-wrap:nowrap">${cardHTML(null, { size: 'xs', back: true })}${cardHTML({ r: '9', s: 'H' }, { size: 'xs' })}</span>`, '2×', 'to see <span style="font-weight:400">Last two? Show down.</span>') + exampleHTML(cardHTML(null, { size: 'xs', back: true }), 'A blind bet of 1', '= seen pays 2'),
-      s3: 'What beats what', head: ['Hand · best at the top', ''],
-      rows: [{ ic: xs('3H 3S 3D'), t: 'Prial', s: 'Three of a kind. 3-3-3 is top.', hi: 1 }, { ic: xs('AH 2H 3H'), t: 'Running flush', s: 'A run in one suit.' }, { ic: xs('QS JH 10D'), t: 'Run', s: 'A-2-3 is top. Beats a flush!' }, { ic: xs('KD 8D 4D'), t: 'Flush', s: 'Three of one suit.' }, { ic: xs('9C 9H 5S'), t: 'Pair', s: 'Higher pair wins.' }, { ic: xs('AS JD 6C'), t: 'High card', s: 'Highest card wins.' }],
-      s4: 'Showdown', pills: ['A tie', 'Seer loses'],
-      notes: [['A tie?', 'The player who paid to see loses.'], ['Everyone folds?', 'The last player takes the pot, no cards shown.'], ['Open can’t see blind.', 'A seen player can’t call for a blind player’s cards.']],
-      foot: 'Best hand <em>wins!</em>', footSub: 'Winner takes the pot. Agree the stake and top bet before you deal.'
+      score: scoreRow(cardHTML(null, { size: 'sm', back: true }), '½', 'blind <span style="font-weight:400">Not looked: pay half price</span>') + scoreRow(cardHTML({ r: 'K', s: 'S' }, { size: 'sm' }), '1×', 'seen <span style="font-weight:400">Looked: pay full price</span>') + scoreRow(`<span class="cards-row" style="gap:2px;flex-wrap:nowrap">${cardHTML({ r: '9', s: 'H' }, { size: 'xs' })}${cardHTML({ r: '9', s: 'S' }, { size: 'xs' })}</span>`, '2×', 'to see <span style="font-weight:400">Last two only: pay double to show</span>') + `<div style="border-top:2px dashed rgba(78,31,77,.45);margin-top:10px;padding-top:8px"><b style="color:var(--plum);font-size:12.5px">Example</b><div style="font-size:13px;margin-top:4px">Ann (seen) bets 2. Ben (blind) stays in for 1. Cat (seen) must put in 2 or more, and raises to 4. Now seen players pay 4, blind players 2.</div></div>`,
+      s3: 'What beats what', s3sub: '<b>Prials:</b> 3-3-3 is top, then A-A-A down to 2-2-2. <b>Runs:</b> A-2-3 is top, then A-K-Q down to 4-3-2. <b>Ties:</b> compare the top card, then the next. Suits never rank.', head: ['Hand · best at the top', ''],
+      rows: [{ ic: xs('3D 3C 3H'), t: 'Prial', s: 'Three of a kind.', hi: 1 }, { ic: xs('AH 2H 3H'), t: 'Running flush', s: 'A run in one suit.' }, { ic: xs('QC JH 10S'), t: 'Run', s: 'Three in a row.' }, { ic: xs('KD 8D 4D'), t: 'Flush', s: 'Three of one suit.' }, { ic: xs('9S 9H 5D'), t: 'Pair', s: 'Higher pair wins.' }, { ic: xs('AC JD 6H'), t: 'High card', s: 'Highest card wins.' }],
+      s4: 'Showdown',
+      notes: [['Two left?', 'Either can pay twice the current bet to see the other. Best hand wins.'], ['Exactly equal?', 'Whoever paid to see loses.'], ['Looked?', 'Then you can’t see a blind player: bet or fold. A blind player can see anyone.'], ['All others fold?', 'The last player takes the pot without showing.'], ['Can’t match a bet?', 'Fold.']],
+      foot: 'Best hand takes the pot!', footSub: 'Out of counters? You’re out. Most counters at the end wins.'
     }
   };
   G.brag._key = bragKey; G.brag._pct = pct;
@@ -5322,7 +5346,7 @@ const seatTop = (st, i, extra = '') => `<div class="top">${who(st.players[i])}<s
     log(st, `${losers.map(i => nm(st, i)).join(' and ')} ${losers.length > 1 ? 'tie for lowest and each lose' : 'has the lowest card and loses'} a life.`);
     losers.forEach(i => { if (!alive(st.players[i])) log(st, `${nm(st, i)} is out!`); });
     const left = st.players.filter(alive);
-    if (left.length === 1) st.over = { t: winsText(left[0].name), s: 'Last player with a life. Playing for a pot? Pay a counter in for every life you lose.', ic: `<svg viewBox="0 0 24 24" width="44"><path d="M12 20.5s-8-4.9-8-10.6A4.4 4.4 0 0 1 12 7.2a4.4 4.4 0 0 1 8 2.7c0 5.7-8 10.6-8 10.6z" fill="#f2a91f"/></svg>` };
+    if (left.length === 1) st.over = { t: winsText(left[0].name), s: 'Last player with a life.', ic: `<svg viewBox="0 0 24 24" width="44"><path d="M12 20.5s-8-4.9-8-10.6A4.4 4.4 0 0 1 12 7.2a4.4 4.4 0 0 1 8 2.7c0 5.7-8 10.6-8 10.6z" fill="#f2a91f"/></svg>` };
   }
   function ai(st) {
     const i = actor(st), p = st.players[i], v = val(p.card), n = st.order.length;
@@ -5335,9 +5359,9 @@ const seatTop = (st, i, extra = '') => `<div class="top">${who(st.players[i])}<s
     id: 'cuckoo', kind: 'cards', name: 'Cuckoo', tagline: 'One card each. Dodge the lowest.', players: '5+ players', min: 3, max: 10, defN: 6, priv: true,
     art: () => `<svg viewBox="0 0 150 120"><path d="M38 22 C 60 2, 100 2, 118 20" stroke="${ORANGE}" stroke-width="3" stroke-dasharray="5 6" fill="none" stroke-linecap="round"/><path d="M112 20l7 1-1-7" stroke="${ORANGE}" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M112 104 C 90 122, 50 122, 32 104" stroke="${ORANGE}" stroke-width="3" stroke-dasharray="5 6" fill="none" stroke-linecap="round"/><path d="M38 104l-7-1 1 7" stroke="${ORANGE}" stroke-width="3" fill="none" stroke-linecap="round"/>${cardG({ r: '3', s: 'C' }, 18, 30, -10, 46)}${cardG({ r: '9', s: 'H' }, 82, 28, 10, 46)}</svg>`,
     icon: () => iconCards([{ r: '3', s: 'C' }, { r: '9', s: 'H' }]),
-    info: [['cards', '1 pack of cards', '52 cards, aces low'], ['heart', '3 lives each', 'counters or coins'], ['people', '5+ players', 'the more the merrier']],
+    info: [['cards', '1 pack of cards', '52 cards, aces low'], ['heart', '3 lives each', 'use counters'], ['people', '5+ players', 'the more the merrier']],
     note: 'Best with five or more. The computer can fill the seats.',
-    options: [{ key: 'lives', label: 'Lives each', help: 'Lose them all and you’re out.', def: 3, choices: [[3, '3'], [5, '5']] }],
+    options: [{ key: 'lives', label: 'Lives each', help: 'Lose them all and you’re out. Short on time? Try 2.', def: 3, choices: [[2, '2 · short'], [3, '3'], [5, '5']] }],
     create(players, o) { const st = { players: players.map(p => ({ ...p, lives: o.lives, card: null })), dealer: players.length - 1, handNo: 0, maxLives: o.lives }; deal(st); return st; },
     actor,
     next(st) {
@@ -5380,17 +5404,19 @@ const seatTop = (st, i, extra = '') => `<div class="top">${who(st.players[i])}<s
       return h;
     },
     rules: {
+      pre: ['Before you start', '<b>Everyone starts with 3 lives</b> (use counters). <b>Cut for the first dealer:</b> highest card deals. The deal passes left after every hand.'],
       s1: 'Play a hand',
-      steps: [['Deal one card each,', 'face down. Take a look at yours.'], ['Stand or change.', 'Going round, keep your card or swap with the player on your left.'], ['The dealer goes last,', 'and may swap with the top card of the pack.'], ['Turn them over.', 'Lowest card loses a life. Pass the deal left.']],
+      steps: [['Deal one card each,', 'face down. Look at yours, but keep it hidden.'], ['Going left from the dealer,', 'each player keeps their card or swaps with the player on their left. That player can’t refuse, unless they hold a King.'], ['The dealer goes last:', 'keep your card, or swap it for the top card of the pack, sight unseen. You keep whatever you get.'], ['Turn all the cards over.', 'The lowest card loses a life. Pass the deal left.']],
       s2: 'Card order',
       score: `<div style="font-size:13px;margin-bottom:6px">Suits don’t matter.</div><div class="cards-row" style="gap:2px;flex-wrap:wrap;justify-content:flex-start">${['K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2', 'A'].map((r, i) => cardHTML({ r, s: i === 12 ? 'D' : 'C' }, { size: 'xs' })).join('')}</div><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:var(--plum);margin-top:3px"><span>← highest</span><span>lowest →</span></div>` +
-        scoreRow(cardHTML({ r: 'K', s: 'H' }, { size: 'xs' }), '', 'King is safe <span style="font-weight:400">Nobody can swap it off you.</span>') + scoreRow(cardHTML({ r: 'A', s: 'S' }, { size: 'xs' }), '', 'Ace is worst <span style="font-weight:400">Swap it on if you can!</span>') +
+        scoreRow(cardHTML({ r: 'K', s: 'D' }, { size: 'xs' }), '', 'King is safe <span style="font-weight:400">Nobody can swap it off you</span>') + scoreRow(cardHTML({ r: 'A', s: 'S' }, { size: 'xs' }), '', 'Ace is lowest <span style="font-weight:400">Swap it on if you can!</span>') +
         exampleHTML(`<span class="cards-row" style="gap:3px">${cardHTML({ r: '3', s: 'C' }, { size: 'xs' })}${cardHTML({ r: '9', s: 'H' }, { size: 'xs' })}</span>`, 'Swap your 3', '= you get 9'),
       s3: 'Who loses a life?', head: ['Cards turned over', 'Lives lost'],
-      rows: [{ ic: xs('KS 7C 2H 9D'), t: 'The 2 is lowest', s: 'That player loses a life.', v: 1, hi: 1 }, { ic: xs('5D QS 5C 8H'), t: 'Two 5s tie for lowest', s: 'Both players lose a life.', v: 2 }, { ic: xs('AH 2S 3C 4D'), t: 'The Ace is lowest', s: 'Aces are always low.', v: 1 }],
-      s4: 'Kings', pills: ['King', 'No swap'],
-      notes: [['Got a King?', 'Show it when asked. The swap is off.'], ['Blocked by a King?', 'Keep your card. Play moves on past the King.'], ['Lose all three lives', 'and you’re out.']],
-      foot: 'Last player with a life <em>wins!</em>', footSub: 'Playing for a pot? Pay a counter in for every life you lose.', footIc: `<svg viewBox="0 0 24 24" width="44"><path d="M12 20.5s-8-4.9-8-10.6A4.4 4.4 0 0 1 12 7.2a4.4 4.4 0 0 1 8 2.7c0 5.7-8 10.6-8 10.6z" fill="#f2a91f"/></svg>`
+      rows: [{ ic: xs('KS 7C 2H 9D'), t: 'The 2 is lowest', s: 'That player loses a life.', v: 1 }, { ic: xs('5D QS 5C 8H'), t: 'Two 5s tie for lowest', s: 'Everyone tied for lowest loses a life.', v: 2, hi: 1 }, { ic: xs('AH 2S 3C 4D'), t: 'The Ace is lowest', s: 'Aces are always low.', v: 1 }],
+      s4: 'Kings and lives',
+      notes: [['Asked to swap with a King?', 'Show it. The swap is off, and the asker keeps their card.'], ['A King never swaps,', 'so play moves on to the player after it.'], ['Lost all three lives?', 'You’re out.'], ['Would a tie knock everyone out?', 'Nobody loses a life. Deal again.']],
+      post: ['Shorter game', 'Short on time? Start with 2 lives each instead of 3.'],
+      foot: 'Last player with a life <em>wins!</em>', footIc: `<svg viewBox="0 0 24 24" width="44"><path d="M12 20.5s-8-4.9-8-10.6A4.4 4.4 0 0 1 12 7.2a4.4 4.4 0 0 1 8 2.7c0 5.7-8 10.6-8 10.6z" fill="#f2a91f"/></svg>`
     }
   };
 })();
