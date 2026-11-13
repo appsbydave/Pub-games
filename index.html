@@ -1504,11 +1504,11 @@ class SjoelTable extends SlideTable {
 
 GAMES.sjoel = {
   id: 'sjoel', name: 'Sjoelbak', short: 'Sjoelbak', tag: 'Slide the discs. Fill every box. Score sets.', icon: ICON.sjoel,
-  blurb: 'Dutch shuffleboard: 30 discs, four gates.', Table: SjoelTable, kind: 'turns',
+  blurb: 'Dutch shuffleboard: 20 discs, four gates.', Table: SjoelTable, kind: 'turns',
   seat: { min: 1, max: 6, label: 'Players' },
-  options: [{ id: 'discs', label: 'Discs', sub: 'Per turn, over three goes', choices: [[30, '30'], [15, '15 · quick']], def: 30 },
+  options: [{ id: 'discs', label: 'Discs', sub: 'Per turn, over three goes', choices: [[20, '20'], [10, '10 · quick']], def: 20 },
     { id: 'turns', label: 'Turns each', sub: 'Totals add up', choices: [[1, '1'], [2, '2'], [3, '3']], def: 1 }],
-  info: [['board', '1 sjoelbak', 'Dutch shuffleboard'], ['disc', '30 discs', 'flat wooden pucks'], ['people', '2+ players', 'best total wins']],
+  info: [['board', '1 sjoelbak', 'Dutch shuffleboard'], ['disc', '20 discs', 'flat wooden pucks'], ['people', '2+ players', 'best total wins']],
   init(m) { const n = m.players.length; m.s = { tot: Array(n).fill(0), log: m.players.map(() => []), cur: 0, rnd: 1 }; },
   unit(m) { const s = m.s; return { who: s.cur, title: `${rname(m, s.cur)}'s turn`, sub: m.opts.turns > 1 ? `Turn ${s.rnd} of ${m.opts.turns}` : `${m.opts.discs} discs, three goes` }; },
   apply(m, res) {
@@ -1539,11 +1539,11 @@ GAMES.sjoel = {
     else if (a === 'done') return { done: { counts: st.c.slice() } };
   },
   rules: {
-    s1: ['Play a turn', [['Slide all 30 discs.', 'Push them one at a time from the open end.'], ['Leave the ones that score.', 'Discs in a box stay put. Gather up the rest.'], ['Slide again.', 'Three goes in all, each with the discs left over.'], ['Count up after the third go.', 'Empty the boxes and pass the board on.']]],
-    s2: ['Scoring', [[20, 'points', 'One in every box'], [3, 'points', 'Spare in the 3 box'], [0, 'points', 'Stuck in the gate']], ['×6 ×5 ×7 ×5', '5 sets + 2 + 8 = 110 points'], 'Boxes score 2, 3, 4, 1 from the left.'],
+    s1: ['Play a turn', [['Slide all 20 discs.', 'Push them one at a time from the open end.'], ['Leave the ones that score.', 'Discs in a box stay put. Gather up the rest.'], ['Slide again.', 'Three goes in all, each with the discs left over.'], ['Count up after the third go.', 'Empty the boxes and pass the board on.']]],
+    s2: ['Scoring', [[20, 'points', 'One in every box'], [3, 'points', 'Spare in the 3 box'], [0, 'points', 'Stuck in the gate']], ['×5 ×4 ×6 ×4', '4 sets + 2 + 8 = 90 points'], 'Boxes score 2, 3, 4, 1 from the left.'],
     s3: ['Spread them out', 'Same 20 discs. Very different scores.', ['Discs in the 2 · 3 · 4 · 1 boxes', 'Score'], [['5 · 5 · 5 · 5', '5 in every box: five full sets of 20.', 100], ['0 · 0 · 20 · 0', 'All 20 in the 4: no sets, just 20 × 4.', 80], ['6 · 6 · 6 · 2', 'Few in the 1 box: only 2 sets. The 1 box matters!', 76]]],
     s4: ['Does it count?', [['Half in', 'Slide again. A disc only scores once it’s fully past the gate.'], ['Bounced back', 'Off the board, or back past the start bar? It sits out until your next go.'], ['Hands off', 'Hands off the board until your go is over.']]],
-    banner: ['Highest score wins!', 'A perfect turn scores 148: seven sets, plus two spare in the 4.']
+    banner: ['Highest score wins!', 'A perfect turn scores 100: five full sets.']
   },
   appNotes: ['You can slide the next disc while others are still moving, just like the real thing.', 'Discs stay where they stop until the go ends, on the board or in a box, even if you leave the game and carry on later. A box only has room for so many, so a crowded box can block its own gate. Slide them firmly to the back.', 'Between goes the discs in each box are stacked at the back, like on a real board, which clears the gates again.']
 };
